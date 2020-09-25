@@ -1,0 +1,22 @@
+name: Licence Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic:5.0.0
+    env:
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check version doesn't already exist
+        run: |
+          /scripts/release-checks.sh --java --maven pom.xml
+        shell: bash
