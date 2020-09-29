@@ -1,0 +1,36 @@
+name: 'Maven Deploy Central'
+description: 'Deploy java package to Maven central'
+inputs:
+  NEXUS_MAVEN_REPO:
+    required: true
+  NEXUS_USERNAME:
+    required: true
+  NEXUS_PASSWORD:
+    required: true
+  ZEPBEN_GPG_KEY:
+    required: true
+  OSSRH_USERNAME:
+    required: true
+  OSSRH_PASSWORD:
+    required: true
+  GPG_KEY_ID:
+    required: true
+  GPG_KEY_PASSWORD:
+    required: true
+runs:
+  using: "composite"
+  steps: 
+    - run: |
+        echo "$ZEPBEN_GPG_KEY" | base64 -d > zepben-gpg.key
+        gpg2 --batch --import zepben-gpg.key
+        mvn clean deploy -f pom.xml -P release,ossrh -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dossrh.server.username=$OSSRH_USERNAME -Dossrh.server.password=$OSSRH_PASSWORD -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD
+      shell: bash
+      env:
+        NEXUS_MAVEN_REPO: ${{ inputs.NEXUS_MAVEN_REPO }}
+        NEXUS_USERNAME: ${{ inputs.NEXUS_USERNAME }}
+        NEXUS_PASSWORD: ${{ inputs.NEXUS_PASSWORD }}
+        ZEPBEN_GPG_KEY: ${{ inputs.ZEPBEN_GPG_KEY }}
+        OSSRH_USERNAME: ${{ inputs.OSSRH_USERNAME }}
+        OSSRH_PASSWORD: ${{ inputs.OSSRH_PASSWORD }}
+        GPG_KEY_ID: ${{ inputs.GPG_KEY_ID }}
+        GPG_KEY_PASSWORD: ${{ inputs.GPG_KEY_PASSWORD }}
