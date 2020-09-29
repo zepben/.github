@@ -21,7 +21,7 @@ jobs:
           /scripts/release-checks.sh --java --maven pom.xml
           FILE=./docs/release_notes.md
           if [ -f "$FILE" ]; then
-            release_date=$(date +'%d %B %Y')
+            export release_date=$(date +'%d %B %Y')
             /scripts/finalize-version.sh --java --maven pom.xml $FILE 'sed -i -e "s/TBD/$release_date/g"'
           else
             /scripts/finalize-version.sh --java --maven pom.xml
@@ -98,8 +98,9 @@ jobs:
         run: |
           FILE=./docs/release_notes.md
           if [ -f "$FILE" ]; then
-            /scripts/update-version.sh --java --maven --release pom.xml $FILE 'sed -i -e "s/TBD/$release_date/g"'
-          else
+            export ln=$(cat $FILE | grep -n "### v[0-9]\+.[0-9]\+.[0-9]\+" | head -1 | cut -d':' -f1)
             /scripts/update-version.sh --java --maven --release pom.xml $FILE 'next_release_version=${version//-SNAPSHOT/} && sed -i "${ln}i \#\#\# v${version//-SNAPSHOT/}\n\n\#\#\#\#\# Breaking Changes\n\* None.\n\n\#\#\#\#\# New Features\n\* None.\n\n\#\#\#\#\# Enhancements\n\* None.\n\n\#\#\#\#\# Fixes\n\* None.\n\n\#\#\#\#\# Notes\n\* None.\n\n\-\-\-\n" $changelog && sed -i "5i \|\[${next_release_version}\]\(\#v${next_release_version//\./}\)\| \`TBD\` \|"'
+          else
+            /scripts/update-version.sh --java --maven --release pom.xml
           fi
         shell: bash
