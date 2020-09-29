@@ -19,7 +19,13 @@ jobs:
       - name: Release checks and update version for release
         run: |
           /scripts/release-checks.sh --java --maven pom.xml
-          /scripts/finalize-version.sh --java --maven pom.xml
+          FILE=./docs/release_notes.md
+          if [ -f "$FILE" ]; then
+            release_date=$(date +'%d %B %Y')
+            /scripts/finalize-version.sh --java --maven pom.xml docs/release.md 'sed -i -e "s/TBD/$release_date/g"'
+          else
+            /scripts/finalize-version.sh --java --maven pom.xml
+          fi
         shell: bash
   deploy-central:
     needs: release-checks
@@ -89,5 +95,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Update to next minor version
-        run: /scripts/update-version.sh --java --maven --release pom.xml
+        run: |
+          FILE=./docs/release_notes.md
+          if [ -f "$FILE" ]; then
+            /scripts/update-version.sh --java --maven --release pom.xml docs/release.md 'sed -i -e "s/TBD/$release_date/g"'
+          else
+            /scripts/update-version.sh --java --maven --release pom.xml docs/release.md 'next_release_version=${version//-SNAPSHOT/} && sed -i "${ln}i \#\#\# v${version//-SNAPSHOT/}\n\n\#\#\#\#\# Breaking Changes\n\* None.\n\n\#\#\#\#\# New Features\n\* None.\n\n\#\#\#\#\# Enhancements\n\* None.\n\n\#\#\#\#\# Fixes\n\* None.\n\n\#\#\#\#\# Notes\n\* None.\n\n\-\-\-\n" $changelog && sed -i "5i \|\[${next_release_version}\]\(\#v${next_release_version//\./}\)\| \`TBD\` \|"'
+          fi
         shell: bash
