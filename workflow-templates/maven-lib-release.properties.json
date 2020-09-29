@@ -1,5 +1,5 @@
 {
-    "name": "Zepben Maven Release Workflow",
+    "name": "Zepben Maven Release Workflow (Library)",
     "description": "Workflow for creating a release of maven projects.",
     "iconName": "Zepbensvglogo",
     "categories": [

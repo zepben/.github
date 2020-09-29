@@ -1,5 +1,5 @@
 {
-    "name": "Zepben Maven Snapshot Workflow",
+    "name": "Zepben Maven Snapshot Workflow (Library)",
     "description": "Workflow for creating a snapshot release of maven projects.",
     "iconName": "Zepbensvglogo",
     "categories": [

@@ -1,4 +1,4 @@
-name: Maven Snapshot
+name: Maven Library Snapshot
 
 on:
   push:
