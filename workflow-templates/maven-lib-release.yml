@@ -43,7 +43,7 @@ jobs:
 
       - name: Maven deploy to Central
         id: build
-        uses: ./.github/actions/maven-deploy-central
+        uses: zepben/maven-deploy-central-action@main
         with:
           NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
