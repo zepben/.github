@@ -14,16 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: create lc directory
-        run: mkdir ~/lc
-        shell: bash
-
-      - name: Cache licence-check
-        uses: actions/cache@v2
-        with:
-          path: ~/lc
-          key: lc
-
       - name: Check licence
         uses: zepben/licence-check-action@main
         with:
