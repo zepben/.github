@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Maven Build Workflow (Application)",
+    "description": "Workflow for building maven application projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}

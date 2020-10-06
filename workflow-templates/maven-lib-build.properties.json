@@ -1,6 +1,6 @@
 {
-    "name": "Zepben Maven Build Workflow",
-    "description": "Workflow for building maven projects.",
+    "name": "Zepben Maven Build Workflow (Library)",
+    "description": "Workflow for building maven library projects.",
     "iconName": "Zepbensvglogo",
     "categories": [
         "Java"

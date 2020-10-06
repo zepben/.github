@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Maven Snapshot Workflow (Application)",
+    "description": "Workflow for creating a snapshot release of maven application projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}
