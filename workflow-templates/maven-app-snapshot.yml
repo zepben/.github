@@ -1,4 +1,4 @@
-name: Snapshot App Release
+name: Maven App Snapshot
 
 on: workflow_dispatch
 
@@ -10,7 +10,7 @@ jobs:
       check_container_config: ${{ steps.check_container_config.outputs.files_exists }}
     env:
       GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-      GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }} 
+      GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
 
@@ -58,9 +58,10 @@ jobs:
 
       - name: Create Docker image
         run: |
-          mv built-artifacts/*.jar built-artifacts/energy-workbench-server.jar
           apk add docker jq xmlstarlet
+          artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
+          mv built-artifacts/*.jar built-artifacts/${artifactId}.jar
           jq --arg VERSION $version '."post-processors"[0][0].tag = $VERSION' container.json > container.json.tmp
           mv container.json.tmp container.json
           mkdir /build
