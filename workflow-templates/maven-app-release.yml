@@ -1,5 +1,5 @@
 # Note: default release notes file is docs/release.md.
-name: Maven App Release
+name: Release App 
 
 on: workflow_dispatch
 
@@ -29,9 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     env:
-      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
-      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+      GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
     outputs:
       check_container_config: ${{ steps.check_container_config.outputs.files_exists }}
     steps:
@@ -53,7 +52,7 @@ jobs:
       - name: Maven package
         id: build
         run: |
-          mvn clean package -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+          mvn clean package -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD
         continue-on-error: true
 
       - name: Merge and Tag
