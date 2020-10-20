@@ -1,7 +1,10 @@
-# Note: default release notes file is docs/release.md.
-name: Maven App Release
+# Notes: 
+# * Default release notes file is docs/release.md.
+# * Update deploy-docs -> PRODUCT_NAME.
+name: Release App 
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
 
 jobs:
   release-checks:
@@ -24,12 +27,16 @@ jobs:
           export release_date=$(date +'%d %B %Y')
           /scripts/finalize-version.sh --java --maven pom.xml $FILE 'sed -i -e "s/TBD/$release_date/g"'
         shell: bash
-  build-app:
+  create-release:
     needs: release-checks
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     outputs:
       check_container_config: ${{ steps.check_container_config.outputs.files_exists }}
+      tag: ${{ steps.build.outputs.tag }}
+      version: ${{ steps.build.outputs.version }}
+      artifact-id: ${{ steps.build.outputs.artifact-id }}
+      source-url: ${{ steps.build.outputs.source-url }}
     env:
       GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
       GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
@@ -53,61 +60,46 @@ jobs:
         id: build
         run: |
           mvn clean package -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD
-        continue-on-error: true
-
-      - name: Merge and Tag
-        if: steps.build.outcome == 'success'
-        id: merge
-        run: | 
-          git checkout ${GITHUB_REF/refs\/heads\//}
-          git merge release
-          git push origin ${GITHUB_REF/refs\/heads\//}
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           artifact="${artifactId}-${version}.jar"
-          git tag "v$version"
-          git push --tags
-          echo "::set-output name=tag::$(echo v$version)"
+          tag=v$version
+          echo "::set-output name=version::$(echo $version)"
+          echo "::set-output name=tag::$(echo $tag)"
+          echo "::set-output name=artifact-id::$(echo $artifactId)"
           echo "::set-output name=artifact::$(echo $artifact)"
           echo "::set-output name=artifact-path::$(echo target/$artifact)"
+          source_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/archive/${tag}.zip"
+          echo "::set-output name=source-url::$(echo $source_url)"
         shell: bash
-
+          
       - name: Create Release
-        if: steps.build.outcome == 'success'
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.merge.outputs.tag }}
-          release_name: ${{ steps.merge.outputs.tag }}
+          tag_name: ${{ steps.build.outputs.tag }}
+          release_name: ${{ steps.build.outputs.tag }}
+          commitish: 'release'
           body_path: docs/release.md
           draft: false
           prerelease: false
 
       - name: Upload Release Asset
-        if: steps.build.outcome == 'success'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.merge.outputs.artifact-path }}
-          asset_name: ${{ steps.merge.outputs.artifact }}
+          asset_path: ${{ steps.build.outputs.artifact-path }}
+          asset_name: ${{ steps.build.outputs.artifact }}
           asset_content_type: application/zip
-
-      - name: Fail build
-        if: steps.build.outcome == 'failure'
-        run: | 
-          git push origin -d release
-          echo "There was an error in the mvn deploy command above."
-          exit 1
-        shell: bash
 
       - uses: actions/upload-artifact@master
         with:
           name: build-artifact
-          path: ${{ steps.merge.outputs.artifact-path }}
+          path: ${{ steps.build.outputs.artifact-path }}
 
       - name: Check container config existence
         id: check_container_config
@@ -115,39 +107,28 @@ jobs:
         with:
           files: "container.json"
 
-  build-container:
-    needs: build-app
-    if: needs.build-app.outputs.check_container_config == 'true'
+  handle-release-failure:
+    needs: create-release
+    if: failure()
     runs-on: ubuntu-latest
-    container:  hashicorp/packer
-    env:
-      DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
-      DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    container: zepben/pipeline-basic:5.0.0
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: build-artifact
-          path: built-artifacts
-
-      - name: Create Docker image
-        run: |
-          apk add docker jq xmlstarlet
-          artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
-          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          mv built-artifacts/*.jar built-artifacts/${artifactId}.jar
-          jq --arg VERSION $version '."post-processors"[0][0].tag = $VERSION' container.json > container.json.tmp
-          mv container.json.tmp container.json
-          mkdir /build
-          export PACKER_CONFIG_DIR=/build
-          echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USER --password-stdin
-          packer build container.json
+      - name: Delete release branch
+        run: | 
+          git push origin -d release
         shell: bash
 
+      - uses: dev-drprasad/delete-tag-and-release@v0.1.2
+        if: ${{ needs.create-release.outputs.tag }}
+        with:
+          delete_release: true
+          tag_name: ${{ needs.create-release.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   update-version:
-    needs: build-container
-    if: always() && needs.build-container.result == 'skipped' || needs.build-container.result == 'success'
+    needs: create-release
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic:5.0.0
     env:
@@ -166,3 +147,51 @@ jobs:
           export ln=$(cat $FILE | grep -n "### v[0-9]\+.[0-9]\+.[0-9]\+" | head -1 | cut -d':' -f1)
           /scripts/update-version.sh --java --maven --release pom.xml $FILE 'next_release_version=${version//-SNAPSHOT/} && sed -i "${ln}i \#\#\# v${version//-SNAPSHOT/}\n\n\#\#\#\#\# Breaking Changes\n\* None.\n\n\#\#\#\#\# New Features\n\* None.\n\n\#\#\#\#\# Enhancements\n\* None.\n\n\#\#\#\#\# Fixes\n\* None.\n\n\#\#\#\#\# Notes\n\* None.\n\n\-\-\-\n" $changelog && sed -i "5i \|\[${next_release_version}\]\(\#v${next_release_version//\./}\)\| \`TBD\` \|"'
         shell: bash
+
+  deploy-docs:
+    needs: create-release
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic:5.0.0
+    steps:
+      - name: Deploy Docs
+        id: docs
+        uses: zepben/bitbucket-trigger-pipeline-action@main
+        with:
+          AUTH: ${{ secrets.DOCS_PIPELINE_AUTH }}
+          URL: ${{ secrets.DOCS_PIPELINE_URL }}
+          BRANCH: ${{ secrets.DOCS_PIPELINE_BRANCH }}
+          CUSTOM_PIPELINE_NAME: ${{ secrets.DOCS_PIPELINE_NAME }}
+          PRODUCT_NAME: "Energy Workbench Server"
+          PRODUCT_VERSION: ${{ needs.create-release.outputs.version }}
+          SOURCE_URL: ${{ needs.create-release.outputs.source-url }}
+
+  build-container:
+    needs: create-release
+    if: needs.create-release.outputs.check_container_config == 'true'
+    runs-on: ubuntu-latest
+    container:  hashicorp/packer
+    env:
+      DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
+      DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: build-artifact
+          path: built-artifacts
+
+      - name: Create Docker image
+        run: |
+          apk add docker jq
+          mv built-artifacts/*.jar built-artifacts/${ARTIFACT_ID}.jar
+          jq --arg VERSION $VERSION '."post-processors"[0][0].tag = $VERSION' container.json > container.json.tmp
+          mv container.json.tmp container.json
+          mkdir /build
+          export PACKER_CONFIG_DIR=/build
+          echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USER --password-stdin
+          packer build container.json
+        shell: bash
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+          ARTIFACT_ID: ${{ needs.create-release.outputs.artifact-id }}
