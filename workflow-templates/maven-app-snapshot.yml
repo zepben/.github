@@ -32,7 +32,7 @@ jobs:
 
       - uses: actions/upload-artifact@master
         with:
-          name: build-artifact
+          name: snapshot
           path: ${{ steps.build.outputs.artifact-path }}
 
       - name: Check container config existence
@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          name: build-artifact
+          name: snapshot
           path: built-artifacts
 
       - name: Create Docker image
