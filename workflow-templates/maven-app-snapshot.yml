@@ -9,6 +9,7 @@ jobs:
     container: zepben/pipeline-java
     outputs:
       check_container_config: ${{ steps.check_container_config.outputs.files_exists }}
+      artifact_name: ${{ steps.build.outputs.version }}
     env:
       GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
       GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
@@ -27,12 +28,13 @@ jobs:
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           artifact="${artifactId}-${version}.jar"
+          echo "::set-output name=version::$(echo $version)"
           echo "::set-output name=artifact-path::$(echo target/$artifact)"
           mvn clean package -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD
 
       - uses: actions/upload-artifact@master
         with:
-          name: snapshot
+          name: ${{ steps.build.outputs.version }}
           path: ${{ steps.build.outputs.artifact-path }}
 
       - name: Check container config existence
@@ -54,7 +56,7 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          name: snapshot
+          name: ${{ needs.build-app.outputs.artifact_name }}
           path: built-artifacts
 
       - name: Create Docker image
