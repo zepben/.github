@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Python Snapshot Workflow (Library)",
+    "description": "Workflow for creating a snapshot release of python library projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Python"
+    ],
+    "filePatterns": [
+        "setup.py"
+    ]
+}

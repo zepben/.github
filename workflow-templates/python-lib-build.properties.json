@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Python Build Workflow (Library)",
+    "description": "Workflow for building python library projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Python"
+    ],
+    "filePatterns": [
+        "setup.py"
+    ]
+}
