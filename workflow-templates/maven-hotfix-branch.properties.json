@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Create Hotfix Branch Workflow (Maven)",
+    "description": "Workflow for creating a hotfix branch on a maven project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}

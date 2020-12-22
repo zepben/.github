@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Create LTS Branch Workflow (Maven)",
+    "description": "Workflow for creating a LTS branch on a maven project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}
