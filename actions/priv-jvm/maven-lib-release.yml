@@ -1,0 +1,187 @@
+# Note: default release notes file is docs/release.md.
+name: Maven Library Release
+
+on: workflow_dispatch
+
+jobs:
+  release-checks:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+      SLACK_NOTIFICATION: YES
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Release checks and update version for release
+        id: check
+        run: |
+          /scripts/release-checks.sh --java --maven pom.xml
+          /scripts/finalize-version.sh --java --maven pom.xml changelog.md
+          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
+          echo "::set-output name=version::$(echo $version)"
+        shell: bash
+
+  deploy:
+    needs: release-checks
+    runs-on: ubuntu-latest
+    outputs:
+      artifact: ${{ steps.build.outputs.artifact }}
+    container: zepben/pipeline-java
+    steps:
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - uses: actions/checkout@v3
+
+      - name: Cache maven deps
+        uses: actions/cache@v2
+        with:
+          path: /maven
+          key: maven
+
+      - name: Checkout release branch
+        run: |
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git checkout release
+        shell: bash
+
+      - name: Maven deploy to Central
+        id: build
+        uses: zepben/maven-deploy-central-action@main
+        with:
+          NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+          NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+          PROFILE: zepben-maven
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        if: steps.build.outcome == 'success'
+        uses: codecov/codecov-action@v1
+
+      - uses: actions/upload-artifact@master
+        if: steps.build.outcome == 'success'
+        with:
+          name: ${{ steps.build.outputs.artifact }}
+          path: ${{ steps.build.outputs.artifact-path }}
+
+      - name: Fail build
+        if: steps.build.outcome == 'failure'
+        run: |
+          git push origin -d release
+          echo "There was an error in the mvn deploy command above."
+          exit 1
+        shell: bash
+
+  create-release:
+    needs: [deploy, release-checks]
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Merge and Tag
+        id: merge
+        run: |
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git merge origin/release
+          git push origin ${GITHUB_REF/refs\/heads\//}
+          git tag "v${{ needs.release-checks.outputs.version }}"
+          git push --tags
+          echo "::set-output name=tag::$(echo v${{ needs.release-checks.outputs.version }})"
+        shell: bash
+        continue-on-error: true
+
+      - name: Fail if any previous step failed
+        if: steps.merge.outcome == 'failure'
+        run: |
+          git push origin -d release
+          echo "There was an error in merging the branch. release branch was deleted."
+          exit 1
+        shell: bash
+
+      - name: Download binary
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ needs.deploy.outputs.artifact }}
+          path: built-artifacts
+        continue-on-error: true
+
+      - name: Create Release and upload assets
+        if: success()
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.merge.outputs.tag }}
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+          files: |
+            built-artifacts/${{ needs.deploy.outputs.artifact }}
+        continue-on-error: true
+
+
+  update-version:
+    needs: deploy
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+      SLACK_NOTIFICATION: YES
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Update to next minor version
+        run: |
+          /scripts/update-version.sh --java --grow-changelog --maven --release pom.xml changelog.md
+        shell: bash
