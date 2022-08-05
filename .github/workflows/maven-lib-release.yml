@@ -1,7 +1,32 @@
 # Note: default release notes file is docs/release.md.
 name: Maven Library Release
 
-on: workflow_dispatch
+on: 
+  workflow_call:
+    inputs:
+      private:
+        description: 'Calling workflow from a private repo'
+        required: true
+        type: boolean
+        default: true
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_MAVEN_REPO:
+        required: true
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD: 
+        required: true
+      NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      NEXUS_MAVEN_RELEASE:
+        required: true
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+
 
 jobs:
   release-checks:
@@ -66,6 +91,17 @@ jobs:
           git checkout release
         shell: bash
 
+      - name: Set profile
+        id: profile
+        run: |
+          priv=${{ inputs.private }}
+          if [[ $priv == 'true' ]]
+          then 
+            echo "::set-output name=profile::zepben-maven"; 
+          else 
+            echo "::set-output name=profile::ossrh"
+          fi
+
       - name: Maven deploy to Central
         id: build
         uses: zepben/maven-deploy-central-action@main
@@ -75,7 +111,7 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
           NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-          PROFILE: zepben-maven
+          PROFILE: ${{ steps.profile.outputs.profile }}
         continue-on-error: true
 
       - name: Upload coverage to Codecov

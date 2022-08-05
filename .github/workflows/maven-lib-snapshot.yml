@@ -45,9 +45,9 @@ jobs:
           priv=${{ inputs.private }}
           if [[ $priv == 'true' ]]
           then 
-            echo "::set-output profile=zepben-maven"; 
+            echo "::set-output name=profile::zepben-maven"; 
           else 
-            echo "::set-output profile=oss"
+            echo "::set-output name=profile::ossrh"
           fi
 
       - name: Maven deploy to Central
