@@ -1,11 +1,31 @@
 name: Create Hotfix Branch
 
 on: 
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
         description: 'Version tag (e.g. 2.5 or 2.5.0) to create the branch in.'
         required: true
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_MAVEN_REPO:
+        required: true
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD: 
+        required: true
+      NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      NEXUS_MAVEN_RELEASE:
+        required: true
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+
+
+
 jobs:
   create-branch:
     runs-on: ubuntu-latest

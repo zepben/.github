@@ -1,11 +1,33 @@
 name: Maven Library Snapshot
 
 on:
-  push:
-    branches:
-      - main
-      - LTS/*
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version tag (e.g. 2.5 or 2.5.0) to create the branch in.'
+        required: true
+      private:
+        description: 'Calling workflow from a private repo'
+        required: true
+        type: boolean
+        default: true
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_MAVEN_REPO:
+        required: true
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD: 
+        required: true
+      NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      NEXUS_MAVEN_RELEASE:
+        required: true
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
 
 jobs:
   deploy:
@@ -20,6 +42,16 @@ jobs:
           path: /maven
           key: maven
 
+      - name: Set profile
+        id: profile
+        run: |
+          echo ${{ github.event.inputs.private }}
+          if [[ ${{ github.event.inputs.private }} == 'true' ]]
+          then 
+            echo "::set-output profile=zepben-maven"; 
+          else 
+            echo "::set-output profile=oss"
+
       - name: Maven deploy to Central
         uses: zepben/maven-deploy-central-action@main
         with:
@@ -28,7 +60,7 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
           NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-          PROFILE: zepben-maven
+          PROFILE: ${{ steps.profile.outputs.profile }}
 
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
