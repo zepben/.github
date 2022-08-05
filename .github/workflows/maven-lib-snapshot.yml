@@ -3,9 +3,6 @@ name: Maven Library Snapshot
 on:
   workflow_call:
     inputs:
-      version:
-        description: 'Version tag (e.g. 2.5 or 2.5.0) to create the branch in.'
-        required: true
       private:
         description: 'Calling workflow from a private repo'
         required: true

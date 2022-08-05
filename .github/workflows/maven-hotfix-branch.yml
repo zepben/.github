@@ -6,6 +6,7 @@ on:
       version:
         description: 'Version tag (e.g. 2.5 or 2.5.0) to create the branch in.'
         required: true
+        type: string
     secrets:
       CI_GITHUB_TOKEN:
         required: true
