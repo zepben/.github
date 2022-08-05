@@ -42,12 +42,13 @@ jobs:
       - name: Set profile
         id: profile
         run: |
-          priv=${{ github.event.inputs.private }}
+          priv=${{ inputs.private }}
           if [[ $priv == 'true' ]]
           then 
             echo "::set-output profile=zepben-maven"; 
           else 
             echo "::set-output profile=oss"
+          fi
 
       - name: Maven deploy to Central
         uses: zepben/maven-deploy-central-action@main
