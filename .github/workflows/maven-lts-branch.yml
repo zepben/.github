@@ -54,5 +54,5 @@ jobs:
         run: |
           /scripts/create-branch.sh --lts ${{ github.event.inputs.version }}
           export BITBUCKET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          /scripts/update-version.sh --python setup.py changelog.md
+          /scripts/update-version.sh --java --maven pom.xml changelog.md
         shell: bash
