@@ -154,6 +154,7 @@ jobs:
         run: |
           git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
           git fetch --all
+          git branch -a
           git merge origin/release
           git push origin ${GITHUB_REF/refs\/heads\//}
           git tag "v${{ needs.release-checks.outputs.version }}"
