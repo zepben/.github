@@ -195,7 +195,7 @@ jobs:
 
 
   update-version:
-    needs: deploy
+    needs: [create-release]
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
