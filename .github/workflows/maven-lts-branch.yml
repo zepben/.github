@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Version tag (e.g. 2.5 or 2.5.0) to create the branch in.'
+        description: 'Version tag (e.g. 2.5) to create the branch in.'
         required: true
         type: string
     secrets:
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
-      DEBUG: true
+      DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
@@ -55,5 +55,5 @@ jobs:
         run: |
           /scripts/create-branch.sh --lts ${{ github.event.inputs.version }}
           export BITBUCKET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          /scripts/update-version.sh --java --maven pom.xml changelog.md
+          /scripts/update-version.sh --java --maven pom.xml 
         shell: bash

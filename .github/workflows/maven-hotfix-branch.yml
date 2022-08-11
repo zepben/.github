@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Version tag (e.g. 2.5 or 2.5.0) to create the branch in.'
+        description: 'Version tag (e.g. 2.5) to create the branch in.'
         required: true
         type: string
     secrets:
@@ -24,8 +24,6 @@ on:
         required: false
       SLACK_WEBHOOK:
         required: false
-
-
 
 jobs:
   create-branch:
