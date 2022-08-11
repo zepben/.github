@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
-      DEBUG: true
+      DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
