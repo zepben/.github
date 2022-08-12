@@ -24,7 +24,6 @@ on:
         type: string
         default: "src"
 
-
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -44,6 +43,23 @@ on:
         required: false
       LC_URL:
         required: false
+      ZEPBEN_GPG_KEY:
+        required: false
+      OSSRH_USERNAME:
+        required: false
+      OSSRH_PASSWORD:
+        required: false
+      GPG_KEY_ID:
+        required: false
+      GPG_KEY_PASSWORD:
+        required: false
+      NPM_REPO:
+        required: true
+      DOCS_REPO:
+        required: true
+      DOCS_REPO_EVOLVE_WORKFLOW:
+        required: true
+
 
 
 jobs:
