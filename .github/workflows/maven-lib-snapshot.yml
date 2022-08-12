@@ -1,0 +1,92 @@
+name: Maven Library Snapshot
+
+on:
+  workflow_call:
+    inputs:
+      private:
+        description: 'Calling workflow from a private repo'
+        required: true
+        type: boolean
+        default: true
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_MAVEN_REPO:
+        required: true
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD: 
+        required: true
+      NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      NEXUS_MAVEN_RELEASE:
+        required: true
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-java
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache maven deps
+        uses: actions/cache@v2
+        with:
+          path: /maven
+          key: maven
+
+      - name: Set profile
+        id: profile
+        run: |
+          priv=${{ inputs.private }}
+          if [[ $priv == 'true' ]]
+          then 
+            echo "::set-output name=profile::zepben-maven"; 
+          else 
+            echo "::set-output name=profile::ossrh"
+          fi
+
+      - name: Maven deploy to Central
+        uses: zepben/maven-deploy-central-action@main
+        with:
+          NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+          NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+          PROFILE: ${{ steps.profile.outputs.profile }}
+
+      - name: Upload coverage to Codecov
+        if: steps.build.outcome == 'success'
+        uses: codecov/codecov-action@v1
+
+  update-snapshot-version:
+    needs: [deploy]
+    container: zepben/pipeline-basic
+    runs-on: ubuntu-latest
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Update snapshot version
+        run: |
+          /scripts/update-version.sh --java --snapshot --maven pom.xml
