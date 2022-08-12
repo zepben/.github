@@ -12,15 +12,25 @@ on:
       CI_GITHUB_TOKEN:
         required: true
       NEXUS_MAVEN_REPO:
-        required: true
+        required: false
       NEXUS_USERNAME:
-        required: true
+        required: false
       NEXUS_PASSWORD: 
-        required: true
+        required: false
       NEXUS_MAVEN_SNAPSHOT:
-        required: true
+        required: false
       NEXUS_MAVEN_RELEASE:
-        required: true
+        required: false
+      ZEPBEN_GPG_KEY:
+        required: false
+      OSSRH_USERNAME:
+        required: false
+      OSSRH_PASSWORD:
+        required: false
+      GPG_KEY_ID:
+        required: false
+      GPG_KEY_PASSWORD:
+        required: false
       SLACK_NOTIFICATION:
         required: false
       SLACK_WEBHOOK:
@@ -58,11 +68,16 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
           NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+          ZEPBEN_GPG_KEY: ${{ secrets.ZEPBEN_GPG_KEY_B64 }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
           PROFILE: ${{ steps.profile.outputs.profile }}
 
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
 
   update-snapshot-version:
     needs: [deploy]
