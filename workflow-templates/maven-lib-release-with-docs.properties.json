@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Maven Release Workflow (Library with Docusaurus)",
+    "description": "Workflow for creating a release of maven library projects that have docusaurus docs.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}

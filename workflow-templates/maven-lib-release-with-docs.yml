@@ -1,0 +1,12 @@
+name: Maven Library Release
+
+on: workflow_dispatch
+
+jobs:
+  release:
+    uses: zepben/.github/.github/workflows/maven-lib-release-with-docs.yml@main
+    with:
+      private: true
+      product-key: "<some-product-key>"   # Must be unique
+      licencecheck: false   # Set to true if private = false (OSS)
+    secrets: inherit

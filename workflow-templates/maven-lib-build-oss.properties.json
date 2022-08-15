@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Maven Build Workflow (Open Source Library)",
+    "description": "Workflow for building Open Source maven library projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}
