@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  run:
     uses: zepben/.github/.github/workflows/maven-build-oss.yml@main
     secrets: inherit
 

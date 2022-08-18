@@ -3,6 +3,6 @@ name: NPM App Snapshot Release
 on: workflow_dispatch
 
 jobs:
-  release:
+  run:
     uses: zepben/.github/.github/workflows/npm-app-snapshot-release.yml@main
     secrets: inherit

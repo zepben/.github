@@ -7,7 +7,7 @@ on:
         description: 'Major.Minor version to create the LTS branch for (e.g. 2.5)'
         required: true
 jobs:
-  lts:
+  run:
     uses: zepben/.github/.github/workflows/maven-lts-branch.yml@main
     with:
       version: ${{ inputs.version }}
