@@ -1,4 +1,4 @@
-name: Maven Library Release
+name: NPM App Build
 
 on: workflow_dispatch
 

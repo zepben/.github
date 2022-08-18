@@ -1,4 +1,4 @@
-name: Maven Library Release
+name: NPM App Snapshot Release
 
 on: workflow_dispatch
 
