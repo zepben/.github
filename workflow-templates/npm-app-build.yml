@@ -1,0 +1,10 @@
+name: Maven Library Release
+
+on: workflow_dispatch
+
+jobs:
+  release:
+    uses: zepben/.github/.github/workflows/npm-app-build.yml@main
+    with:
+      private: true
+    secrets: inherit
