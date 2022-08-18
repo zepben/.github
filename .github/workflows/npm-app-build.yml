@@ -1,0 +1,38 @@
+name: NPM Static App Build
+
+on: 
+  workflow_call:
+    secrets:
+      NEXUS_NPM_REPO:
+        required: true
+      CI_NPM_TOKEN:
+        required: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - name: Set timezone to Australia/ACT
+        run: |
+          sudo timedatectl set-timezone Australia/ACT
+
+      - uses: actions/checkout@v3
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Create .npmrc
+        run: |
+          rm -rf .npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+
+      - name: Build and test
+        run: |
+          npm ci --unsafe-perm
+          npm run ci

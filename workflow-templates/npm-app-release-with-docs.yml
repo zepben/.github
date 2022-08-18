@@ -1,0 +1,8 @@
+name: NPM App Release
+
+on: workflow_dispatch
+
+jobs:
+  run:
+    uses: zepben/.github/.github/workflows/npm-app-release-with-docs.yml@main
+    secrets: inherit

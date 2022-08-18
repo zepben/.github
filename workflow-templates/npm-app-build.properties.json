@@ -1,0 +1,12 @@
+{
+  "name": "Zepben NPM App Build Workflow",
+  "description": "Workflow for building static npm/js web apps",
+  "iconName": "Zepbensvglogo",
+  "categories": [
+    "nodejs",
+    "node"
+  ],
+  "filePatterns": [
+    "package.json"
+  ]
+}

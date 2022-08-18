@@ -1,0 +1,10 @@
+name: NPM App Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  run:
+    uses: zepben/.github/.github/workflows/npm-app-build.yml@main
+    secrets: inherit

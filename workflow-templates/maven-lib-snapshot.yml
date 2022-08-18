@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  snapshot:
+  run:
     uses: zepben/.github/.github/workflows/maven-lib-snapshot.yml@main
     with:
       private: true
