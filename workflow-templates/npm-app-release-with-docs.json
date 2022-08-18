@@ -1,5 +1,5 @@
 {
-  "name": "Zepben NPM Release Workflow (static app)",
+  "name": "Zepben NPM App Release Workflow with Docusaurus",
   "description": "Workflow for releasing static npm/js web apps",
   "iconName": "Zepbensvglogo",
   "categories": [

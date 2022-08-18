@@ -1,6 +1,6 @@
 {
-  "name": "Zepben NPM Build Workflow (static app)",
-  "description": "Workflow for building static npm/js web apps",
+  "name": "Zepben NPM App Release Workflow",
+  "description": "Workflow for releasing static npm/js web apps",
   "iconName": "Zepbensvglogo",
   "categories": [
     "nodejs",

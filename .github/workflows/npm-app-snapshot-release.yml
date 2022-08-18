@@ -2,12 +2,6 @@ name: NPM Static App Snapshot Release
 
 on:
   workflow_call:
-    inputs:
-      private:
-        description: 'Calling workflow from a private repo'
-        required: true
-        type: boolean
-        default: true
     secrets:
       NEXUS_NPM_REPO:
         required: true

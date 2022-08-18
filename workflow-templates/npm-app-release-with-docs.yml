@@ -4,5 +4,5 @@ on: workflow_dispatch
 
 jobs:
   release:
-    uses: zepben/.github/.github/workflows/npm-app-release.yml@main
+    uses: zepben/.github/.github/workflows/npm-app-release-with-docs.yml@main
     secrets: inherit

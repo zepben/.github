@@ -1,5 +1,5 @@
 {
-  "name": "Zepben NPM Snapshot Release Workflow (static app)",
+  "name": "Zepben NPM App Snapshot Release Workflow",
   "description": "Workflow for releasing snapshots of static npm/js web apps",
   "iconName": "Zepbensvglogo",
   "categories": [
