@@ -35,5 +35,4 @@ jobs:
       - name: Build and test
         run: |
           npm ci --unsafe-perm
-          npm run lint
-          npm run test-ci
+          npm run ci
