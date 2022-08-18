@@ -1,0 +1,174 @@
+name: NPM Static App Release
+
+on: 
+  workflow_call:
+    secrets:
+      NEXUS_NPM_REPO:
+        required: true
+      CI_NPM_TOKEN:
+        required: true
+      CI_GITHUB_TOKEN:
+        required: true
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+
+
+jobs:
+  release-checks:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    continue-on-error: false
+    env:
+      SLACK_NOTIFICATION: YES
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Release checks and update version for release
+        run: |
+          /scripts/release-checks.sh --js package.json
+          /scripts/finalize-version.sh --js package.json CHANGELOG.md
+        shell: bash
+
+  build-artifact:
+    needs: release-checks
+    runs-on: ubuntu-latest
+    outputs:
+      artifact: ${{ steps.build.outputs.artifact }}
+      artifact-id: ${{ steps.build.outputs.artifact-id }}
+      version: ${{ steps.build.outputs.version }}
+    steps:
+      - name: Set timezone to Australia/ACT
+        run: |
+          sudo timedatectl set-timezone Australia/ACT
+
+      - uses: actions/checkout@v3
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: 'npm'
+
+      - name: Checkout release branch
+        run: |
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git checkout release
+        shell: bash
+
+      - name: create .npmrc
+        run: | 
+          rm -rf .npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authtoken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+
+      - name: build
+        id: build
+        run: |
+          npm ci --unsafe-perm
+          npm run prod
+          version=$(jq -r .version package.json)
+          artifactId=$(jq -r .name package.json)
+          artifact="$artifactId-$version.tar.bz2"
+          tar jcvf "$artifact" -C dist .
+          echo "::set-output name=version::$(echo $version)"
+          echo "::set-output name=artifact::$(echo $artifact)"
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@master
+        if: steps.build.outcome == 'success'
+        with:
+          name: ${{ steps.build.outputs.artifact }}
+          path: ${{ steps.build.outputs.artifact }}
+
+      - name: Fail build
+        if: steps.build.outcome == 'failure'
+        run: | 
+          git push origin -d release
+          echo "There was an error in the npm package command above."
+          exit 1
+        shell: bash
+
+  create-release:
+    needs: [build-artifact]
+    runs-on: ubuntu-latest
+    outputs:
+      artifact: ${{ steps.merge.outputs.artifact }}
+      tag: ${{ steps.merge.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Merge and Tag
+        id: merge
+        run: | 
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git merge origin/release
+          git push origin ${GITHUB_REF/refs\/heads\//}
+          version=$(jq -r .version package.json)
+          git tag "v$version"
+          git push --tags
+          echo "::set-output name=tag::$(echo v$version)"
+          echo "::set-output name=artifact::$(echo ${{ needs.build-artifact.outputs.artifact }})"
+        shell: bash
+        continue-on-error: true
+
+      - name: Fail
+        if: steps.merge.outcome == 'failure'
+        run: | 
+          git push origin -d release
+          echo "There was an error in merging the branch. release branch was deleted."
+          exit 1
+        shell: bash
+
+      - name: Get latest changelog
+        id: changelog
+        run: |
+          lines=$(egrep -n "## \[[0-9]+\.[0-9]+\.[0-9]+\]" changelog.md | head -2 | cut -f1 -d:)
+          line1=$(echo "$lines" | head -1)
+          line2=$(echo "$lines" | tail -1)
+          cat changelog.md | tail +$((line1+1)) | head -$((line2-line1-1)) > latest_changelog.txt
+        shell: bash
+        continue-on-error: true
+
+      - name: Create Release and upload assets
+        if: success()
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.merge.outputs.tag }}
+          body_path: latest_changelog.txt
+          draft: false
+          prerelease: false
+          files: |
+            built-artifacts/${{ needs.build-artifact.outputs.artifact }}
+        continue-on-error: true
+
+  update-version:
+    needs: create-release
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      SLACK_NOTIFICATION: YES
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Update to next minor version
+        run: |
+          /scripts/update-version.sh --js --release --grow-changelog package.json CHANGELOG.md
+        shell: bash
