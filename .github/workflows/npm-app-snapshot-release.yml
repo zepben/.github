@@ -44,11 +44,11 @@ jobs:
         rm -rf .npmrc
         echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authtoken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
         echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
-        cat .npmrc | sed 's/NpmToken/3333333/' | sed 's/mavenrepo/3333333/'
 
     - name: build
       id: build
       run: |
+        cat .npmrc | sed 's/NpmToken/3333333/' | sed 's/mavenrepo/3333333/'
         npm ci --unsafe-perm
         npm run prod
         version=$(jq -r .version package.json)
