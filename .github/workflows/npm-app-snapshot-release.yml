@@ -21,14 +21,19 @@ jobs:
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       version: ${{ steps.build.outputs.version }}
+    container: node:14-alpine
     steps:
-    - uses: actions/checkout@v3
+    - name: Install Git
+      run: |
+        apk add jq tar
 
-    - name: Setup NodeJS
-      uses: actions/setup-node@v2
+    - name: Cache nodejs deps
+      uses: actions/cache@v2
       with:
-        node-version: '14'
-        cache: 'npm'
+        path: ~/.npm
+        key: npm
+
+    - uses: actions/checkout@v3
 
     - name: create .npmrc
       run: | 
@@ -37,7 +42,7 @@ jobs:
         echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
         cat .npmrc | sed 's/NpmToken/3333333/'
 
-    - name: build 
+    - name: build
       id: build
       run: |
         npm ci --unsafe-perm
@@ -52,8 +57,8 @@ jobs:
     - uses: actions/upload-artifact@master
       if: steps.build.outcome == 'success'
       with:
-        name: ${{ steps.build.outputs.artifact }}
-        path: ${{ steps.build.outputs.artifact }}
+          name: ${{ steps.build.outputs.artifact }}
+          path: ${{ steps.build.outputs.artifact }}
 
   update-snapshot-version:
     needs: [build-artifact]
