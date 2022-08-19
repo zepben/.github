@@ -26,10 +26,20 @@ jobs:
     container: zepben/pipeline-basic
     continue-on-error: false
     env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
       - name: Release checks and update version for release
         run: |
           /scripts/release-checks.sh --js package.json
@@ -42,6 +52,8 @@ jobs:
     outputs:
       artifact: docs
     container: node:12-alpine
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - name: Install Git
         run: |
@@ -54,6 +66,8 @@ jobs:
         shell: sh
 
       - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
 
       - name: Checkout release branch
         run: |
@@ -98,12 +112,22 @@ jobs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
       version: ${{ steps.build.outputs.version }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - name: Set timezone to Australia/ACT
         run: |
           sudo timedatectl set-timezone Australia/ACT
 
       - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
 
       - name: Setup NodeJS
         uses: actions/setup-node@v2
@@ -157,8 +181,18 @@ jobs:
     outputs:
       artifact: ${{ steps.merge.outputs.artifact }}
       tag: ${{ steps.merge.outputs.tag }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
 
       - name: Merge and Tag
         id: merge
