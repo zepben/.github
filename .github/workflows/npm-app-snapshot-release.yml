@@ -35,6 +35,7 @@ jobs:
         rm -rf .npmrc
         echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authtoken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
         echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+        cat .npmrc | sed 's/g/3333333/'
 
     - name: build 
       id: build
