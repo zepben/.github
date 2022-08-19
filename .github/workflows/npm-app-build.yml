@@ -7,12 +7,19 @@ on:
         required: true
       CI_NPM_TOKEN:
         required: true
+      GITHUB_TOKEN:
+        required: true
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
+      - name: Check all tasks have been completed
+        uses: kentaro-m/task-completed-checker-action@v0.1.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set timezone to Australia/ACT
         run: |
           sudo timedatectl set-timezone Australia/ACT
