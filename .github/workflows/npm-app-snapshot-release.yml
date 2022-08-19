@@ -16,29 +16,7 @@ on:
 
 
 jobs:
-  release-checks:
-    runs-on: ubuntu-latest
-    container: zepben/pipeline-basic
-    continue-on-error: false
-    env:
-      SLACK_NOTIFICATION: YES
-      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
-
-      - name: Release checks and update version for release
-        run: |
-          /scripts/release-checks.sh --js package.json
-        shell: bash
-
   build-artifact:
-    needs: release-checks
     runs-on: ubuntu-latest
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
