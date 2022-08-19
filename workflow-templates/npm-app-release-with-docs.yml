@@ -1,8 +1,10 @@
-name: NPM App Release
+name: NPM App Release with docusaurus
 
 on: workflow_dispatch
 
 jobs:
   run:
     uses: zepben/.github/.github/workflows/npm-app-release-with-docs.yml@main
+    with:
+      product-key: "<some-product-key>"   # Must be unique
     secrets: inherit
