@@ -47,12 +47,12 @@ jobs:
   build-artifact:
     needs: release-checks
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
       version: ${{ steps.build.outputs.version }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
         with:
