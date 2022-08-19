@@ -14,6 +14,8 @@ on:
         required: true
       CI_GITHUB_TOKEN:
         required: true
+      CI_GITHUB_NPM_TOKEN:
+        required: true
       SLACK_NOTIFICATION:
         required: false
       SLACK_WEBHOOK:
@@ -88,7 +90,7 @@ jobs:
         with:
           VERSION: ${{ needs.release-checks.outputs.version }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
-          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_NPM_TOKEN }}
         continue-on-error: true
 
       - uses: actions/upload-artifact@master
