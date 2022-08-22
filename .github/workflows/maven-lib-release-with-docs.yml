@@ -55,8 +55,6 @@ on:
         required: false
       NPM_REPO:
         required: true
-      CI_GITHUB_NPM_TOKEN:
-        required: true
       DOCS_REPO:
         required: true
       DOCS_REPO_EVOLVE_WORKFLOW:
@@ -153,7 +151,7 @@ jobs:
         with:
           VERSION: ${{ needs.release-checks.outputs.version }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
-          NPM_TOKEN: ${{ secrets.CI_GITHUB_NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         continue-on-error: true
 
       - uses: actions/upload-artifact@master
