@@ -49,7 +49,6 @@ jobs:
     - name: build
       id: build
       run: |
-        cat ~/.npmrc
         cat .npmrc
         npm ci --unsafe-perm
         npm run prod
