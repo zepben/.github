@@ -41,7 +41,7 @@ jobs:
       - name: Release checks and update version for release
         run: |
           /scripts/release-checks.sh --js package.json
-          /scripts/finalize-version.sh --js package.json CHANGELOG.md
+          /scripts/finalize-version.sh --js package.json changelog.md
         shell: bash
 
   build-artifact:
