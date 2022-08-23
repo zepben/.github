@@ -173,6 +173,13 @@ jobs:
         shell: bash
         continue-on-error: true
 
+      - name: Download artefact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ needs.build-artifact.outputs.artifact }}
+          path: built-artifacts
+        continue-on-error: true
+
       - name: Create Release and upload assets
         if: success()
         id: create_release
