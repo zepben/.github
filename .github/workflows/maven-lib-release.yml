@@ -182,10 +182,10 @@ jobs:
       - name: Get latest changelog
         id: changelog
         run: |
-          lines=$(egrep -n "## \[[0-9]+\.[0-9]+\.[0-9]+\]" changelog.md | head -n 2 | cut -f1 -d:)
-          line1=$(echo "$lines" | head -n 1)
-          line2=$(echo "$lines" | tail -n 1)
-          cat changelog.md | tail +$((line1+1)) | head -$((line2-line1-1)) > latest_changelog.txt
+          lines=$(egrep -n "## \[[0-9]+\.[0-9]+\.[0-9]+\]" changelog.md | head -2 | cut -f1 -d:)
+          line1=$(echo "$lines" | head -1)
+          line2=$(echo "$lines" | tail -1)
+          cat changelog.md | tail -n +$((line1+1)) | head -n -$((line2-line1-1)) > latest_changelog.txt
         shell: bash
         continue-on-error: true
 
