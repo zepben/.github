@@ -36,10 +36,12 @@ jobs:
       - name: Create .npmrc
         run: |
           rm -rf .npmrc
-          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
           echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+          echo "\n" >> .npmrc
 
       - name: Build and test
         run: |
+          echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run ci
