@@ -55,11 +55,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - name: Check all tasks have been completed
-        uses: kentaro-m/task-completed-checker-action@v0.1.0
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install Dependencies
         run: |
           apk add jq tar alpine-conf git
