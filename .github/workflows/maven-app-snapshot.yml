@@ -1,0 +1,102 @@
+name: Maven App Snapshot
+
+on:
+  workflow_call:
+    inputs:
+      private:
+        description: 'Calling workflow from a private repo'
+        required: true
+        type: boolean
+        default: true
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_MAVEN_REPO:
+        required: false
+      NEXUS_USERNAME:
+        required: false
+      NEXUS_PASSWORD: 
+        required: false
+      NEXUS_MAVEN_SNAPSHOT:
+        required: false
+      NEXUS_MAVEN_RELEASE:
+        required: false
+      ZEPBEN_GPG_KEY:
+        required: false
+      OSSRH_USERNAME:
+        required: false
+      OSSRH_PASSWORD:
+        required: false
+      GPG_KEY_ID:
+        required: false
+      GPG_KEY_PASSWORD:
+        required: false
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-java
+    outputs:
+      check_container_config: ${{ steps.check_container_config.outputs.files_exists }}
+      artifact_name: ${{ steps.build.outputs.version }}
+      artifact_path: ${{ steps.build.outputs.artifact-path }}
+
+    env:
+      GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+      GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache maven deps
+        uses: actions/cache@v2
+        with:
+          path: /maven
+          key: maven
+
+      - name: Maven package
+        id: build
+        run: |
+          artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
+          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
+          artifact="${artifactId}-${version}.jar"
+          echo "::set-output name=version::$(echo $version)"
+          echo "::set-output name=artifact-path::$(echo target/$artifact)"
+          mvn clean package -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+
+      - name: Upload coverage to Codecov
+        if: steps.build.outcome == 'success'
+        uses: codecov/codecov-action@v2
+
+  update-snapshot-version:
+    needs: [deploy]
+    container: zepben/pipeline-basic
+    runs-on: ubuntu-latest
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Update snapshot version
+        run: |
+          /scripts/update-version.sh --java --snapshot --maven pom.xml
