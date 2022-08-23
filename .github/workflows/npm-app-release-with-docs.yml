@@ -145,7 +145,7 @@ jobs:
           git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
           git fetch --all
           git checkout release
-        shell: bash
+        shell: sh
 
       - name: create .npmrc
         run: | 
@@ -179,7 +179,7 @@ jobs:
           git push origin -d release
           echo "There was an error in the npm package command above."
           exit 1
-        shell: bash
+        shell: sh
 
   create-release:
     needs: [build-artifact]
