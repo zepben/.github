@@ -69,7 +69,7 @@ jobs:
         uses: codecov/codecov-action@v2
 
   update-snapshot-version:
-    needs: [deploy]
+    needs: [build-app]
     container: zepben/pipeline-basic
     runs-on: ubuntu-latest
     env:
