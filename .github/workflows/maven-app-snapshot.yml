@@ -21,12 +21,6 @@ on:
         required: false
       NEXUS_MAVEN_RELEASE:
         required: false
-      ZEPBEN_GPG_KEY:
-        required: false
-      OSSRH_USERNAME:
-        required: false
-      OSSRH_PASSWORD:
-        required: false
       GPG_KEY_ID:
         required: false
       GPG_KEY_PASSWORD:
