@@ -13,16 +13,6 @@ on:
         required: true
         type: boolean
         default: true
-      licencecheck:
-        description: 'Need to check licence headers/files'
-        required: true
-        type: boolean
-        default: false
-      sourcepath:
-        description: 'Path to source directory (used for licence check)'
-        required: false
-        type: string
-        default: "src"
 
     secrets:
       CI_GITHUB_TOKEN:
