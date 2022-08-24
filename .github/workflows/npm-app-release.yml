@@ -174,12 +174,18 @@ jobs:
         shell: bash
         continue-on-error: true
 
-      - name: Download artefact
+      - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: ${{ needs.build-artifact.outputs.artifact }}
-          path: built-artifacts
+          path: built-artifacts/
         continue-on-error: true
+
+      - name: Check artifact
+        run: | 
+          ls -la
+          ls -la built-artifacts
+        shell: sh
 
       - name: Create Release and upload assets
         if: success()
@@ -195,6 +201,14 @@ jobs:
           files: |
             built-artifacts/${{ needs.build-artifact.outputs.artifact }}
         continue-on-error: true
+
+      - name: Fail Release
+        if: steps.create_release.outcome == 'failure'
+        run: | 
+          git push origin -d release
+          echo "There was an error in the npm package release above."
+          exit 1
+        shell: sh
 
   update-version:
     needs: create-release
