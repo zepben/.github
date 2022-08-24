@@ -284,11 +284,11 @@ jobs:
           client-payload: '{"product_key": "${{ inputs.product-key }}", "download_url": "https://github.com/${{ github.repository }}/releases/download/${{ steps.merge.outputs.tag }}/docs-site.zip"}'
         continue-on-error: true
 
-  call-build-container:
-    needs: [build-artifact, create-release]
-    uses: zepben/energy-workbench-server/.github/workflows/build-release-container.yaml@main
-    with:
-      ewbRelease: ${{ needs.build-artifact.outputs.version }}
+  # call-build-container:
+  #   needs: [build-artifact, create-release]
+  #   uses: zepben/energy-workbench-server/.github/workflows/build-release-container.yaml@main
+  #   with:
+  #     ewbRelease: ${{ needs.build-artifact.outputs.version }}
 
   update-version:
     needs: [create-release]
