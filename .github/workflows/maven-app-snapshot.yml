@@ -61,12 +61,18 @@ jobs:
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           artifact="${artifactId}-${version}.jar"
           echo "::set-output name=version::$(echo $version)"
+          echo "::set-output name=artifactId::$(echo $artifactId)"
           echo "::set-output name=artifact-path::$(echo target/$artifact)"
           mvn clean package -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
 
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v2
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: ${{ steps.build.outputs.artifactId }}-${{ steps.build.outputs.version }}
+          path: ${{ steps.build.outputs.artifact-path }}
 
   update-snapshot-version:
     needs: [build-app]
