@@ -1,6 +1,12 @@
 name: NPM Lib Snapshot Release
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+  push: 
+    branches:
+      - main
+      - LTS/*
+      - hotfix/*
 
 jobs:
   run:
