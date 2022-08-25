@@ -1,4 +1,4 @@
-name: NPM Static App Build
+name: NPM Lib Build
 
 on: 
   workflow_call:
@@ -17,6 +17,7 @@ jobs:
     continue-on-error: false
     steps:
       - name: Check all tasks have been completed
+        if: ${{ github.event_name == 'pull_request' }}
         uses: kentaro-m/task-completed-checker-action@v0.1.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
