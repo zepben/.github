@@ -1,0 +1,12 @@
+{
+  "name": "Zepben NPM Lib Build Workflow",
+  "description": "Workflow for building npm/js libraries",
+  "iconName": "Zepbensvglogo",
+  "categories": [
+    "nodejs",
+    "node"
+  ],
+  "filePatterns": [
+    "package.json"
+  ]
+}

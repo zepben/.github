@@ -1,0 +1,90 @@
+name: NPM Static App Snapshot Release
+
+on:
+  workflow_call:
+    secrets:
+      NEXUS_NPM_REPO:
+        required: true
+      CI_NPM_TOKEN:
+        required: true
+      CI_GITHUB_TOKEN:
+        required: true
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+
+
+jobs:
+  build-artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact: ${{ steps.build.outputs.artifact }}
+      version: ${{ steps.build.outputs.version }}
+    container: node:14-alpine
+    steps:
+    - name: Install Dependencies
+      run: |
+        apk add jq tar alpine-conf git
+
+    - name: Cache nodejs deps
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: npm
+
+    - uses: actions/checkout@v3
+
+    - name: Set timezone to Australia/ACT
+      run: |
+        setup-timezone -z Australia/ACT
+
+    - name: create .npmrc
+      run: | 
+        rm -rf .npmrc
+        echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+        echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+        echo "\n" >> .npmrc
+
+    - name: build
+      id: build
+      run: |
+        echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
+        npm ci --unsafe-perm
+        npm run ci
+        version=$(jq -r .version package.json)
+        artifactId=$(jq -r .name package.json)
+        artifact="$artifactId-$version-SNAPSHOT.tar.bz2"
+        tar jcvf "$artifact" -C dist .
+        echo "::set-output name=version::$(echo $version)"
+        echo "::set-output name=artifact::$(echo $artifact)"
+
+    - uses: actions/upload-artifact@master
+      if: steps.build.outcome == 'success'
+      with:
+          name: ${{ steps.build.outputs.artifact }}
+          path: ${{ steps.build.outputs.artifact }}
+
+  update-snapshot-version:
+    needs: [build-artifact]
+    container: zepben/pipeline-basic
+    runs-on: ubuntu-latest
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      SLACK_NOTIFICATION: YES
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Update snapshot version
+        run: |
+          /scripts/update-version.sh --js --snapshot package.json

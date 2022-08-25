@@ -1,0 +1,51 @@
+name: NPM Static App Build
+
+on: 
+  workflow_call:
+    secrets:
+      NEXUS_NPM_REPO:
+        required: true
+      CI_NPM_TOKEN:
+        required: true
+      CI_GITHUB_TOKEN:
+        required: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    container: node:14-alpine
+    continue-on-error: false
+    steps:
+      - name: Check all tasks have been completed
+        uses: kentaro-m/task-completed-checker-action@v0.1.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Dependencies
+        run: |
+          apk add jq tar alpine-conf git
+
+      - name: Cache nodejs deps
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: npm
+
+      - uses: actions/checkout@v3
+
+      - name: Set timezone to Australia/ACT
+        run: |
+          setup-timezone -z Australia/ACT
+
+      - name: create .npmrc
+        run: | 
+          rm -rf .npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+          echo "\n" >> .npmrc
+
+      - name: Build and test
+        run: |
+          echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
+          npm ci --unsafe-perm
+          npm run ci

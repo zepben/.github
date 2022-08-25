@@ -1,0 +1,12 @@
+{
+  "name": "Zepben NPM Lib Release Workflow",
+  "description": "Workflow for releasing npm/js libraries",
+  "iconName": "Zepbensvglogo",
+  "categories": [
+    "nodejs",
+    "node"
+  ],
+  "filePatterns": [
+    "package.json"
+  ]
+}
