@@ -36,8 +36,6 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-
-      - uses: actions/checkout@v3
       - name: Release checks and update version for release
         run: |
           /scripts/release-checks.sh --js package.json
