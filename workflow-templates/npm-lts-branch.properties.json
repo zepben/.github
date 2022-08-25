@@ -1,0 +1,12 @@
+{
+    "name": "Zepben Create LTS Branch Workflow (NPM)",
+    "description": "Workflow for creating a LTS branch on a NPM project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "node",
+        "nodejs"
+    ],
+    "filePatterns": [
+        "package.json"
+    ]
+}

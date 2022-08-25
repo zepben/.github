@@ -1,0 +1,12 @@
+{
+    "name": "Zepben Create Hotfix Branch Workflow (NPM)",
+    "description": "Workflow for creating a hotfix branch on a NPM project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "node",
+        "nodejs"
+    ],
+    "filePatterns": [
+        "package.json"
+    ]
+}

@@ -1,0 +1,44 @@
+name: Create Hotfix Branch
+
+on: 
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version tag (e.g. 2.5) to create the branch in.'
+        required: true
+        type: string
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      SLACK_NOTIFICATION: ${{ secrets.SLACK_NOTIFICATION }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Create Hotfix branch
+        run: |
+          /scripts/create-branch.sh --hotfix ${{ github.event.inputs.version }}
+          export BITBUCKET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          /scripts/update-version.sh --js package.json changelog.md
+        shell: bash
