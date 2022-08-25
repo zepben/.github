@@ -81,7 +81,6 @@ jobs:
         id: changelog
         run: |
           sed -n -E "/UNRELEASED/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md
-        shell: bash
         continue-on-error: false
 
       - name: Checkout release branch
