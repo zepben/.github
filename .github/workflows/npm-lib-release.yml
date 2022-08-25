@@ -102,7 +102,6 @@ jobs:
           artifact=$(npm pack)
           npm publish
           version=$(jq -r .version package.json)
-          artifactId=$(jq -r .name package.json)
           echo "::set-output name=version::$(echo $version)"
           echo "::set-output name=artifact::$(echo $artifact)"
         continue-on-error: true
