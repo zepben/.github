@@ -1,0 +1,11 @@
+name: Maven App Release
+
+on: workflow_dispatch
+
+jobs:
+  release:
+    uses: zepben/.github/.github/workflows/maven-app-release-with-docs.yml@main
+    with:
+      private: false
+      product-key: "energy-workbench-server"
+    secrets: inherit

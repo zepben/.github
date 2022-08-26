@@ -4,8 +4,7 @@ on: workflow_dispatch
 
 jobs:
   release:
-    uses: zepben/.github/.github/workflows/maven-app-release-with-docs.yml@main
+    uses: zepben/.github/.github/workflows/maven-app-release.yml@main
     with:
-      private: false
-      product-key: "energy-workbench-server"
+      private: true
     secrets: inherit
