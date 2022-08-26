@@ -92,21 +92,10 @@ jobs:
           git checkout release
         shell: bash
 
-      - name: Set profile
-        id: profile
-        run: |
-          priv=${{ inputs.private }}
-          if [[ $priv == 'true' ]]
-          then 
-            echo "::set-output name=profile::zepben-maven"; 
-          else 
-            echo "::set-output name=profile::ossrh"
-          fi
-
       - name: Maven package
         id: build
         run: |
-          mvn clean package -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+          mvn clean package -f pom.xml -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.release.url=$NEXUS_RELEASE_URL -Dserver.snapshot.url=$NEXUS_SNAPSHOT_URL
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           artifact="${artifactId}-${version}.jar"
@@ -115,6 +104,12 @@ jobs:
           echo "::set-output name=artifact-id::$(echo $artifactId)"
           echo "::set-output name=artifact-path::$(echo target/$artifact)"
         shell: bash
+        env:
+          NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+          NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
         continue-on-error: true
 
       - name: Upload coverage to Codecov
