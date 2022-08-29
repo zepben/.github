@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Create LTS Branch Workflow (Python)",
+    "description": "Workflow for creating a LTS branch on a Python project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}

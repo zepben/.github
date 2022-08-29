@@ -1,0 +1,11 @@
+{
+    "name": "Zepben Create Hotfix Branch Workflow (Python)",
+    "description": "Workflow for creating a hotfix branch on a Python project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "Java"
+    ],
+    "filePatterns": [
+        "pom.xml"
+    ]
+}
