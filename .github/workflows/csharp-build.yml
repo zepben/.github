@@ -47,4 +47,6 @@ jobs:
       env:
         TEST_FILES: ${{ github.event.inputs.test_files }}
       if: ${{ env.TEST_FILES != '' }}
-      run: vstest.console.exe ${{ github.event.inputs.test_files }} /Platform:x64
+      run: |
+        echo $TEST_FILES
+        vstest.console.exe ${{ github.event.inputs.test_files }} /Platform:x64
