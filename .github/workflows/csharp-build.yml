@@ -14,7 +14,7 @@ on:
  
 jobs:
   build:
-    runs-on: ${{ github.event.inputs.runs-on }}
+    runs-on: [${{ github.event.inputs.runs-on }}]
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
