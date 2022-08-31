@@ -2,6 +2,11 @@ name: CSharp Build App
  
 on: 
   workflow_call:
+    inputs:
+      test_files:
+        description: 'Test dll output files separated by space.'
+        required: true
+        type: string
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -38,4 +43,5 @@ jobs:
       run: msbuild /p:Configuration=Release /p:Platform=x64
 
     - name: Test
+      if: ${{ github.event.inputs.test_files }} != ''
       run: vstest.console.exe /Platform:x64
