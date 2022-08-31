@@ -32,10 +32,10 @@ jobs:
 
     - name: Restore NuGet Packages
       run:   
-        msbuild *.sln /p:Configuration=Release /p:Platform=x64 /t:restore
+        msbuild /p:Configuration=Release /p:Platform=x64 /t:restore
 
     - name: Build
-      run: msbuild *.sln /p:Configuration=Release /p:Platform=x64
+      run: msbuild /p:Configuration=Release /p:Platform=x64
 
     - name: Test
-      run: vstest.console.exe /Platform:x64 *.sln
+      run: vstest.console.exe /Platform:x64
