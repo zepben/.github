@@ -44,5 +44,7 @@ jobs:
       run: msbuild /p:Configuration=Release /p:Platform=x64
 
     - name: Test
-      if: github.event.inputs.test_files != ''
+      env:
+        TEST_FILES: ${{ github.event.inputs.test_files }}
+      if: "${{ env.TEST_FILES != '' }}"
       run: vstest.console.exe ${{ github.event.inputs.test_files }} /Platform:x64
