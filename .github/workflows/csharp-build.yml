@@ -1,0 +1,47 @@
+name: CSharp Build App
+ 
+on: 
+  workflow_call:
+    inputs:
+      runs-on:
+        description: 'GH hosted runner for this action to run on.'
+        default: 'windows-latest'
+        required: false
+        type: string
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+ 
+jobs:
+  build:
+    runs-on: ${{ github.event.inputs.runs-on }}
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ env.GITHUB_TOKEN }}
+    
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+     
+    - name: Setup MSBuild Path
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Setup VSTest Path
+      uses: darenm/Setup-VSTest@v1.1.1
+
+    - name: Add ZepBen Nuget Repo credentials
+      run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
+
+    - name: Restore NuGet Packages
+      run:   
+        msbuild *.sln /p:Configuration=Release /p:Platform=x64 /t:restore
+
+    - name: Build
+      run: msbuild *.sln /p:Configuration=Release /p:Platform=x64
+
+    - name: Test
+      run: vstest.console.exe /Platform:x64 *.sln
