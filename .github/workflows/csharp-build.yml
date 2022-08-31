@@ -5,7 +5,7 @@ on:
     inputs:
       runs-on:
         description: 'GH hosted runner for this action to run on.'
-        default: 'windows-latest'
+        default: windows-latest
         required: false
         type: string
     secrets:
@@ -14,7 +14,7 @@ on:
  
 jobs:
   build:
-    runs-on: [${{ github.event.inputs.runs-on }}]
+    runs-on: [ ${{ github.event.inputs.runs-on }} ]
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
