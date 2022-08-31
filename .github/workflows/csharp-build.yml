@@ -5,7 +5,7 @@ on:
     inputs:
       test_files:
         description: 'Test dll output files separated by space.'
-        required: true
+        required: false
         type: string
     secrets:
       CI_GITHUB_TOKEN:
@@ -44,4 +44,4 @@ jobs:
 
     - name: Test
       if: ${{ github.event.inputs.test_files }} != ''
-      run: vstest.console.exe /Platform:x64
+      run: vstest.console.exe ${{ github.event.inputs.test_files }} /Platform:x64
