@@ -7,7 +7,7 @@ on:
         description: 'Version tag (e.g. 2.5) to create the branch in.'
         required: true
         type: string
-      project_file:
+      version_file:
         description: 'Project file for updating version.'
         required: true
         type: string
@@ -44,5 +44,5 @@ jobs:
         run: |
           /scripts/create-branch.sh --lts ${{ inputs.version }}
           export BITBUCKET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          /scripts/update-version.sh --csharp ${{ inputs.project_file }} changelog.md
+          /scripts/update-version.sh --csharp ${{ inputs.version_file }} changelog.md
         shell: bash
