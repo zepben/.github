@@ -2,19 +2,13 @@ name: CSharp Build App
  
 on: 
   workflow_call:
-    inputs:
-      runs-on:
-        description: 'GH hosted runner for this action to run on.'
-        default: windows-latest
-        required: false
-        type: string
     secrets:
       CI_GITHUB_TOKEN:
         required: true
  
 jobs:
   build:
-    runs-on: ${{ github.event.inputs.runs-on }}
+    runs-on: windows-latest
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
