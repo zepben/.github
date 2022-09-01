@@ -187,7 +187,7 @@ jobs:
           body_path: changelog.md
           draft: false
           prerelease: false
-          files: built-artifacts/${{ needs.deploy.outputs.artifact_id }}.zip
+          files: built-artifacts/${{ needs.release-checks.outputs.artifact_id }}.zip
         continue-on-error: true
 
 
