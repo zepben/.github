@@ -167,7 +167,7 @@ jobs:
         with:
           type: zip
           filename: ${{ needs.release-checks.outputs.artifact_id }}.zip
-          directory: built-artifacts/${{ needs.release-checks.outputs.artifact_id }}/
+          directory: built-artifacts
 
       - name: Create Release and upload assets
         if: success()
@@ -181,7 +181,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            built-artifacts/${{ needs.release-checks.outputs.artifact_id }}/${{ needs.deploy.outputs.artifact }}.zip
+            built-artifacts/${{ needs.deploy.outputs.artifact }}.zip
         continue-on-error: true
 
 
