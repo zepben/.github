@@ -11,6 +11,10 @@ on:
     secrets:
       CI_GITHUB_TOKEN:
         required: true
+      NEXUS_USERNAME:
+        required: false
+      NEXUS_PASSWORD: 
+        required: false
  
 jobs:
   build:

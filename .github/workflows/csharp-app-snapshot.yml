@@ -1,0 +1,70 @@
+name: CSharp App Snapshot
+ 
+on: 
+  workflow_call:
+    inputs:
+      test_files:
+        description: 'Test dll output files separated by space.'
+        required: false
+        default: ''
+        type: string
+      version_file:
+        description: 'Project file for updating version.'
+        required: true
+        type: string
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_USERNAME:
+        required: false
+      NEXUS_PASSWORD: 
+        required: false
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+    
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+     
+    - name: Setup MSBuild Path
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Setup VSTest Path
+      uses: darenm/Setup-VSTest@v1.1.1
+
+    - name:  Update Info version
+      id: update-info-version
+      shell: bash
+      run: |
+        info_version=$(cat ${{ inputs.version_file }} | grep "AssemblyInformationalVersion(\"[0-9]\+\.[0-9]\+\.[0-9]\+.*\")" | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\++build[0-9]\+")
+        info_version_date=${info_version#*build}
+        new_info_version_date=$(date '+%d%m%Y%H%M%S')
+        sed -i "s|$info_version_date|$new_info_version_date|g" ${{ inputs.version_file }}
+        info_version=$(cat ${{ inputs.version_file }} | grep "AssemblyInformationalVersion(\"[0-9]\+\.[0-9]\+\.[0-9]\+.*\")" | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\++build[0-9]\+")
+        echo "::set-output name=info_version::$(echo $info_version)"
+        artifact_id=$(cat ${{ inputs.version_file }} | grep "AssemblyTitle" | egrep -o "\"[A-Za-z0-9\-]+\"" | tr -d '"')
+        echo "::set-output name=artifact_id::$(echo $artifact_id)"
+
+    - name: Add ZepBen Nuget Repo credentials
+      run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
+     
+    - name: Restore NuGet Packages
+      run:   
+        msbuild /p:Configuration=Release /p:Platform=x64 /t:restore
+
+    - name: Build
+      run: msbuild /p:Configuration=Release /p:Platform=x64
+
+    - name: Test
+      if: ${{ inputs.test_files != '' }}
+      run: vstest.console.exe ${{ inputs.test_files }} /Platform:x64
+
+    - name: Upload Release
+      uses: actions/upload-artifact@master
+      with:
+        name: ${{ steps.update-info-version.outputs.artifact_id }}-${{ steps.update-info-version.outputs.info_version }}
+        path: ${{ steps.update-info-version.outputs.artifact_id }}/bin/Release/
