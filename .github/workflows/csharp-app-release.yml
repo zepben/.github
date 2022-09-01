@@ -181,7 +181,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            built-artifacts/${{ needs.deploy.outputs.artifact }}.zip
+            built-artifacts/${{ needs.deploy.outputs.artifact_id }}.zip
         continue-on-error: true
 
 
