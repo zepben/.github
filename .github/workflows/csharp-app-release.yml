@@ -169,6 +169,13 @@ jobs:
           filename: ${{ needs.release-checks.outputs.artifact_id }}.zip
           directory: built-artifacts
 
+      - name: Stat zip file
+        run: |
+          ls
+          echo "Y"
+          ls built-artifacts
+        shell: bash
+
       - name: Create Release and upload assets
         if: success()
         id: create_release
