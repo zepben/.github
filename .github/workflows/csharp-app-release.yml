@@ -51,8 +51,8 @@ jobs:
       - name: Release checks and update version for release
         id: check
         run: |
-          artifact_id=$(cat ${{ inputs.version_file }} | grep "AssemblyTitle" | egrep -o "\"[A-Za-z0-9\-]+\"" | tr -d '"')
-          echo $artifact_id
+          # artifact_id=$(cat ${{ inputs.version_file }} | grep "AssemblyTitle" | egrep -o "\"[A-Za-z0-9\-]+\"" | tr -d '"')
+          # echo $artifact_id
           /scripts/release-checks.sh --csharp ${{ inputs.version_file }}
           /scripts/finalize-version.sh --csharp ${{ inputs.version_file }} changelog.md
           version=$(cat ${{ inputs.version_file }} | grep "AssemblyVersion(\"[0-9]\+\.[0-9]\+\.[0-9]\+\")" | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\")
