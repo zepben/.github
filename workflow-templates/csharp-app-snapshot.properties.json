@@ -1,0 +1,13 @@
+{
+    "name": "Zepben C# .Net Framework Snapshot Workflow (Application)",
+    "description": "Workflow for creating a snapshot release of C# .Net Framework application projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "C#"
+    ],
+    "filePatterns": [
+        "*.sln",
+        "*.csproj",
+        "*.cs"
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "name": "Zepben Create Hotfix Branch Workflow (Dotnet)",
+    "description": "Workflow for creating a hotfix branch on a Dotnet project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "C#"
+    ],
+    "filePatterns": [
+        "*.sln",
+        "*.csproj",
+        "*.cs"
+    ]
+}

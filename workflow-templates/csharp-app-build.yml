@@ -1,0 +1,12 @@
+name: CSharp App Build
+
+on: 
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: zepben/.github/.github/workflows/csharp-build.yml@main
+    with:
+      test_files: data-access-layer-test\bin\Release\data-access-layer-test.dll
+    secrets: inherit

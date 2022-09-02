@@ -1,0 +1,13 @@
+name: CSharp App Snapshot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    uses: zepben/.github/.github/workflows/csharp-app-snapshot.yml@main
+    with:
+      test_files: data-access-layer-test\bin\Release\data-access-layer-test.dll
+      version_file: ednar-reporting-service/Properties/AssemblyInfo.cs
+    secrets: inherit
+    
