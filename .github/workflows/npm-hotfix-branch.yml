@@ -38,7 +38,7 @@ jobs:
 
       - name: Create Hotfix branch
         run: |
-          /scripts/create-branch.sh --hotfix ${{ github.event.inputs.version }}
+          /scripts/create-branch.sh --hotfix ${{ inputs.version }}
           export BITBUCKET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
           /scripts/update-version.sh --js package.json changelog.md
         shell: bash
