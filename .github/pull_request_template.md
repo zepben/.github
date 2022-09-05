@@ -11,7 +11,7 @@ List any other tasks / PRs that are required to be merged alongside this one (e.
 # Checklist:
 
 - [ ] I have performed a self review of my own code.
-- [ ] I have added unit tests / updated existing tests for these changes.
+- [ ] I have added/updated unit tests for these changes if they are necessary.
 - [ ] I have updated the changelog.
 - [ ] I have updated any documentation required for these changes.
 - [ ] I have commented my code in hard-to-understand or hacky areas.
