@@ -51,6 +51,7 @@ jobs:
       run: |
         echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
         npm ci --unsafe-perm
+        npm run build
         artifact=$(npm pack)
         npm publish
         version=$(jq -r .version package.json)
