@@ -8,4 +8,5 @@ jobs:
     with:
       test_files: data-access-layer-test\bin\Release\data-access-layer-test.dll
       version_file: ednar-reporting-service/Properties/AssemblyInfo.cs
+      changelog: docs/release_notes.md
     secrets: inherit
