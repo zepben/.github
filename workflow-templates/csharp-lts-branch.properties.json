@@ -1,0 +1,13 @@
+{
+    "name": "Zepben Create LTS Branch Workflow (Dotnet)",
+    "description": "Workflow for creating a LTS branch on a Dotnet project.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "C#"
+    ],
+    "filePatterns": [
+        "*.sln",
+        "*.csproj",
+        "*.cs"
+    ]
+}

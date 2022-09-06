@@ -1,10 +1,14 @@
-name: Create LTS Branch
+name: Create Hotfix Branch
 
 on: 
   workflow_call:
     inputs:
       version:
         description: 'Version tag (e.g. 2.5) to create the branch in.'
+        required: true
+        type: string
+      version_file:
+        description: 'Project file for updating version.'
         required: true
         type: string
     secrets:
@@ -22,7 +26,7 @@ jobs:
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-      SLACK_NOTIFICATION: ${{ secrets.SLACK_NOTIFICATION }}
+      SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
       - uses: actions/checkout@v3
@@ -36,9 +40,9 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - name: Create LTS branch
+      - name: Create Hotfix branch
         run: |
-          /scripts/create-branch.sh --lts ${{ inputs.version }}
+          /scripts/create-branch.sh --hotfix ${{ inputs.version }}
           export BITBUCKET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          /scripts/update-version.sh --python setup.py changelog.md
+          /scripts/update-version.sh --csharp ${{ inputs.version_file }} changelog.md
         shell: bash

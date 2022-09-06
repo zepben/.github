@@ -1,0 +1,13 @@
+{
+    "name": "Zepben C# .Net Framework Build Workflow (Application)",
+    "description": "Workflow for building C# .Net Framework application projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "C#"
+    ],
+    "filePatterns": [
+        "*.sln",
+        "*.csproj",
+        "*.cs"
+    ]
+}

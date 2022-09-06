@@ -1,0 +1,13 @@
+{
+    "name": "Zepben C# .Net Framework Release Workflow (Application)",
+    "description": "Workflow for creating a release of C# .Net Framework application projects.",
+    "iconName": "Zepbensvglogo",
+    "categories": [
+        "C#"
+    ],
+    "filePatterns": [
+        "*.sln",
+        "*.csproj",
+        "*.cs"
+    ]
+}

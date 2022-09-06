@@ -1,0 +1,52 @@
+name: CSharp Build App
+ 
+on: 
+  workflow_call:
+    inputs:
+      test_files:
+        description: 'Test dll output files separated by space.'
+        required: false
+        default: ''
+        type: string
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_USERNAME:
+        required: false
+      NEXUS_PASSWORD: 
+        required: false
+ 
+jobs:
+  build:
+    runs-on: windows-2019
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        token: ${{ env.GITHUB_TOKEN }}
+    
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+     
+    - name: Setup MSBuild Path
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Setup VSTest Path
+      uses: darenm/Setup-VSTest@v1.1.1
+
+    - name: Add ZepBen Nuget Repo credentials
+      run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
+
+    - name: Restore NuGet Packages
+      run:   
+        msbuild /p:Configuration=Release /p:Platform=x64 /t:restore
+
+    - name: Build
+      run: msbuild /p:Configuration=Release /p:Platform=x64
+
+    - name: Test
+      if: ${{ inputs.test_files != '' }}
+      run: vstest.console.exe ${{ inputs.test_files }} /Platform:x64
