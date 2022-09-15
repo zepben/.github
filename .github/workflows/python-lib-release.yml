@@ -1,0 +1,240 @@
+name: Python Library Release
+
+on: 
+  workflow_call:
+    inputs:
+      private:
+        description: 'Calling workflow from a private repo'
+        required: true
+        type: boolean
+        default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: true
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
+
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      ZEPBEN_PYPI_REPO:
+        required: false
+      NEXUS_USERNAME:
+        required: false
+      NEXUS_PASSWORD: 
+        required: false
+      SLACK_NOTIFICATION:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
+      LC_URL:
+        required: false
+      COVERALLS_REPO_TOKEN:
+        required: false
+      PYPI_USERNAME:
+        required: false
+      PYPI_PASSWORD:
+        required: false
+      NPM_REPO:
+        required: true
+
+
+jobs:
+  release-checks:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      SLACK_NOTIFICATION: ${{ secrets.SLACK_NOTIFICATION }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Release checks and update version for release
+        id: check
+        run: |
+          /scripts/release-checks.sh --python setup.py
+          /scripts/finalize-version.sh --python setup.py
+          version=$(grep version= setup.py | cut -d= -f2 | tr -d '",')
+          echo "::set-output name=version::$(echo $version)"
+        shell: bash
+
+      - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ env.LICENCE_CHECK }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
+
+  deploy:
+    needs: [release-checks]
+    runs-on: ubuntu-latest
+    container: python:3.7
+    outputs:
+      artifact: ${{ steps.build.outputs.artifact }}
+    steps:
+      - name: Install dependencies
+        run: |
+          pip install tox twine
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - uses: actions/checkout@v3
+
+      - name: Checkout release branch
+        run: |
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git checkout release
+        shell: sh
+
+      - name: Build and publish
+        id: build
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          tox
+          twine upload dist/*
+          artifact_id=$(grep name= setup.py | cut -d= -f2 | tr -d '",')
+          artifact="${artifact_id}-${{ needs.release-checks.outputs.version }}-py3-none-any.whl"
+          echo "::set-output name=artifact::$(echo $artifact)"
+          echo "::set-output name=artifact-path::$(echo dist/$artifact)"
+        shell: bash
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: false
+
+      - uses: actions/upload-artifact@master
+        if: steps.build.outcome == 'success'
+        with:
+          name: ${{ steps.build.outputs.artifact }}
+          path: ${{ steps.build.outputs.artifact-path }}
+
+      - name: Delete release branch if deploy failed and fail
+        if: steps.build.outcome == 'failure'
+        run: |
+          git push origin -d release
+          echo "There was an error in the python build and publish commands above."
+          exit 1
+        shell: bash
+
+  create-release:
+    needs: [deploy, release-checks]
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Merge and Tag
+        id: merge
+        run: |
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git branch -a
+          git merge origin/release
+          git push origin ${GITHUB_REF/refs\/heads\//}
+          git tag "v${{ needs.release-checks.outputs.version }}"
+          git push --tags
+          echo "::set-output name=tag::$(echo v${{ needs.release-checks.outputs.version }})"
+        shell: bash
+        continue-on-error: true
+
+      - name: Delete release branch if merge failed and fail
+        if: steps.merge.outcome == 'failure'
+        run: |
+          git push origin -d release
+          echo "There was an error in merging the branch. release branch was deleted."
+          exit 1
+        shell: bash
+
+      - name: Download binary
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ needs.deploy.outputs.artifact }}
+          path: built-artifacts
+        continue-on-error: true
+
+      - name: Create Release and upload assets
+        if: success()
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.merge.outputs.tag }}
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+          files: |
+            built-artifacts/${{ needs.deploy.outputs.artifact }}
+        continue-on-error: true
+
+  update-version:
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      ZEPBEN_PYPI_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      ZEPBEN_PYPI_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      ZEPBEN_PYPI_REPO: ${{ secrets.ZEPBEN_PYPI_REPO }}
+      SLACK_NOTIFICATION: ${{ secrets.SLACK_NOTIFICATION }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Update to next minor version
+        run: |
+          /scripts/update-version.sh --python --grow-changelog --release setup.py changelog.md
+        shell: bash
