@@ -23,6 +23,12 @@ jobs:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
+    - name: Check all tasks have been completed
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: kentaro-m/task-completed-checker-action@v0.1.0
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0

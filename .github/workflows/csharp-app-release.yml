@@ -174,13 +174,6 @@ jobs:
           filename: ${{ needs.release-checks.outputs.artifact_id }}.zip
           directory: built-artifacts
 
-      - name: Stat zip file
-        run: |
-          ls
-          echo "Y"
-          ls built-artifacts
-        shell: bash
-
       - name: Get latest changelog
         id: changelog
         run: |
@@ -228,5 +221,5 @@ jobs:
 
       - name: Update to next minor version
         run: |
-          /scripts/update-version.sh --csharp --grow-changelog --release ${{ inputs.version_file }} ${{ inputs.changelog }}
+          /scripts/update-version.sh --csharp --release ${{ inputs.version_file }} ${{ inputs.changelog }}
         shell: bash

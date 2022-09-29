@@ -20,6 +20,12 @@ jobs:
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
     steps:
+      - name: Check all tasks have been completed
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: kentaro-m/task-completed-checker-action@v0.1.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
       - uses: actions/checkout@v3
 
       - name: Cache maven deps
