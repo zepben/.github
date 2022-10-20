@@ -68,6 +68,8 @@ jobs:
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - uses: actions/upload-artifact@master
         with:
