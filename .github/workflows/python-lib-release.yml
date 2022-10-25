@@ -71,7 +71,7 @@ jobs:
         id: check
         run: |
           /scripts/release-checks.sh --python setup.py
-          /scripts/finalize-version.sh --python setup.py
+          /scripts/finalize-version.sh --python setup.py changelog.md
           version=$(grep version= setup.py | cut -d= -f2 | tr -d '",')
           echo "::set-output name=version::$(echo $version)"
         shell: bash
