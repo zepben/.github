@@ -6,6 +6,6 @@ jobs:
   snapshot:
     uses: zepben/.github/.github/workflows/maven-app-snapshot.yml@main
     with:
-      private: false
+      private: true
     secrets: inherit
     
