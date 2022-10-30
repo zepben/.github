@@ -6,6 +6,6 @@ jobs:
   release:
     uses: zepben/.github/.github/workflows/maven-app-release-with-docs.yml@main
     with:
-      private: false
+      private: true
       product-key: "energy-workbench-server"
     secrets: inherit
