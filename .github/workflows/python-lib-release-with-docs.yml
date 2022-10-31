@@ -6,16 +6,16 @@ on:
     inputs:
       product-key:
         description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
-        required: true
+        required: false
         type: string
       private:
         description: 'Calling workflow from a private repo'
-        required: true
+        required: false
         type: boolean
         default: true
       licencecheck:
         description: 'Need to check licence headers/files'
-        required: true
+        required: false
         type: boolean
         default: false
       sourcepath:

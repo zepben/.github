@@ -6,12 +6,12 @@ on:
     inputs:
       private:
         description: 'Calling workflow from a private repo'
-        required: true
+        required: false
         type: boolean
         default: true
       licencecheck:
         description: 'Need to check licence headers/files'
-        required: true
+        required: false
         type: boolean
         default: false
       sourcepath:
