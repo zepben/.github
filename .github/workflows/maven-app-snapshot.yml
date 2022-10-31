@@ -8,6 +8,16 @@ on:
         required: true
         type: boolean
         default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: false
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -40,6 +50,7 @@ jobs:
       artifact_path: ${{ steps.build.outputs.artifact-path }}
 
     env:
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
       GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
       GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
@@ -53,6 +64,20 @@ jobs:
         with:
           path: /maven
           key: maven
+
+      - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
 
       - name: Maven package
         id: build

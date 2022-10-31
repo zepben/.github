@@ -9,6 +9,16 @@ on:
         required: true
         type: boolean
         default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: true
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -34,6 +44,7 @@ jobs:
     container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
@@ -55,6 +66,20 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
+       
       - name: Release checks and update version for release
         id: check
         run: |

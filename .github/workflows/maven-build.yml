@@ -2,6 +2,22 @@ name: Maven Build
 
 on: 
   workflow_call:
+    inputs:
+      private:
+        description: 'Calling workflow from a private repo'
+        required: false
+        type: boolean
+        default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: false
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
     secrets:
       NEXUS_MAVEN_REPO:
         required: true
@@ -16,11 +32,26 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     env:
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
+
+      - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
 
       - name: Cache maven deps
         uses: actions/cache@v2
