@@ -29,7 +29,8 @@ on:
         required: false
       SLACK_WEBHOOK:
         required: false
-
+      LC_URL: 
+        required: false
 
 jobs:
   release-checks:

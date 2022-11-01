@@ -25,6 +25,8 @@ on:
         required: true
       CI_GITHUB_TOKEN:
         required: true
+      LC_URL: 
+        required: false
 
 jobs:
   build-and-test:

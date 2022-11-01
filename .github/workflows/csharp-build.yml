@@ -30,6 +30,8 @@ on:
         required: false
       NEXUS_PASSWORD: 
         required: false
+      LC_URL: 
+        required: false
  
 jobs:
   build:
