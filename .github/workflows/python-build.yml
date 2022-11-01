@@ -2,6 +2,25 @@ name: Build
 
 on:
   workflow_call:
+    inputs:
+      private:
+        description: 'Calling workflow from a private repo'
+        required: false
+        type: boolean
+        default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: false
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
+    secrets:
+      LC_URL: 
+        required: false
 
 jobs:
   check-licence-and-test:
@@ -15,15 +34,18 @@ jobs:
           pip install tox
 
       - name: Cache licence-check
-        uses: actions/cache@v2
+        if: ${{ env.LICENCE_CHECK }}
+        uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
+        if: ${{ env.LICENCE_CHECK }}
         uses: zepben/licence-check-action@main
         with:
-          PATH: src
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
 
       - name: Build and test
         run: |

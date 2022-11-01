@@ -13,6 +13,16 @@ on:
         required: true
         type: boolean
         default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: true
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
 
     outputs:
       version:
@@ -42,6 +52,8 @@ on:
         required: true
       DOCS_REPO_EVOLVE_WORKFLOW:
         required: true
+      LC_URL: 
+        required: false
 
 
 
@@ -73,6 +85,20 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ env.LICENCE_CHECK == true }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
+
       - name: Release checks and update version for release
         id: check
         run: |
@@ -81,6 +107,20 @@ jobs:
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           echo "::set-output name=version::$(echo $version)"
         shell: bash
+
+      - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ env.LICENCE_CHECK }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
 
   build-docs:
     needs: release-checks

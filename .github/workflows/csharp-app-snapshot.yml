@@ -12,6 +12,21 @@ on:
         description: 'Project file for updating version.'
         required: true
         type: string
+      private:
+        description: 'Calling workflow from a private repo'
+        required: false
+        type: boolean
+        default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: false
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -19,14 +34,32 @@ on:
         required: false
       NEXUS_PASSWORD: 
         required: false
+      LC_URL: 
+        required: false
 
 jobs:
   build:
+    env:
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
     runs-on: windows-2019
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
-    
+
+    - name: Cache licence-check
+      if: ${{ env.LICENCE_CHECK == true }}
+      uses: actions/cache@v3
+      with:
+        path: /lc
+        key: lcc
+
+    - name: Check licence
+      if: ${{ env.LICENCE_CHECK == true }}
+      uses: zepben/licence-check-action@main
+      with:
+        LC_URL: ${{ secrets.LC_URL }}
+        PATH: ${{ inputs.sourcepath }}
+  
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
      
