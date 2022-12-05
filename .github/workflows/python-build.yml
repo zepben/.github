@@ -26,6 +26,8 @@ jobs:
   check-licence-and-test:
     runs-on: ubuntu-latest
     container: python:3.7
+    env:
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
       - uses: actions/checkout@v2
 
