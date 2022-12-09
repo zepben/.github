@@ -5,9 +5,19 @@ on:
     inputs:
       private:
         description: 'Calling workflow from a private repo'
-        required: true
+        required: false
         type: boolean
         default: true
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: false
+        type: boolean
+        default: false
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -35,11 +45,15 @@ on:
         required: false
       SLACK_WEBHOOK:
         required: false
+      LC_URL: 
+        required: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
+    env:
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
       - uses: actions/checkout@v3
 
@@ -48,6 +62,21 @@ jobs:
         with:
           path: /maven
           key: maven
+
+      - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ env.LICENCE_CHECK }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
+
 
       - name: Set profile
         id: profile
