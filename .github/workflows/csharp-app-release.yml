@@ -32,6 +32,16 @@ on:
         required: false
         type: string
         default: "src"
+      configuration:
+        description: 'Configuration'
+        required: false
+        type: string
+        default: "Release"
+      platform:
+        description: 'Platform'
+        required: false
+        type: string
+        default: "x64"
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -129,14 +139,14 @@ jobs:
       
       - name: Restore NuGet Packages
         run:   
-          msbuild /p:Configuration=Release /p:Platform=x64 /t:restore
+          msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }} /t:restore
 
       - name: Build
         id: build
-        run: msbuild /p:Configuration=Release /p:Platform=x64
+        run: msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }}
 
       - name: Test
-        run: vstest.console.exe ${{ inputs.test_files }} /Platform:x64
+        run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ inputs.platform }}
 
       - name: Upload Release
         id: upload
