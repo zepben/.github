@@ -87,14 +87,14 @@ jobs:
         shell: bash
 
       - name: Cache licence-check
-        if: ${{ env.LICENCE_CHECK }}
+        if: ${{ env.LICENCE_CHECK == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
-        if: ${{ env.LICENCE_CHECK }}
+        if: ${{ env.LICENCE_CHECK == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}
