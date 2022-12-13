@@ -157,9 +157,9 @@ jobs:
         id: upload_path
         run: |
           if [[ -z $BINARY_PATH ]]; then
-            echo "${{ needs.release-checks.outputs.artifact_id }}/bin/Release/" >> $UPLOAD_PATH
+            echo "path=${{ needs.release-checks.outputs.artifact_id }}/bin/Release/" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=path::$(echo $BINARY_PATH)" >> $UPLOAD_PATH
+            echo "path=$BINARY_PATH" >> $GITHUB_OUTPUT
           fi
         env:
           BINARY_PATH: ${{ inputs.binary_path }}
@@ -170,7 +170,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
-          path: ${{ needs.release-checks.outputs.upload_path.UPLOAD_PATH }}
+          path: ${{ needs.release-checks.outputs.upload_path.path }}
 
       - name: Delete release branch if deploy failed and fail
         if: steps.build.outcome == 'failure' || steps.upload.outcome == 'failure'
