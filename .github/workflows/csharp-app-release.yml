@@ -207,7 +207,7 @@ jobs:
           git push origin ${GITHUB_REF/refs\/heads\//}
           git tag "v${{ needs.release-checks.outputs.version }}"
           git push --tags
-          echo "tag=v${{ needs.release-checks.outputs.version }})" >> $GITHUB_OUTPUT
+          echo "tag=v${{ needs.release-checks.outputs.version }}" >> $GITHUB_OUTPUT
         shell: bash
         continue-on-error: true
 
