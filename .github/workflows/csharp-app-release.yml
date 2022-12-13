@@ -42,6 +42,11 @@ on:
         required: false
         type: string
         default: "x64"
+      binary_path:
+        description: 'Path to the binaries.'
+        required: false
+        type: string
+        default: "x64"
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -148,12 +153,23 @@ jobs:
       - name: Test
         run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ inputs.platform }}
 
+      - name: Set upload path
+        id: upload_path
+        run: |
+          if [ -z $BINARY_PATH ]; then
+            echo "::set-output name=path::$(echo ${{ needs.release-checks.outputs.artifact_id }}/bin/Release/)"
+          else
+            echo "::set-output name=path::$(echo $BINARY_PATH)"
+          fi
+        env:
+          BINARY_PATH: ${{ inputs.binary_path }}
+
       - name: Upload Release
         id: upload
         uses: actions/upload-artifact@master
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
-          path: ${{ needs.release-checks.outputs.artifact_id }}/bin/Release/
+          path: ${{ needs.release-checks.outputs.upload_path }}
 
       - name: Delete release branch if deploy failed and fail
         if: steps.build.outcome == 'failure' || steps.upload.outcome == 'failure'
