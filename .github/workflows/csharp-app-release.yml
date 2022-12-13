@@ -106,9 +106,9 @@ jobs:
           /scripts/release-checks.sh --csharp ${{ inputs.version_file }}
           /scripts/finalize-version.sh --csharp ${{ inputs.version_file }} ${{ inputs.changelog }}
           version=$(cat ${{ inputs.version_file }} | grep "AssemblyVersion(\"[0-9]\+\.[0-9]\+\.[0-9]\+\")" | grep -o "[0-9]\+\.[0-9]\+\.[0-9]")
-          echo "::set-output name=version::$(echo $version)"
+          echo "version=$version" >> $GITHUB_OUTPUT
           artifact_id=$(cat ${{ inputs.version_file }} | grep "AssemblyTitle" | egrep -o "\"[A-Za-z0-9\-]+\"" | tr -d '"')
-          echo "::set-output name=artifact_id::$(echo $artifact_id)"
+          echo "artifact_id=$artifact_id" >> $GITHUB_OUTPUT
         shell: bash
 
   deploy:
@@ -207,7 +207,7 @@ jobs:
           git push origin ${GITHUB_REF/refs\/heads\//}
           git tag "v${{ needs.release-checks.outputs.version }}"
           git push --tags
-          echo "::set-output name=tag::$(echo v${{ needs.release-checks.outputs.version }})"
+          echo "tag=v${{ needs.release-checks.outputs.version }})" >> $GITHUB_OUTPUT
         shell: bash
         continue-on-error: true
 

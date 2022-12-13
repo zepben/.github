@@ -88,9 +88,9 @@ jobs:
         new_info_version_date=$(date '+%d%m%Y%H%M%S')
         sed -i "s|$info_version_date|$new_info_version_date|g" ${{ inputs.version_file }}
         info_version=$(cat ${{ inputs.version_file }} | grep "AssemblyInformationalVersion(\"[0-9]\+\.[0-9]\+\.[0-9]\+.*\")" | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\++build[0-9]\+")
-        echo "::set-output name=info_version::$(echo $info_version)"
+        echo "info_version=$info_version" >> $GITHUB_OUTPUT
         artifact_id=$(cat ${{ inputs.version_file }} | grep "AssemblyTitle" | egrep -o "\"[A-Za-z0-9\-]+\"" | tr -d '"')
-        echo "::set-output name=artifact_id::$(echo $artifact_id)"
+        echo "artifact_id=$artifact_id" >> $GITHUB_OUTPUT
 
     - name: Add ZepBen Nuget Repo credentials
       run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
