@@ -156,7 +156,7 @@ jobs:
       - name: Set upload path
         id: upload_path
         run: |
-          if [ -z $BINARY_PATH ]; then
+          if [[ -z $BINARY_PATH ]]; then
             echo "::set-output name=path::$(echo ${{ needs.release-checks.outputs.artifact_id }}/bin/Release/)"
           else
             echo "::set-output name=path::$(echo $BINARY_PATH)"
