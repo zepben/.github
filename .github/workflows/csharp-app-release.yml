@@ -170,7 +170,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
-          path: ${{ needs.release-checks.outputs.upload_path.path }}
+          path: ${{ steps.upload_path.outputs.path }}
 
       - name: Delete release branch if deploy failed and fail
         if: steps.build.outcome == 'failure' || steps.upload.outcome == 'failure'
