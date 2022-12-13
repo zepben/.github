@@ -163,6 +163,7 @@ jobs:
           fi
         env:
           BINARY_PATH: ${{ inputs.binary_path }}
+        shell: bash
 
       - name: Upload Release
         id: upload
