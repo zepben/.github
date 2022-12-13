@@ -46,7 +46,7 @@ on:
         description: 'Path to the binaries.'
         required: false
         type: string
-        default: "x64"
+        default: ""
     secrets:
       CI_GITHUB_TOKEN:
         required: true
