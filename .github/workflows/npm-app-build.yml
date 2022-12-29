@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: true
+      build-docs:
+        description: 'Repo has docusaurus docs'
+        required: false
+        type: boolean
+        default: false
       licencecheck:
         description: 'Need to check licence headers/files'
         required: false
@@ -78,3 +83,11 @@ jobs:
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run ci
+
+      - name: Build docs
+        if: ${{ inputs.build-docs }}
+        run: |
+          cd docs
+          npm ci --unsafe-perm
+          npm run build
+
