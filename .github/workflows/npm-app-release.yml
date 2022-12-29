@@ -47,6 +47,8 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    outputs:
+      version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -73,9 +75,12 @@ jobs:
           PATH: ${{ inputs.sourcepath }}
 
       - name: Release checks and update version for release
+        id: check
         run: |
           /scripts/release-checks.sh --js package.json
           /scripts/finalize-version.sh --js package.json changelog.md
+          version=$(jq -r .version package.json)
+          echo "{version}={$version}" >> $GITHUB_OUTPUT
         shell: bash
 
   build-docs:
@@ -145,8 +150,6 @@ jobs:
     container: node:14-alpine
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
-      artifact-id: ${{ steps.build.outputs.artifact-id }}
-      version: ${{ steps.build.outputs.version }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
@@ -174,18 +177,23 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - name: Get latest changelog
-        id: changelog
-        run: |
-          sed -n -E "/UNRELEASED/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md
-        continue-on-error: false
-
       - name: Checkout release branch
         run: |
           git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
           git fetch --all
           git checkout release
         shell: sh
+
+      - name: Test changelog format
+        id: changelog
+        run: |
+          changelog=$(sed -n -E "/UNRELEASED/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
+          if [[ -z "$changelog" ]]; then
+            echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
+            git push origin -d release
+            exit 1
+          fi
+        continue-on-error: false
 
       - name: create .npmrc
         run: | 
@@ -200,12 +208,10 @@ jobs:
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run prod
-          version=$(jq -r .version package.json)
           artifactId=$(jq -r .name package.json)
-          artifact="$artifactId-$version.tar.bz2"
+          artifact="$artifactId-$${{ needs.release-checks.outputs.version }}.tar.bz2"
           tar jcvf "$artifact" -C dist .
-          echo "::set-output name=version::$(echo $version)"
-          echo "::set-output name=artifact::$(echo $artifact)"
+          echo "{artifact}={$artifact}" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - uses: actions/upload-artifact@master
@@ -223,7 +229,7 @@ jobs:
         shell: sh
 
   create-release:
-    needs: [build-artifact]
+    needs: [build-artifact, release-checks]
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
@@ -249,11 +255,10 @@ jobs:
           git fetch --all
           git merge origin/release
           git push origin ${GITHUB_REF/refs\/heads\//}
-          version=$(jq -r .version package.json)
-          git tag "v$version"
+          tag="v${{ needs.release-checks.outputs.version }}" 
+          git tag $tag
           git push --tags
-          echo "::set-output name=tag::$(echo v$version)"
-          echo "::set-output name=artifact::$(echo ${{ needs.build-artifact.outputs.artifact }})"
+          echo "{tag}={$tag}" >> $GITHUB_OUTPUT
         shell: bash
         continue-on-error: true
 
