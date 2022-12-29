@@ -80,7 +80,7 @@ jobs:
           /scripts/release-checks.sh --js package.json
           /scripts/finalize-version.sh --js package.json changelog.md
           version=$(jq -r .version package.json)
-          echo "{version}={$version}" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
         shell: bash
 
   build-docs:
@@ -211,7 +211,7 @@ jobs:
           artifactId=$(jq -r .name package.json)
           artifact="$artifactId-$${{ needs.release-checks.outputs.version }}.tar.bz2"
           tar jcvf "$artifact" -C dist .
-          echo "{artifact}={$artifact}" >> $GITHUB_OUTPUT
+          echo "artifact=$artifact" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - uses: actions/upload-artifact@master
@@ -258,7 +258,7 @@ jobs:
           tag="v${{ needs.release-checks.outputs.version }}" 
           git tag $tag
           git push --tags
-          echo "{tag}={$tag}" >> $GITHUB_OUTPUT
+          echo "tag=$tag" >> $GITHUB_OUTPUT
         shell: bash
         continue-on-error: true
 
