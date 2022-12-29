@@ -73,11 +73,10 @@ jobs:
 
       - name: create .npmrc
         run: | 
-          rm -rf .npmrc
-          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
-          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
-          echo "@zepben:registry=${{ secrets.NPM_REPO }}" >> .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> .npmrc
+          rm -rf ~/.npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> .npmrc
 
       - name: Build and test
