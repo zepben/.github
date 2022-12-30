@@ -95,8 +95,8 @@ jobs:
         artifactId=$(jq -r .name package.json)
         artifact="$artifactId-$version-SNAPSHOT.tar.bz2"
         tar jcvf "$artifact" -C dist .
-        echo "::set-output name=version::$(echo $version)"
-        echo "::set-output name=artifact::$(echo $artifact)"
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "artifact=$artifact" >> $GITHUB_OUTPUT
 
     - uses: actions/upload-artifact@master
       if: steps.build.outcome == 'success'
