@@ -98,24 +98,50 @@ jobs:
         echo "::set-output name=version::$(echo $version)"
         echo "::set-output name=artifact::$(echo $artifact)"
 
-    - name: Build docs
-      if: ${{ inputs.build-docs }}
-      run: |
-        cd docs
-        npm ci --unsafe-perm
-        npm run build
-
     - uses: actions/upload-artifact@master
       if: steps.build.outcome == 'success'
       with:
           name: ${{ steps.build.outputs.artifact }}
           path: ${{ steps.build.outputs.artifact }}
 
+  build-docs:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.build-docs }}
+    container: node:16-alpine
+    steps:
+      - name: Install Dependencies
+        run: |
+          apk add tar 
+
+      - name: Cache nodejs deps
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: npm
+
+      - uses: actions/checkout@v3
+
+      - name: create .npmrc
+        run: | 
+          rm -rf ~/.npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
+          echo "\n" >> ~/.npmrc
+
+      - name: Build docs
+        id: docs
+        run: |
+          cd docs
+          npm ci --unsafe-perm
+          npm run build
+
     - uses: actions/upload-artifact@master
-      if: steps.build.outcome == 'success' && inputs.build-docs
+      if: steps.docs.outcome == 'success' 
       with:
         name: docs
         path: docs/build/
+
 
 
   update-snapshot-version:

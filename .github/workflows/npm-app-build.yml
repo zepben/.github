@@ -85,8 +85,32 @@ jobs:
           npm ci --unsafe-perm
           npm run ci
 
+  build-docs:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.build-docs }}
+    container: node:16-alpine
+    steps:
+      - name: Install Dependencies
+        run: |
+          apk add tar 
+
+      - name: Cache nodejs deps
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: npm
+
+      - uses: actions/checkout@v3
+
+      - name: create .npmrc
+        run: | 
+          rm -rf ~/.npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
+          echo "\n" >> ~/.npmrc
+
       - name: Build docs
-        if: ${{ inputs.build-docs }}
         run: |
           cd docs
           npm ci --unsafe-perm
