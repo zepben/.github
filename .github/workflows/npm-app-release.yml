@@ -108,7 +108,7 @@ jobs:
     steps:
       - name: Install Git
         run: |
-          apk add git
+          apk add git tar
 
       - name: Work around git permission issue
         run: |
