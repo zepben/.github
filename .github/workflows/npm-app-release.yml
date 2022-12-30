@@ -93,7 +93,7 @@ jobs:
             git push origin -d release
             exit 1
           fi
-          echo "changelog=$changelog" >> $GITHUB_OUTPUT
+          echo "changelog=$(echo $changelog | base64)" >> $GITHUB_OUTPUT
 
   build-docs:
     needs: release-checks
@@ -274,7 +274,7 @@ jobs:
       - name: Get latest changelog
         id: changelog
         run: |
-          echo "${{ needs.release-checks.outputs.changelog }}" > latest_changelog.txt
+          echo "${{ needs.release-checks.outputs.changelog }}" | base64 -d > latest_changelog.txt
         shell: bash
         continue-on-error: true
 
