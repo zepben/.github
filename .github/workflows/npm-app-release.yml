@@ -93,7 +93,8 @@ jobs:
             git push origin -d release
             exit 1
           fi
-          echo "changelog=$(echo $changelog | base64)" >> $GITHUB_OUTPUT
+          # Changelog has newlines which isn't well supported, so we base64 with line wrap disabled (-w0)
+          echo "changelog=$(echo $changelog | base64 -w0)" >> $GITHUB_OUTPUT
 
   build-docs:
     needs: release-checks
