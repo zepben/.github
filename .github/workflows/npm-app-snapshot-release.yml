@@ -136,16 +136,14 @@ jobs:
           npm ci --unsafe-perm
           npm run build
 
-    - uses: actions/upload-artifact@master
-      if: steps.docs.outcome == 'success' 
-      with:
-        name: docs
-        path: docs/build/
-
-
+      - uses: actions/upload-artifact@master
+        if: steps.docs.outcome == 'success' 
+        with:
+          name: docs
+          path: docs/build/
 
   update-snapshot-version:
-    needs: [build-artifact]
+    needs: [build-artifact, build-docs]
     container: zepben/pipeline-basic
     runs-on: ubuntu-latest
     env:
