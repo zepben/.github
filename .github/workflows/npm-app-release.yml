@@ -158,7 +158,7 @@ jobs:
 
 
   build-artifact:
-    needs: [build-docs, release-checks]
+    needs: [release-checks]
     runs-on: ubuntu-latest
     container: node:14-alpine
     outputs:
