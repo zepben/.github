@@ -158,7 +158,8 @@ jobs:
 
 
   build-artifact:
-    needs: [release-checks]
+    if: ${{ always() }}
+    needs: [build-docs, release-checks]
     runs-on: ubuntu-latest
     container: node:14-alpine
     outputs:
