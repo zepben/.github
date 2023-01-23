@@ -232,6 +232,7 @@ jobs:
         shell: sh
 
   create-release:
+    if: ${{ always() }}
     needs: [build-artifact, release-checks]
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
@@ -327,6 +328,7 @@ jobs:
         shell: sh
 
   update-version:
+    if: ${{ always() }}
     needs: create-release
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
