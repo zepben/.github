@@ -156,7 +156,6 @@ jobs:
           exit 1
         shell: sh
 
-
   build-artifact:
     if: ! failure()
     needs: [build-docs, release-checks]
