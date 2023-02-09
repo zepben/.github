@@ -157,7 +157,7 @@ jobs:
         shell: sh
 
   build-artifact:
-    if: ! failure()
+    if: ${{ !failure() }}
     needs: [build-docs, release-checks]
     runs-on: ubuntu-latest
     container: node:14-alpine
@@ -231,7 +231,7 @@ jobs:
         shell: sh
 
   create-release:
-    if: ! failure()
+    if: ${{ !failure() }}
     needs: [build-artifact, release-checks]
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
@@ -327,7 +327,7 @@ jobs:
         shell: sh
 
   update-version:
-    if: ! failure()
+    if: ${{ !failure() }}
     needs: create-release
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
