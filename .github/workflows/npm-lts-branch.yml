@@ -1,4 +1,4 @@
-name: Create Hotfix Branch
+name: Create LTS Branch
 
 on: 
   workflow_call:
@@ -36,7 +36,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - name: Create Hotfix branch
+      - name: Create LTS branch
         run: |
           /scripts/create-branch.sh --lts ${{ inputs.version }}
           export BITBUCKET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
