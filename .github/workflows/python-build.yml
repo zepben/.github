@@ -25,7 +25,7 @@ on:
 jobs:
   check-licence-and-test:
     runs-on: ubuntu-latest
-    container: python:3.7
+    container: python:3.9
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
