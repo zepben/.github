@@ -93,7 +93,7 @@ jobs:
   deploy:
     needs: [release-checks]
     runs-on: ubuntu-latest
-    container: python:3.7
+    container: python:3.9
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
     steps:
