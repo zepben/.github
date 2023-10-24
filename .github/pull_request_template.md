@@ -10,7 +10,7 @@ List any other tasks / PRs that are required to be merged alongside this one (e.
 
 # Checklist
 
-If any of these are not applicable, strikethrough the line `~~like this~~`. **Do not delete it!**. Let the reviewer decide if you should have done it.
+If any of these are not applicable, strikethrough the line `~like this~`. **Do not delete it!**. Let the reviewer decide if you should have done it.
 
 ### Code
 - [ ] I have performed a self review of my own code (including checking issues raised when creating the PR).
