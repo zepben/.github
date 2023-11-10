@@ -41,12 +41,12 @@ jobs:
           apk add jq tar alpine-conf git
 
       - name: Cache nodejs deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache licence-check
         if: ${{ env.LICENCE_CHECK == true }}

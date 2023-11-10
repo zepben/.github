@@ -59,10 +59,10 @@ jobs:
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache maven deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /maven
           key: maven
@@ -98,7 +98,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.build.outputs.artifactId }}-${{ steps.build.outputs.version }}
           path: ${{ steps.build.outputs.artifact-path }}
@@ -116,7 +116,7 @@ jobs:
       NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
       NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

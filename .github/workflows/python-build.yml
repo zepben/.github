@@ -29,7 +29,7 @@ jobs:
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |

@@ -47,12 +47,12 @@ jobs:
         apk add jq tar alpine-conf git
 
     - name: Cache nodejs deps
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.npm
         key: npm
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Cache licence-check
       if: ${{ env.LICENCE_CHECK == true }}
@@ -91,7 +91,7 @@ jobs:
         echo "::set-output name=version::$(echo $version)"
         echo "::set-output name=artifact::$(echo $artifact)"
 
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v3
       if: steps.build.outcome == 'success'
       with:
           name: ${{ steps.build.outputs.artifact }}
@@ -107,7 +107,7 @@ jobs:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

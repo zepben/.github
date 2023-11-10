@@ -20,14 +20,14 @@ jobs:
     container: python:3.9
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           pip install tox twine
 
       - name: Cache licence-check
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
@@ -61,7 +61,7 @@ jobs:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
