@@ -87,7 +87,7 @@ jobs:
 
   build-docs:
     runs-on: ubuntu-latest
-    if: ${{ inputs.build-docs }}
+    needs: build-and-test
     container: node:16-alpine
     steps:
       - name: Install Dependencies
@@ -100,7 +100,7 @@ jobs:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: create .npmrc
         run: | 
@@ -112,7 +112,9 @@ jobs:
 
       - name: Build docs
         run: |
-          cd docs
-          npm ci --unsafe-perm
-          npm run build
+          if [ -d docs ]; then
+            cd docs
+            npm ci --unsafe-perm
+            npm run build
+          fi
 

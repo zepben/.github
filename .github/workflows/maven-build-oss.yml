@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache licence-check
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
@@ -36,3 +36,37 @@ jobs:
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v2
+
+  build-docs:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    container: node:16-alpine
+    steps:
+      - name: Install Dependencies
+        run: |
+          apk add tar 
+
+      - name: Cache nodejs deps
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm
+
+      - uses: actions/checkout@v4
+
+      - name: create .npmrc
+        run: | 
+          rm -rf ~/.npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
+          echo "\n" >> ~/.npmrc
+
+      - name: Build docs
+        run: |
+          if [ -d docs ]; then
+            cd docs
+            npm ci --unsafe-perm
+            npm run build
+          fi
+

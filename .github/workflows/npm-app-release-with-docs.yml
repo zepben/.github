@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       artifact: docs
-    container: node:12-alpine
+    container: node:16-alpine
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
