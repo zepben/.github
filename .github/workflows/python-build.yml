@@ -64,10 +64,6 @@ jobs:
     needs: check-licence-and-test
     container: node:16-alpine
     steps:
-      - name: Install Dependencies
-        run: |
-          apk add tar 
-
       - name: Cache nodejs deps
         uses: actions/cache@v3
         with:
