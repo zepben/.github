@@ -52,7 +52,7 @@ jobs:
         path: ~/.npm
         key: npm
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     - name: Cache licence-check
       if: ${{ env.LICENCE_CHECK == true }}
@@ -107,7 +107,7 @@ jobs:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

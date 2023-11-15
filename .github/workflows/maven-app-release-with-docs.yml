@@ -75,7 +75,7 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -139,7 +139,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Checkout release branch
         run: |
@@ -196,7 +196,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Cache maven deps
         uses: actions/cache@v3
@@ -252,7 +252,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -351,7 +351,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

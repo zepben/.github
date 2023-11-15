@@ -51,7 +51,7 @@ jobs:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Cache licence-check
         if: ${{ env.LICENCE_CHECK == true }}
@@ -100,7 +100,7 @@ jobs:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: create .npmrc
         run: | 

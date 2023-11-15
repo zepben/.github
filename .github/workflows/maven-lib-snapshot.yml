@@ -55,7 +55,7 @@ jobs:
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Cache maven deps
         uses: actions/cache@v3
@@ -121,7 +121,7 @@ jobs:
       NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
       NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
