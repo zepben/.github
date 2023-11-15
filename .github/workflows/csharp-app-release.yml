@@ -76,7 +76,7 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       artifact_id: ${{ steps.check.outputs.artifact_id }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -121,7 +121,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout release branch
         run: |
@@ -167,7 +167,7 @@ jobs:
 
       - name: Upload Release
         id: upload
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
           path: ${{ steps.upload_path.outputs.path }}
@@ -187,7 +187,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -220,7 +220,7 @@ jobs:
         shell: bash
 
       - name: Download binary
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
           path: built-artifacts
@@ -275,7 +275,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

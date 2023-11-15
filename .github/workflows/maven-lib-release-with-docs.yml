@@ -80,7 +80,7 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -130,7 +130,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout release branch
         run: |
@@ -154,7 +154,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         continue-on-error: true
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v3
         if: steps.build.outcome == 'success'
         with:
           name: docs
@@ -181,10 +181,10 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache maven deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /maven
           key: maven
@@ -228,7 +228,7 @@ jobs:
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v1
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v3
         if: steps.build.outcome == 'success'
         with:
           name: ${{ steps.build.outputs.artifact }}
@@ -249,7 +249,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -282,14 +282,14 @@ jobs:
         shell: bash
 
       - name: Download binary
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ needs.deploy.outputs.artifact }}
           path: built-artifacts
         continue-on-error: true
 
       - name: Download docs
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: docs
           path: docs-site
@@ -342,7 +342,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

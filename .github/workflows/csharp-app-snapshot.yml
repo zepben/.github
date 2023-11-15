@@ -54,7 +54,7 @@ jobs:
     runs-on: windows-2019
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Cache licence-check
       if: ${{ env.LICENCE_CHECK == true }}
@@ -107,7 +107,7 @@ jobs:
       run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ inputs.platform }}
 
     - name: Upload Release
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ steps.update-info-version.outputs.artifact_id }}-${{ steps.update-info-version.outputs.info_version }}
         path: ${{ steps.update-info-version.outputs.artifact_id }}/bin/Release/

@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache licence-check
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
@@ -23,7 +23,7 @@ jobs:
           LC_URL: ${{ secrets.LC_URL }}
 
       - name: Cache maven deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /maven
           key: maven
