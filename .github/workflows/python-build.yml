@@ -68,12 +68,7 @@ jobs:
           if [ -d docs ]; then
             exist=yes
           fi
-          echo "present=$exist"
           echo "present=$exist" >> "${GITHUB_OUTPUT}"
-
-      - name: Test output in steps
-        run: |
-          echo "Hey '${{ steps.docs.outputs.present }}'"
 
   build-docs:
     runs-on: ubuntu-latest
