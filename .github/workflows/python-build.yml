@@ -66,6 +66,8 @@ jobs:
         run: |
           if [ -d docs ]; then
             echo "present=yes" >> $GITHUB_ENV
+          else
+            echo "present=no" >> $GITHUB_ENV
           fi
 
   build-docs:
