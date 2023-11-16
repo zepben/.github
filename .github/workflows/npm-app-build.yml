@@ -40,6 +40,8 @@ jobs:
     runs-on: ubuntu-latest
     container: node:14-alpine
     continue-on-error: false
+    outputs:
+      docs: ${{ steps.docs.present}}
     steps:
       - name: Install Dependencies
         run: |
@@ -85,36 +87,27 @@ jobs:
           npm ci --unsafe-perm
           npm run ci
 
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "present=yes" >> $GITHUB_ENV
+          fi
+
   build-docs:
     runs-on: ubuntu-latest
     needs: build-and-test
+    if: ${{ needs.build-and-test.outputs.docs == 'yes' }}
     container: node:16-alpine
     steps:
-      - name: Install Dependencies
-        run: |
-          apk add tar 
 
-      - name: Cache nodejs deps
-        uses: actions/cache@v3
+      - uses: actions/checkout@v3
+
+      - name: Build docusaurus
+        id: build
+        uses: zepben/docusaurus-action@main
         with:
-          path: ~/.npm
-          key: npm
-
-      - uses: actions/checkout@v4
-
-      - name: create .npmrc
-        run: | 
-          rm -rf ~/.npmrc
-          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
-          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
-          echo "\n" >> ~/.npmrc
-
-      - name: Build docs
-        run: |
-          if [ -d docs ]; then
-            cd docs
-            npm ci --unsafe-perm
-            npm run build
-          fi
-
+          TAG-AND-RELEASE: false
+          NPM_REPO: ${{ secrets.NPM_REPO }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        continue-on-error: true
