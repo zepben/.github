@@ -68,7 +68,7 @@ jobs:
           if [ -d docs ]; then
             exist=yes
           fi
-          echo "present=$exist" >> $GITHUB_ENV
+          echo "present=$exist" >> $GITHUB_OUTPUT
 
       - name: Test output in steps
         run: |
