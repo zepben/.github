@@ -70,6 +70,10 @@ jobs:
           fi
           echo "present=$exist" >> $GITHUB_ENV
 
+      - name: Test output in steps
+        run: |
+          echo "Hey '${{ steps.docs.outputs.present}}'"
+
   build-docs:
     runs-on: ubuntu-latest
     needs: build-and-test
