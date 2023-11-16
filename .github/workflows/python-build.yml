@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     container: python:3.9
     outputs: 
-      docs: ${{ steps.docs.outputs.present}}
+      docs: ${{ steps.docs.outputs.present }}
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
@@ -68,11 +68,13 @@ jobs:
           if [ -d docs ]; then
             exist=yes
           fi
-          echo "present=$exist" >> $GITHUB_OUTPUT
+          echo "present=$exist"
+          echo "present=$exist" >> "${GITHUB_OUTPUT}"
+          echo "present=$exist" >> "${GITHUB_ENV}"
 
       - name: Test output in steps
         run: |
-          echo "Hey '${{ steps.docs.outputs.present}}'"
+          echo "Hey '${{ steps.docs.outputs.present }}'"
 
   build-docs:
     runs-on: ubuntu-latest
