@@ -71,11 +71,15 @@ jobs:
   build-docs:
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: ${{ needs.build-and-test.outputs.docs == 'yes' }}
     container: node:16-alpine
     steps:
 
       - uses: actions/checkout@v3
+
+      - name: Test output
+        run: |
+          echo "Hello '${{ needs.build-and-test.outputs.docs }}'"
+
 
       - name: Build docusaurus
         id: build
