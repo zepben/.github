@@ -84,11 +84,10 @@ jobs:
       - name: Check if docs present
         id: docs
         run: |
-          exist=no
           if [ -d docs ]; then
-            exist=yes
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
           fi
-          echo "present=$exist" >> "${GITHUB_OUTPUT}"
 
   build-docs:
     runs-on: ubuntu-latest

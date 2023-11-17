@@ -43,7 +43,10 @@ jobs:
         id: docs
         run: |
           if [ -d docs ]; then
-            echo "present=yes" >> $GITHUB_ENV
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
           fi
 
   build-docs:
