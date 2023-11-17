@@ -73,7 +73,7 @@ jobs:
   build-docs:
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: ${{ hashFiles('docs/package-lock.json', 'docs/package.json') != "" }}
+    if: ${{ always() && hashFiles('docs/package-lock.json', 'docs/package.json') }}
     container: node:16-alpine
     steps:
 
