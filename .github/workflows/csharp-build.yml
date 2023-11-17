@@ -46,8 +46,8 @@ on:
 jobs:
   build:
     runs-on: windows-2019
-    outputs:
-      docs: ${{ steps.docs.present}}
+    outputs: 
+      docs: ${{ steps.docs.outputs.present }}
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
       DEBUG: ${{ secrets.DEBUG }}

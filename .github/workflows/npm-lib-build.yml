@@ -35,8 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     container: node:14-alpine
     continue-on-error: false
-    outputs:
-      docs: ${{ steps.docs.present}}
+    outputs: 
+      docs: ${{ steps.docs.outputs.present }}
     steps:
       - name: Install Dependencies
         run: |

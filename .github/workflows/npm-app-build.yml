@@ -40,8 +40,8 @@ jobs:
     runs-on: ubuntu-latest
     container: node:14-alpine
     continue-on-error: false
-    outputs:
-      docs: ${{ steps.docs.present}}
+    outputs: 
+      docs: ${{ steps.docs.outputs.present }}
     steps:
       - name: Install Dependencies
         run: |
@@ -93,6 +93,8 @@ jobs:
           if [ -d docs ]; then
             echo "Docs folder found, will run the build-docs job"
             echo "present=yes" >> "${GITHUB_OUTPUT}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
           fi
 
   build-docs:

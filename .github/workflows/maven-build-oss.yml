@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     outputs: 
-      docs: ${{ steps.docs.present}}
+      docs: ${{ steps.docs.outputs.present }}
     steps:
       - uses: actions/checkout@v3
 

@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     outputs: 
-      docs: ${{ steps.docs.present}}
+      docs: ${{ steps.docs.outputs.present }}
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
