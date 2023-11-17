@@ -11,7 +11,7 @@ jobs:
     outputs: 
       docs: ${{ steps.docs.present}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Cache licence-check
         uses: actions/cache@v3

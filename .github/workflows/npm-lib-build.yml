@@ -48,7 +48,7 @@ jobs:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Cache licence-check
         if: ${{ env.LICENCE_CHECK == true }}
@@ -87,6 +87,8 @@ jobs:
           if [ -d docs ]; then
             echo "Docs folder found, will run the build-docs job"
             echo "present=yes" >> "${GITHUB_OUTPUT}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
           fi
 
   build-docs:
