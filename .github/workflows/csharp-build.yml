@@ -98,9 +98,11 @@ jobs:
     - name: Check if docs present
       id: docs
       run: |
+        exist=no
         if [ -d docs ]; then
-          echo "present=yes" >> $GITHUB_ENV
+          exist=yes
         fi
+        echo "present=$exist" >> "${GITHUB_OUTPUT}"
 
   build-docs:
     runs-on: ubuntu-latest
