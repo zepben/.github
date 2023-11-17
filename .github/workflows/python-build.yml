@@ -64,7 +64,7 @@ jobs:
       - name: Check if docs present
         id: docs
         run: |
-          if [ -d docs2 ]; then
+          if [ -d docs ]; then
             echo "Docs folder found, will run the build-docs job"
             echo "present=yes" >> "${GITHUB_OUTPUT}"
           else
