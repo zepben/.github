@@ -100,7 +100,7 @@ jobs:
   build-docs:
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: ${{ hashFiles('docs/package-lock.json', 'docs/package.json') != "" }}
+    if: ${{ needs.build-and-test.outputs.docs == 'yes' }}
     container: node:16-alpine
     steps:
 
