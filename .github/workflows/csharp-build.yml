@@ -44,8 +44,10 @@ on:
         required: false
  
 jobs:
-  build:
+  build-and-test:
     runs-on: windows-2019
+    outputs: 
+      docs: ${{ steps.docs.outputs.present }}
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
       DEBUG: ${{ secrets.DEBUG }}
@@ -92,3 +94,30 @@ jobs:
     - name: Test
       if: ${{ inputs.test_files != '' }}
       run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ inputs.platform }}
+
+    - name: Check if docs present
+      id: docs
+      run: |
+        if [ -d docs ]; then
+          echo "Docs folder found, will run the build-docs job"
+          echo "present=yes" >> "${GITHUB_OUTPUT}"
+        else
+          echo "Docs folder not found, will skip the build-docs"
+        fi
+
+  build-docs:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: ${{ needs.build-and-test.outputs.docs == 'yes' }}
+    container: node:16-alpine
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Build docusaurus
+        id: build
+        uses: zepben/docusaurus-action@main
+        with:
+          TAG-AND-RELEASE: false
+          NPM_REPO: ${{ secrets.NPM_REPO }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}

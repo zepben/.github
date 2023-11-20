@@ -8,6 +8,8 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
+    outputs: 
+      docs: ${{ steps.docs.outputs.present }}
     steps:
       - uses: actions/checkout@v3
 
@@ -36,3 +38,30 @@ jobs:
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v2
+
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
+  build-docs:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: ${{ needs.build-and-test.outputs.docs == 'yes' }}
+    container: node:16-alpine
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Build docusaurus
+        id: build
+        uses: zepben/docusaurus-action@main
+        with:
+          TAG-AND-RELEASE: false
+          NPM_REPO: ${{ secrets.NPM_REPO }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
