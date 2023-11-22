@@ -8,6 +8,7 @@ jobs:
     uses: zepben/.github/.github/workflows/csharp-app-snapshot.yml@main
     with:
       test_files: data-access-layer-test\bin\Release\data-access-layer-test.dll
-      version_file: ednar-reporting-service/Properties/AssemblyInfo.cs
+      version_file: <some-path>/Properties/AssemblyInfo.cs
+      product-key: "<some-product-key>"   # Must be unique
     secrets: inherit
     
