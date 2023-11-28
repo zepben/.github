@@ -45,7 +45,7 @@ jobs:
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       version: ${{ steps.build.outputs.version }}
-    container: node:14-alpine
+    container: node:16-alpine
     steps:
     - name: Install Dependencies
       run: |

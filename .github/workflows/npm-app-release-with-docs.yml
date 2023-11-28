@@ -139,7 +139,7 @@ jobs:
   build-artifact:
     needs: [build-docs, release-checks]
     runs-on: ubuntu-latest
-    container: node:14-alpine
+    container: node:16-alpine
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
