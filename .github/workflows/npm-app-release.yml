@@ -206,6 +206,8 @@ jobs:
 
       - name: build
         id: build
+        env:
+          HUSKY: 0
         run: |
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
