@@ -97,6 +97,7 @@ jobs:
 
     - name: Check if docs present
       id: docs
+      shell: bash
       run: |
         if [ -d docs ]; then
           echo "Docs folder found, will run the build-docs job"
