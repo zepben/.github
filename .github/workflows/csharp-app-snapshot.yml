@@ -127,5 +127,5 @@ jobs:
       id: upload
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ needs.release-checks.outputs.artifact_id }}-${{ steps.update-info-version.outputs.info_version }}
+        name: ${{ steps.update-info-version.outputs.artifact_id }}-${{ steps.update-info-version.outputs.info_version }}
         path: ${{ steps.upload_path.outputs.path }}
