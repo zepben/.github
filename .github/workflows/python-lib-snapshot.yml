@@ -127,8 +127,8 @@ jobs:
 
   build-docs:
     runs-on: ubuntu-latest
-    needs: [build-app]
-    if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
+    needs: [deploy]
+    if: ${{ needs.deploy.outputs.docs-present == 'yes' }}
     outputs:
       artifact-uploaded: ${{ steps.artifact.outputs.uploaded }}
     steps:
