@@ -7,4 +7,5 @@ jobs:
     uses: zepben/.github/.github/workflows/npm-app-snapshot-release.yml@main
     with:
       product-key: "<some-product-key>"   # Must be unique
+      product-repo: "<some-product-repo>"
     secrets: inherit

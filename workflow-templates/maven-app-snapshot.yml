@@ -8,5 +8,6 @@ jobs:
     with:
       private: true
       product-key: "<some-product-key>"   # Must be unique
+      product-repo: "<some-product-repo>" 
     secrets: inherit
     
