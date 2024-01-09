@@ -11,4 +11,7 @@ on:
 jobs:
   run:
     uses: zepben/.github/.github/workflows/npm-lib-snapshot.yml@main
+    with:
+      product-key: "<some-product-key>"   # Must be unique
+      product-repo: "<some-product-repo>"
     secrets: inherit

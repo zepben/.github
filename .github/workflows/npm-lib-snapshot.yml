@@ -1,4 +1,4 @@
-name: NPM Static App Snapshot Release
+name: NPM Static Lib Snapshot Release
 
 on:
   workflow_call:
@@ -18,6 +18,14 @@ on:
         required: false
         type: string
         default: "src"
+      product-key:
+        description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
+        required: true
+        type: string
+      product-repo:
+        description: 'Product repository used for downloading snapshot docs'
+        required: true
+        type: string
     secrets:
       NEXUS_NPM_REPO:
         required: true
@@ -37,10 +45,9 @@ jobs:
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
     runs-on: ubuntu-latest
+    container: node:14-alpine
     outputs:
-      artifact: ${{ steps.build.outputs.artifact }}
-      version: ${{ steps.build.outputs.version }}
-    container: node:16-alpine
+      docs-present: ${{ steps.docs.outputs.present }}
     steps:
     - name: Install Dependencies
       run: |
@@ -87,15 +94,101 @@ jobs:
         npm run build
         artifact=$(npm pack)
         npm publish
-        version=$(jq -r .version package.json)
-        echo "::set-output name=version::$(echo $version)"
-        echo "::set-output name=artifact::$(echo $artifact)"
+        # version=$(jq -r .version package.json)
+        echo "artifact=$(echo $artifact)" >> ${GITHUB_ENV}
 
     - uses: actions/upload-artifact@v3
       if: steps.build.outcome == 'success'
       with:
-          name: ${{ steps.build.outputs.artifact }}
-          path: ${{ steps.build.outputs.artifact }}
+          name: ${{ env.artifact }}
+          path: ${{ env.artifact }}
+
+    - name: Check if docs present
+      id: docs
+      run: |
+        if [ -d docs ]; then
+          echo "Docs folder found, will run the build-docs job"
+          echo "present=yes" >> "${GITHUB_OUTPUT}"
+          echo "present=yes" >> "${GITHUB_ENV}"
+        else
+          echo "Docs folder not found, will skip the build-docs"
+        fi
+
+    - name: Work around git permission issue
+      run: |
+        dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+        git config --global --add safe.directory /__w/$dname/$dname
+      shell: sh
+
+    - name: Check doc build artifacts are ignored
+      if: ${{ env.present == 'yes' }}
+      shell: sh {0}
+      run: |
+        # Make sure directories are properly ignored
+        # docs/node_modules
+        git check-ignore -q docs/node_modules 
+        if [ $? != 0 ]; then
+            echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+            echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+            exit 1
+        fi
+
+        # docs/build
+        git check-ignore -q docs/build 
+        if [ $? != 0 ]; then
+            echo "ERROR! Make sure to add 'docs/build' to .gitignore"
+            echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
+            exit 1
+        fi
+
+  build-docs:
+    runs-on: ubuntu-latest
+    needs: [build-artifact]
+    if: ${{ needs.build-artifact.outputs.docs-present == 'yes' }}
+    outputs:
+      artifact-uploaded: ${{ steps.artifact.outputs.uploaded }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache-dependency-path: docs/package-lock.json
+          cache: npm
+
+      - name: Build docusaurus
+        id: build
+        uses: zepben/docusaurus-action@main
+        with:
+          TAG: false
+          NPM_REPO: ${{ secrets.NPM_REPO }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Failed build
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "There was an error in the docusaurus build above. Docs are not pushed"
+          echo " :boom: There was an error in the docusaurus build step. Current docs are not published" >> ${GITHUB_STEP_SUMMARY}
+        shell: sh
+
+      - name: Zip documentation
+        run: |
+          cd docs/build
+          zip -r ../../docs.zip .
+        shell: bash
+
+      - uses: actions/upload-artifact@v3
+        if: steps.build.outcome == 'success'
+        id: upload
+        with:
+          name: docs.zip
+          path: docs.zip
+
+      - if: steps.upload.outcome == 'success'
+        id: artifact
+        run:
+          echo "uploaded=yes" >> "${GITHUB_OUTPUT}"
 
   update-snapshot-version:
     needs: [build-artifact]
@@ -120,3 +213,17 @@ jobs:
       - name: Update snapshot version
         run: |
           /scripts/update-version.sh --js --snapshot package.json
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: [build-docs]
+    if: ${{ needs.build-docs.outputs.artifact-uploaded == 'yes' }}
+    steps:
+      - name: Deploy documentation
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+          repository: ${{ secrets.DOCS_REPO }}
+          event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
+          client-payload: '{"product_key": "${{ inputs.product-key }}", "download_url": "${{inputs.product-repo}}"}'
+
