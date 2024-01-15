@@ -57,6 +57,7 @@ jobs:
           echo "username = __token__" >> ~/.pypirc
           echo "password = $PYPI_API_TOKEN" >> ~/.pypirc
           echo "\n" >> ~/.pypirc
+          cat ~/.pypirc
 
       - name: Build and publish
         env:
