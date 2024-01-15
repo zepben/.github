@@ -63,7 +63,7 @@ jobs:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           tox
-          twine upload --config-file ~/.pypirc dist/*
+          twine upload --non-interactive --config-file ~/.pypirc dist/*
         shell: bash
 
       - name: Upload coverage to Codecov
