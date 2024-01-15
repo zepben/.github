@@ -56,13 +56,14 @@ jobs:
           echo "[pypi]" > ~/.pypirc
           echo "username = __token__" >> ~/.pypirc
           echo "password = $PYPI_API_TOKEN" >> ~/.pypirc
+          echo "\n" >> ~/.pypirc
 
       - name: Build and publish
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           tox
-          twine upload dist/*
+          twine upload --config-file ~/.pypirc dist/*
         shell: bash
 
       - name: Upload coverage to Codecov
