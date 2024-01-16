@@ -209,20 +209,30 @@ jobs:
           echo " :boom: There was an error in the docusaurus build step. Current docs are not published" >> ${GITHUB_STEP_SUMMARY}
         shell: sh
 
+      - name: Check if we need to skip deployment for hotfix or LTS branch
+        run: |
+          if [[ ${GITHUB_REF_NAME} =~ "hotfix" || ${GITHUB_REF_NAME} =~ "LTS" ]]; then
+            echo "deployDocs=no" >> ${GITHUB_ENV}
+            echo "Running on LTS or hotfix branch, skip deploying docs"
+          else
+            echo "deployDocs=yes" >> ${GITHUB_ENV}
+          fi
+
       - name: Zip documentation
+        if: ${{ env.deployDocs == 'yes' }}
         run: |
           cd docs/build
           zip -r ../../docs.zip .
         shell: bash
 
       - uses: actions/upload-artifact@v3
-        if: steps.build.outcome == 'success'
+        if: ${{ steps.build.outcome == 'success' && env.deployDocs == 'yes' }}
         id: upload
         with:
           name: docs.zip
           path: docs.zip
 
-      - if: steps.upload.outcome == 'success'
+      - if: ${{ steps.upload.outcome == 'success' }}
         id: artifact
         run:
           echo "uploaded=yes" >> "${GITHUB_OUTPUT}"
