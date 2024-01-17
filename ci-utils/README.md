@@ -27,9 +27,9 @@ and is only used to create a predefined branch - a `hotfix/version` branch, an `
 
 Create the LTS/hotfix branch
  Options:
-   --type lts       - Creates LTS/#.#.X branch
-   --type hotfix    - Creates hotfix/#.#.# branch
-   --type release   - Creates release branch
+   --btype lts       - Creates LTS/#.#.X branch
+   --btype hotfix    - Creates hotfix/#.#.# branch
+   --btype release   - Creates release branch
  Arguments:
    --version <version> (optional)
 
