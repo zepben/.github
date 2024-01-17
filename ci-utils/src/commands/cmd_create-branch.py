@@ -8,7 +8,7 @@ from git import Repo
 
 @click.command("create-branch",
                short_help="Creates a branch from a list of (lts, hotfix, release)")
-@click.option("--btype", required=False, type=click.Choice(["lts", "hotfix", "release"]))
+@click.option("--btype", required=True, type=click.Choice(["lts", "hotfix", "release"]))
 @click.option("--version", required=False, type=str)
 @pass_environment
 def cli(ctx, btype, version):
@@ -33,7 +33,7 @@ def cli(ctx, btype, version):
         commit = "main"
     elif version:
         tags = [t.name for t in repo.tags
-                if re.match(f"{version}\\.[0-9]*", t.name)]
+                if re.match(f"{version}\\.[0-9]+", t.name)]
 
         # if found tags, pick the last one
         if len(tags) > 0:
@@ -44,8 +44,7 @@ def cli(ctx, btype, version):
             return
 
         version = tag.replace('v', '')
-        for c in repo.iter_commits(max_count=1):
-            commit = c
+        commit = repo.rev_parse(tag)
 
         # Check that version has the correct pattern
         validate_version(ctx, version)
