@@ -23,67 +23,28 @@ def cli(ctx, lang, project_file):
         language: {lang}
         actor: {actor}
         project file: {project_file}
-        branch/ref: {branch}"
+        branch/ref: {branch}
     """)
 
     # This seems to be just sourcing stuff...
     # build_lang ${options[@]}
 
-    # Fetch just in case
-    repo.remotes.origin.fetch(t="tags", "+refs/heads/*:refs/remotes/origin/*")
+    # Do the repo init via the ctx object
+    repo = init_git()
+
+    # Fetch just in case, hopefully this fetches all including tags
+    repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
 
     current_commit_id = repo.rev_parse("HEAD")
-    ctx.info("Checking to make sure commit {current_commit_id} has not been already released.")
+    ctx.info(f"Checking to make sure commit {current_commit_id} has not been already released.")
 
     for tag in repo.tags:
         if current_commit_id == repo.rev_parse(tag):
             ctx.fail(f"Can't run release pipeline. This commit {current_commit_id} is part of the {tag} release.")
+        elif re.match(f"[v]?{get_sem_version(ctx, lang, project_file)}"):
+            ctx.fail(f"Can't run release pipeline. There is already a tag for {tag}.")
 
-        elif [[ $tag =~ [v]?${sem_version()} ]]; then
-            fail "Can't run release pipeline. There is already a tag for ${tag}."
-        fi
-    done
-
-
-
-    # Do the repo init via the ctx object
-    # repo = init_git()
-
-    # match lang:
-    #     case "js":
-    #         lts_branch_name = f"LTS/{version_array[0]}.{version_array[1]}.X"
-    #         if lts_branch_name in ls_remotes(repo)["heads"]:
-    #             ctx.err(
-    #                 "There is already a LTS branch named {lts_branch_name}.")
-    #             exit
-    #         branch = lts_branch_name
-    #     case "csharp":
-    #
-    #         # figure out the next version
-    #         next_version = f"{version_array[0]}.{version_array[1]}.{int(version_array[2]) + 1}"
-    #         if f"v{next_version}" in ls_remotes(repo)["tags"]:
-    #             ctx.err(
-    #                 f"{version} is not the latest tag for {version_array[0]}.{version_array[1]}.")
-    #             exit
-    #
-    #         ctx.log(next_version)
-    #         hotfix_branch_name = f"hotfix/{next_version}"
-    #         if hotfix_branch_name in ls_remotes(repo)["heads"]:
-    #             ctx.err(
-    #                 "There is already a hotfix branch named {hotfix_branch_name}.")
-    #             exit
-    #
-    #         branch = hotfix_branch_name
-    #
-    #     case "jvm":
-    #         if "release" in ls_remotes(repo)["heads"]:
-    #             ctx.err("There is already a branch named 'release'.")
-    #             exit
-    #
-    #         branch = "release"
-    #
-    #     case "python":
-    #         click.echo("python not implemented yet")
+    ctx.run(f"slack-notification.sh \"Release has been triggered for {branch} by *{actor}*\"")
 
 
 # this will go to the utils package
@@ -93,15 +54,13 @@ def init_git() -> Repo:
 
 def validate_version(ctx, version: str):
     if not re.match("[0-9]+.[0-9]+.[0-9]+", version):
-        ctx.err(
+        ctx.fail(
             f"Could not proceed due to the tag {version} not having #.#.# format.")
-        exit
 
     version_array = version.split('.')
     if len(version_array) > 3:
-        ctx.err(
+        ctx.fail(
             f"Version {version} had more than 3 parts and is not a valid version. Did you enter the correct minor version?")
-        exit
 
 
 def ls_remotes(repo: Repo) -> iter:
@@ -120,7 +79,7 @@ def ls_remotes(repo: Repo) -> iter:
     return refs
 
 
-def sem_version(lang: str, project_file: str) -> str:
+def get_sem_version(ctx, lang: str, project_file: str) -> str:
 
     # Check that file exists
 
@@ -135,8 +94,37 @@ def sem_version(lang: str, project_file: str) -> str:
                 if project_version:
                     version = project_version.split("-")[0]
 
-        case "jvm": pass
-        case "python": pass
+        case "jvm":
+            # POM
+            if project_file.endswith(".xml"):
+                project: str = None
+                tree = ET.parse(project_file)
+                for v in tree.getroot().attrib.values():
+                    for p in v.split():
+                        if re.match(".*apache.*POM.*", p):
+                            project = "{" + p + "}"
+
+                if project:
+                    v = tree.getroot().findall(f"{project}version")
+                    if len(v) == 1:
+                        # v[0].text is the value of the version field
+                        # we split by '-' (-SNAPSHOT) and take the first part
+                        version = v[0].text.split('-')[0]
+                    else:
+                        ctx.fail(f"Error parsing version in {project_file}, either none found or too many")
+                else:
+                    ctx.fail(f"Couldn't find project in {project_file}. Project is XML namespace, and for POM it's expected to be something like 'http://maven.apache.org/POM/4.0.0'")
+            else:
+                ctx.fail("Project file for java projects should be in POM XML format")
+
+        case "python": 
+            with open(project_file, "r") as f:
+                text = f.read().split('\n')
+                for line in text:
+                    found_version = re.search(r".*version\s*=\s*\"(?P<version>[0-9]+\.[0-9]+\.[0-9]+)b[0-9]+\"", line)
+                    if found_version:
+                        version = found_version.group('version')
+
         case "csharp":
             if project_file.endswith(".csproj"):
                 try:
@@ -145,7 +133,7 @@ def sem_version(lang: str, project_file: str) -> str:
                     if project_version:
                         version = project_version.split("-")[0]
                 except Exception as err:
-                    ctx.err(f"Couldn't find the project version in the /Project/PropertyGroup/Version field in the {project_file}: {err}")
+                    ctx.fail(f"Couldn't find the project version in the /Project/PropertyGroup/Version field in the {project_file}: {err}")
             elif project_file.endswith(".nuspec"):
                 try:
                     tree = ET.parse(project_file)
@@ -153,14 +141,18 @@ def sem_version(lang: str, project_file: str) -> str:
                     if project_version:
                         version = project_version.split("-")[0]
                 except Exception as err:
-                    ctx.err(f"Couldn't find the project version in the /project/metadata/version field in the {project_file}: {err}")
+                    ctx.fail(f"Couldn't find the project version in the /project/metadata/version field in the {project_file}: {err}")
             elif project_file.endswith("AssemblyInfo.cs"):
                 with open(project_file, "r") as f:
                     lines = f.readall().split('\n')
                     for line in lines:
-                        found_ver = re.search(".*AssemblyVersion\((\"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\")\)", line) 
+                        found_ver = re.search(r".*AssemblyVersion\(\"(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\"\)", line) 
                         if found_ver:
-                            version = found_ver.group(1)
+                            version = found_ver.group('version')
                             break
+
+    if not version:
+        # If version not found
+        ctx.fail(f"Error parsing {project_file}. Check that {lang} is matching and the format of the file is correct.")
 
     return version

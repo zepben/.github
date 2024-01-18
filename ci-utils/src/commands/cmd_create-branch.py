@@ -33,7 +33,7 @@ def cli(ctx, btype, version):
         commit = "main"
     elif version:
         tags = [t.name for t in repo.tags
-                if re.match(f"{version}\\.[0-9]+", t.name)]
+                if re.match(rf"{version}\.[0-9]+", t.name)]
 
         # if found tags, pick the last one
         if len(tags) > 0:
@@ -105,7 +105,7 @@ def init_git() -> Repo:
 
 
 def validate_version(ctx, version: str):
-    if not re.match("[0-9]+.[0-9]+.[0-9]+", version):
+    if not re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         ctx.err(
             f"Could not proceed due to the tag {version} not having #.#.# format.")
         exit

@@ -1,6 +1,6 @@
 # CI utils package for Zepben CI 
 
-This is a ci-utils package that include all the utility commands for Zepben CI.
+This is a ci-utils package that include all the utility commands for Zepben CI and related container packaging.
 
 The package includes:
 
@@ -11,7 +11,6 @@ The package includes:
     * csharp
 
 /src - the python package for ci utilities. These are used to work on branches, update versions, update changelogs, etc.
-/tests - the python package tests
 
 ## Commands List
 
