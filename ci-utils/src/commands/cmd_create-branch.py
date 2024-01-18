@@ -1,9 +1,10 @@
 from src.cli import pass_environment
+from src.utils.git import init_git, ls_remotes
+from src.utils.version import VersionUtils
+from src.utils.slack import Slack
 
 import click
-import os
 import re
-from git import Repo
 
 
 @click.command("create-branch",
@@ -19,7 +20,6 @@ def cli(ctx, btype, version):
     else:
         ctx.log(f"Creating branch of type {btype} for version {version}")
 
-    # Do the repo init via the ctx object
     repo = init_git()
 
     # Definitions
@@ -47,41 +47,34 @@ def cli(ctx, btype, version):
         commit = repo.rev_parse(tag)
 
         # Check that version has the correct pattern
-        validate_version(ctx, version)
+        version_utils = VersionUtils(ctx)
+        version_utils.validate_version(version)
         version_array = version.split('.')
 
         ctx.log(f"commit={commit}")
 
     match btype:
         case "lts":
-            lts_branch_name = f"LTS/{version_array[0]}.{version_array[1]}.X"
-            if lts_branch_name in ls_remotes(repo)["heads"]:
-                ctx.err(
-                    "There is already a LTS branch named {lts_branch_name}.")
-                exit
-            branch = lts_branch_name
-        case "hotfix":
+            branch = f"LTS/{version_array[0]}.{version_array[1]}.X"
+            if branch in ls_remotes(repo)["heads"]:
+                ctx.fail(
+                    "There is already a LTS branch named {branch}.")
 
+        case "hotfix":
             # figure out the next version
             next_version = f"{version_array[0]}.{version_array[1]}.{int(version_array[2]) + 1}"
             if f"v{next_version}" in ls_remotes(repo)["tags"]:
-                ctx.err(
+                ctx.fail(
                     f"{version} is not the latest tag for {version_array[0]}.{version_array[1]}.")
-                exit
 
             ctx.log(next_version)
-            hotfix_branch_name = f"hotfix/{next_version}"
-            if hotfix_branch_name in ls_remotes(repo)["heads"]:
-                ctx.err(
-                    "There is already a hotfix branch named {hotfix_branch_name}.")
-                exit
-
-            branch = hotfix_branch_name
+            branch = f"hotfix/{next_version}"
+            if branch in ls_remotes(repo)["heads"]:
+                ctx.fail(f"There is already a hotfix branch named {branch}.")
 
         case "release":
             if "release" in ls_remotes(repo)["heads"]:
-                ctx.err("There is already a branch named 'release'.")
-                exit
+                ctx.fail("There is already a branch named 'release'.")
 
             branch = "release"
 
@@ -91,43 +84,7 @@ def cli(ctx, btype, version):
     try:
         repo.head.ref = repo.create_head(branch, commit)
         repo.head.ref.checkout()
-        # TODO:
-        # click.run(
-        #     f"/ci-utils/slack-notification.sh \"Created branch {branch}.\"")
-        # ctx.success("Branch {branch} created successfully")
+        Slack().send_message(f"/ci-utils/slack-notification.sh \"Created branch {branch}.\"")
+        ctx.success("Branch {branch} created successfully")
     except Exception as err:
-        ctx.err(f"Couldn't checkout branch {branch}: {err}")
-
-
-# this will go to the utils package
-def init_git() -> Repo:
-    return Repo(os.getcwd())
-
-
-def validate_version(ctx, version: str):
-    if not re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version):
-        ctx.err(
-            f"Could not proceed due to the tag {version} not having #.#.# format.")
-        exit
-
-    version_array = version.split('.')
-    if len(version_array) > 3:
-        ctx.err(
-            f"Version {version} had more than 3 parts and is not a valid version. Did you enter the correct minor version?")
-        exit
-
-
-def ls_remotes(repo: Repo) -> iter:
-    # git ls-remote is not wrapped yet
-    refs = {"heads": [], "tags": []}
-
-    def parse_refs(ref: str) -> dict[str: list[str]]:
-        found_ref = re.search(".*(heads|tags).*", ref)
-        if found_ref:
-            ref_type = found_ref.group(1)
-            # only keep the actual tag or reference (branch) name
-            refs[ref_type].append(found_ref.group(0).split('/')[2])
-
-    # Now filter out heads/tags
-    map(parse_refs, (ref.split('\t')[1] for ref in repo.git.ls_remote().split('\n')))
-    return refs
+        ctx.fail(f"Failed to checkout branch {branch}: {err}")
