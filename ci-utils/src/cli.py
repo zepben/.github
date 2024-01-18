@@ -52,15 +52,8 @@ class ComplexCLI(click.Group):
 
 
 @click.command(cls=ComplexCLI)
-@click.option(
-    "--home",
-    type=click.Path(exists=True, file_okay=False, resolve_path=True),
-    help="Changes the folder to operate on.",
-)
-@click.option("-v", "--verbose", is_flag=True, help="Enables verbose mode.")
+@click.option("-v", "--version", is_flag=True, help="Show version")
 @pass_environment
-def cli(ctx, verbose, home):
-    """A complex command line interface."""
-    ctx.verbose = verbose
-    if home is not None:
-        ctx.home = home
+def cli(ctx, version):
+    """Zepben CI utilities"""
+    pass
