@@ -1,5 +1,5 @@
 from src.cli import pass_environment
-from src.utils.git import init_git
+from src.utils.git import Git
 from src.utils.version import VersionUtils
 from src.utils.slack import Slack
 
@@ -17,7 +17,7 @@ import re
 def cli(ctx, lang, project_file):
 
     actor = os.getenv('GITHUB_ACTOR')
-    branch = os.getenv('GITHUB_REF')
+    branch = os.getenv('GITHUB_REF_NAME')
 
     ctx.info(f"""Running with following parameters:
         language: {lang}
@@ -27,20 +27,22 @@ def cli(ctx, lang, project_file):
     """)
 
     # Do the repo init via the ctx object
-    repo = init_git()
+    git = Git()
 
     # Fetch just in case
-    repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
+    git.repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
 
-    current_commit_id = repo.rev_parse("HEAD")
+    current_commit_id = git.repo.rev_parse("HEAD")
     ctx.info(f"Checking to make sure commit {current_commit_id} has not been already released.")
 
     # Versions util
     version_utils = VersionUtils(ctx)
-    for tag in repo.tags:
-        if current_commit_id == repo.rev_parse(tag):
+    for tag in git.repo.tags:
+        if current_commit_id == git.repo.rev_parse(tag):
             ctx.fail(f"Can't run release pipeline. This commit {current_commit_id} is part of the {tag} release.")
-        elif re.match(f"[v]?{version_utils.get_sem_version(lang, project_file)}"):
-            ctx.fail(f"Can't run release pipeline. There is already a tag for {tag}.")
+        else:
+            (_, sem_version) = version_utils.get_versions(lang, project_file)
+            if re.match(f"[v]?{sem_version}"):
+                ctx.fail(f"Can't run release pipeline. There is already a tag for {tag}.")
 
     Slack().send_message(f"slack-notification.sh \"Release has been triggered for {branch} by *{actor}*\"")

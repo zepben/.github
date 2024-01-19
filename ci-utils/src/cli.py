@@ -56,4 +56,4 @@ class ComplexCLI(click.Group):
 @pass_environment
 def cli(ctx, version):
     """Zepben CI utilities"""
-    pass
+    click.echo("Let's go")
