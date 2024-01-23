@@ -9,7 +9,22 @@ class CsUtils():
     def __init__(self, ctx):
         self.ctx = ctx
 
-    def write_new_version(self, project_file: str, old: str, new: str):
+    def updateSnapshotVersion(self, version: str, project_file: str):
+        if not project_file.endswith(".csproj"):
+            self.ctx.fail(
+                f"Project file must be a csproj file! Cannot update the snapshot version")
+
+        v = re.search(r"(?P<base>.*)-pre(?P<beta>\d+)", version)
+        if not v:
+            self.ctx.fail(
+                f"Couldn't parse the version {version} in {project_file}")
+
+        base = v.group("base")
+        beta = (int(v.group("beta")) + 1)
+        self.writeNewVersion(
+            self.lang, project_file, version, f"${base}-pre{beta}")
+
+    def writeNewVersion(self, project_file: str, old: str, new: str):
 
         if old != new:
             self.ctx.info(f"Writing new version {new}")
@@ -28,33 +43,38 @@ class CsUtils():
             # else:
             #     # sed -i "s/$old_ver/$new_ver/g" $file
 
-    def parseVersionForCSharp(self, project_file: str) -> (str, str):
+    def parseProjectVersion(self, project_file: str) -> (str, str):
         version: str = None
         sem_version: str = None
 
         if project_file.endswith(".csproj"):
             try:
                 tree = ET.parse(project_file)
-                version = tree.root.find("Project").find("PropertyGroup").find("Version").text
+                version = tree.root.find("Project").find(
+                    "PropertyGroup").find("Version").text
                 if version:
                     sem_version = version.split("-")[0]
             except Exception as err:
-                self.ctx.fail(f"Couldn't find the project version in the /Project/PropertyGroup/Version field in the {project_file}: {err}")
+                self.ctx.fail(
+                    f"Couldn't find the project version in the /Project/PropertyGroup/Version field in the {project_file}: {err}")
 
         elif project_file.endswith(".nuspec"):
             try:
                 tree = ET.parse(project_file)
-                version = tree.root.find("package").find("metadata").find("version").text
+                version = tree.root.find("package").find(
+                    "metadata").find("version").text
                 if version:
                     sem_version = version.split("-")[0]
             except Exception as err:
-                self.ctx.fail(f"Couldn't find the project version in the /project/metadata/version field in the {project_file}: {err}")
+                self.ctx.fail(
+                    f"Couldn't find the project version in the /project/metadata/version field in the {project_file}: {err}")
 
         elif project_file.endswith("AssemblyInfo.cs"):
             with open(project_file, "r") as f:
-                lines = f.read().split('\n')
+                lines = f.readll().split('\n')
                 for line in lines:
-                    found_ver = re.search(r".*AssemblyVersion\(\"(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\"\)", line)
+                    found_ver = re.search(
+                        r".*AssemblyVersion\(\"(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\"\)", line)
                     if found_ver:
                         version = found_ver.group('version')
                         sem_version = version
