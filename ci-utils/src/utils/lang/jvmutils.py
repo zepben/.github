@@ -10,12 +10,27 @@ class JvmUtils():
     def __init__(self, ctx):
         self.ctx = ctx
 
-    def write_new_version(self, project_file: str, old: str, new: str):
+    def updateSnapshotVersion(self, version: str, project_file: str):
+        v = re.search(r"(?P<base>.*)-SNAPSHOT(?P<beta>\d+)", version)
+        if not v:
+            self.ctx.fail(
+                f"Couldn't parse the version {version} in {project_file}")
+
+        base = v.group("base")
+        beta = (int(v.group("beta")) + 1)
+        self.writeNewVersion(
+            self.ctx, project_file, version, f"${base}-SNAPSHOT{beta}")
+
+    def writeNewVersion(self, project_file: str, old: str, new: str):
         if old != new:
             self.ctx.info(f"Writing new version {new}")
             self.ctx.fail("JVM writing not implemented")
 
-    def parseVersionFromPom(ctx, project_file: str) -> (str, str):
+    def parseProjectVersion(self, project_file: str) -> (str, str):
+        if not project_file.endswith(".xml"):
+            self.ctx.fail(
+                "Project file for java projects should be in POM XML format")
+
         project: str = None
         version: str = None
         sem_version: str = None
@@ -33,11 +48,10 @@ class JvmUtils():
                 version = v[0].text
                 sem_version = version.split('-')[0]
             else:
-                ctx.fail(f"Error parsing version in {project_file}, either none found or too many")
+                self.ctx.fail(
+                    f"Error parsing version in {project_file}, either none found or too many")
         else:
-            ctx.fail(f"Couldn't find project in {project_file}. Project is XML namespace, and for POM it's expected to be something like 'http://maven.apache.org/POM/4.0.0'")
-
-        if not version:
-            ctx.fail("ERRRRR")
+            self.ctx.fail(
+                f"Couldn't find project in {project_file}. Project is XML namespace, and for POM it's expected to be something like 'http://maven.apache.org/POM/4.0.0'")
 
         return (version, sem_version)

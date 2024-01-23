@@ -36,13 +36,13 @@ def cli(ctx, lang, project_file):
     ctx.info(f"Checking to make sure commit {current_commit_id} has not been already released.")
 
     # Versions util
-    version_utils = VersionUtils(ctx)
+    version_utils = VersionUtils(ctx, lang, project_file)
     for tag in git.repo.tags:
         if current_commit_id == git.repo.rev_parse(tag):
             ctx.fail(f"Can't run release pipeline. This commit {current_commit_id} is part of the {tag} release.")
         else:
-            (_, sem_version) = version_utils.get_versions(lang, project_file)
-            if re.match(f"[v]?{sem_version}"):
+            version_utils.get_versions()
+            if re.match(f"[v]?{version_utils.sem_version}"):
                 ctx.fail(f"Can't run release pipeline. There is already a tag for {tag}.")
 
     Slack().send_message(f"slack-notification.sh \"Release has been triggered for {branch} by *{actor}*\"")

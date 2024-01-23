@@ -2,6 +2,8 @@ import os
 import re
 import datetime
 
+from typing import Union
+
 from src.utils.lang.jsutils import JsUtils
 from src.utils.lang.jvmutils import JvmUtils
 from src.utils.lang.pyutils import PyUtils
@@ -17,10 +19,20 @@ class VersionUtils():
     new_version: str = None
     sem_version: str = None
 
+    lang_utils: Union[JsUtils, JvmUtils, PyUtils, CsUtils] = None
+
     def __init__(self, ctx, lang: str, project_file: str):
         self.ctx = ctx
         self.lang = lang
         self.project_file = project_file
+        self.get_versions()
+
+        match lang:
+            case "js": self.lang_utils = JsUtils(ctx)
+            case "jvm": self.lang_utils = JvmUtils(ctx)
+            case "python": self.lang_utils = PyUtils(ctx)
+            case "csharp": self.lang_utils = CsUtils(ctx)
+            case _: self.ctx.fail(f"Unsupported language provided: {lang}")
 
     def validate_version(self, version: str):
         if not re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version):
@@ -53,62 +65,13 @@ class VersionUtils():
 
     def update_version(self, vtype):
         self.increment_version(vtype)
-        match self.lang:
-            case "js":
-                JsUtils(self.ctx).write_new_version(self.ctx, project_file=self.project_file, old=self.version, new=f"{self.new_version}-next1")
-            case "jvm":
-                JvmUtils(self.ctx).write_new_version(self.ctx, project_file=self.project_file, old=self.version, new=f"{self.new_version}-SNAPSHOT1")
-            case "csharp":
-                if self.project_file.endswith(".csproj") or self.project_file.endswith(".nuspec"):
-                    self.new_version = f"${self.new_version}-pre1"
-                CsUtils(self.ctx).write_new_version(self.ctx, project_file=self.project_file, old=self.version, new=self.new_version)
-            case "python":
-                PyUtils(self.ctx).write_new_version(self.ctx, project_file=self.project_file, old=self.version, new=f"{self.new_version}b1")
-            case _: self.ctx.fail(f"Error with provided language {self.lang}")
+        self._update_new_version(self.new_version)
+        self.lang_utils.writeNewVersion(self.ctx, self.project_file, old=self.version, new=self.new_version)
 
     def update_snapshot_version(self):
-        self.get_versions(self.lang, self.project_file)
-        match self.lang:
-            case "js":
-                v = re.search(r"(?P<base>.*)-next(?P<beta>\d+)", self.version)
-                if not v:
-                    self.ctx.fail(f"Couldn't parse the version {self.version} in {self.project_file}")
+        self.lang_utils.updateSnapshotVersion(self.version, self.project_file)
 
-                base = v.group("base")
-                beta = (int(v.group("beta")) + 1)
-                JsUtils(self.ctx).write_new_version(self.ctx, self.project_file, self.version, f"{base}-next{beta}")
-
-            case "jvm":
-                v = re.search(r"(?P<base>.*)-SNAPSHOT(?P<beta>\d+)", self.version)
-                if not v:
-                    self.ctx.fail(f"Couldn't parse the version {self.version} in {self.project_file}")
-
-                base = v.group("base")
-                beta = (int(v.group("beta")) + 1)
-                JvmUtils(self.ctx).write_new_version(self.ctx, self.project_file, self.version, f"${base}-SNAPSHOT{beta}")
-
-            case "python":
-                v = re.search(r"(?P<base>.*)b(?P<beta>\d+)", self.version)
-                if not v:
-                    self.ctx.fail(f"Couldn't parse the version {self.version} in {self.project_file}")
-
-                base = v.group("base")
-                beta = (int(v.group("beta")) + 1)
-                PyUtils(self.ctx).write_new_version(self.ctx, self.project_file, self.version, f"${base}b{beta}")
-
-            case "csharp":
-                if not self.project_file.endswith(".csproj"):
-                    self.ctx.fail(f"Project file must be a csproj file! Cannot update the snapshot version")
-
-                v = re.search(r"(?P<base>.*)-pre(?P<beta>\d+)", self.version)
-                if not v:
-                    self.ctx.fail(f"Couldn't parse the version {self.version} in {self.project_file}")
-
-                base = v.group("base")
-                beta = (int(v.group("beta")) + 1)
-                CsUtils(self.ctx).write_new_version(self.lang, self.project_file, self.version, f"${base}-pre{beta}")
-
-    def get_versions(self) -> (str, str):
+    def get_versions(self):
 
         # Check that file exists
         if not os.path.exists(self.project_file):
@@ -117,23 +80,7 @@ class VersionUtils():
         if self.version or self.sem_version:
             return (self.version, self.sem_version)
 
-        match self.lang:
-            case "js":
-                # we expect the file to be json
-                self.version = JsUtils(self.ctx).parseVersionFromJS(self.ctx, self.project_file)
-
-            case "jvm":
-                # POM
-                if self.project_file.endswith(".xml"):
-                    (self.version, self.sem_version) = JvmUtils(self.ctx).parseVersionFromPom(self.ctx, self.project_file)
-                else:
-                    self.ctx.fail("Project file for java projects should be in POM XML format")
-
-            case "python":
-                (self.version, self.sem_version) = PyUtils(self.ctx).parseVersionFromPy(self.ctx, self.project_file)
-
-            case "csharp":
-                (self.version, self.sem_version) = CsUtils(self.ctx).parseVersionForCSharp(self.ctx, self.project_file)
+        (self.version, self.sem_version) = self.lang_utils.parseProjectVersion(self.project_file)
 
         if not self.version:
             # If version not found
@@ -143,11 +90,8 @@ class VersionUtils():
 
     def update_changelog(self, grow_changelog: bool, changelog_file: str):
 
-        def _date() -> str:
-            return datetime.datetime.now().strftime("%Y-%m-%d")
-
         release_notes_template="### Breaking Changes\n* None.\n\n### New Features\n* None.\n\n### Enhancements\n* None.\n\n### Fixes\n* None.\n\n### Notes\n* None.\n"
-        #  TODO: figure out what this is
+        # Check if the version pattern matches ## [num.num.num - ]
         with open(changelog_file, "r") as f:
             grow_pattern_ok: bool = False
             text = f.readall().split('\n')
@@ -170,7 +114,7 @@ class VersionUtils():
                         # Replace the existing UNRELEASED with date
                         unreleased_line = re.search("UNRELEASED", line)
                         if unreleased_line:
-                            line.replace("UNRELEASED", _date())
+                            line.replace("UNRELEASED", datetime.datetime.now().strftime("%Y-%m-%d"))
                             # sed -i "s/UNRELEASED/$(date +'%Y-%m-%d')/g" $changelog
                     new_changelog.append(line)
 
@@ -182,3 +126,18 @@ class VersionUtils():
             self.ctx.info("Resetting changelog to template...")
             with open(changelog_file, "w") as f:
                 f.write(f"## [{self.new_version}-SNAPSHOT*] - UNRELEASED\n{release_notes_template}")
+
+    def _update_new_version(self, base: str):
+        if not self.new_version:
+            self.ctx.fail("New version was not generated, check you've ran increment_version prior to updating it")
+
+        match self.lang:
+            case "js":
+                self.new_version = f"{base}-next1"
+            case "jvm":
+                self.new_version = f"{base}-SNAPSHOT1"
+            case "python":
+                self.new_version = f"{base}b"
+            case "csharp":
+                if self.project_file.endswith(".csproj") or self.project_file.endswith(".nuspec"):
+                    self.new_version = f"${self.new_version}-pre1"
