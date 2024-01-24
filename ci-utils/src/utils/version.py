@@ -10,16 +10,15 @@ from src.utils.lang.pyutils import PyUtils
 from src.utils.lang.csutils import CsUtils
 
 
-class VersionUtils():
+class VersionUtils:
 
-    ctx: str
     lang: str
     project_file: str
-    version: str = None
-    new_version: str = None
-    sem_version: str = None
+    version: str 
+    new_version: str 
+    sem_version: str
 
-    lang_utils: Union[JsUtils, JvmUtils, PyUtils, CsUtils] = None
+    lang_utils: Union[JsUtils, JvmUtils, PyUtils, CsUtils]
 
     def __init__(self, ctx, lang: str, project_file: str):
         self.ctx = ctx
@@ -46,7 +45,7 @@ class VersionUtils():
     def increment_version(self, version_type: str):
         self.ctx.info(f"Updating {version_type} version...")
 
-        version_array = self.version.split('.')
+        version_array = [int(i) for i in self.version.split('.')]
         match version_type:
             case "patch":
                 version_array[2] += 1
@@ -60,13 +59,13 @@ class VersionUtils():
             case _:
                 self.ctx.fail(f"{version_type} is invalid.")
 
-        self.new_version = ".".join(version_array)
+        self.new_version = ".".join((str(i) for i in version_array))
         self.ctx.info(f"New version: {self.new_version}")
 
     def update_version(self, vtype):
         self.increment_version(vtype)
         self._update_new_version(self.new_version)
-        self.lang_utils.writeNewVersion(self.ctx, self.project_file, old=self.version, new=self.new_version)
+        self.lang_utils.writeNewVersion(self.project_file, old=self.version, new=self.new_version)
 
     def update_snapshot_version(self):
         self.lang_utils.updateSnapshotVersion(self.version, self.project_file)
@@ -94,7 +93,7 @@ class VersionUtils():
         # Check if the version pattern matches ## [num.num.num - ]
         with open(changelog_file, "r") as f:
             grow_pattern_ok: bool = False
-            text = f.readall().split('\n')
+            text = f.read().split('\n')
             for line in text:
                 if re.match(r"## \[[0-9]+\.[0-9]+\.[0-9]\] -", line):
                     grow_pattern_ok = True
@@ -103,9 +102,9 @@ class VersionUtils():
         if grow_changelog and grow_pattern_ok:
             self.ctx.info("Updating the release date")
 
-            new_changelog: list[str]
+            new_changelog: list[str] = []
             with open(changelog_file, "r") as f:
-                text = f.readall().split('\n')
+                text = f.read().split('\n')
                 for line in text:
                     if re.match("^# ", line):
                         # Append template

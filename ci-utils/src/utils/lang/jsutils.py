@@ -2,9 +2,7 @@ import json
 import re
 
 
-class JsUtils():
-
-    ctx: str
+class JsUtils:
 
     def __init__(self, ctx):
         self.ctx = ctx
@@ -17,24 +15,23 @@ class JsUtils():
 
         base = v.group("base")
         beta = (int(v.group("beta")) + 1)
-        self.writeNewVersion(
-            self.ctx, project_file, version, f"{base}-next{beta}")
+        self.writeNewVersion(project_file, version, f"{base}-next{beta}")
 
     def writeNewVersion(self, project_file: str, old: str, new: str):
         if old != new:
             self.ctx.info(f"Writing new version {new}")
             self.ctx.fail("JS writing not implemented")
-            if not re.match(r".*[\.csproj|\.nuspec|AssemblyInfo\.cs]$", project_file):
+            if not re.match(r".*[.csproj|.nuspec|AssemblyInfo.cs]$", project_file):
                 self.ctx.fail(
                     f"Project file must be be a csproj, nuspec or AssemblyInfo.cs file")
             # run jq --arg VERSION $new_ver '.version = $VERSION' $file
             # run cp -f $output_file $file
 
-    def parseProjectVersion(self, project_file: str) -> (str, str):
+    def parseProjectVersion(self, project_file: str) -> tuple[str, str]:
         with open(project_file) as f:
             project = json.load(f)
             project_version = project.get("version", None)
             if not project_version:
                 self.ctx.fail("Err in JS parsing version")
 
-            return (project_version, project_version.split("-")[0])
+            return project_version, project_version.split("-")[0]
