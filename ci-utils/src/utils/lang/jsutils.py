@@ -19,13 +19,14 @@ class JsUtils:
 
     def writeNewVersion(self, project_file: str, old: str, new: str):
         if old != new:
-            self.ctx.info(f"Writing new version {new}")
-            self.ctx.fail("JS writing not implemented")
-            if not re.match(r".*[.csproj|.nuspec|AssemblyInfo.cs]$", project_file):
-                self.ctx.fail(
-                    f"Project file must be be a csproj, nuspec or AssemblyInfo.cs file")
-            # run jq --arg VERSION $new_ver '.version = $VERSION' $file
-            # run cp -f $output_file $file
+            self.ctx.info(f"Updating old version '{old}' to new version '{new}'")
+            project = ""
+            with open(project_file) as f:
+                project = json.load(f)
+                project["version"] = new
+
+            with open(project_file, "w") as f:
+                json.dump(project, f, indent=2)
 
     def parseProjectVersion(self, project_file: str) -> tuple[str, str]:
         with open(project_file) as f:
