@@ -9,7 +9,7 @@ class Environment:
         self.verbose = False
         self.home = os.getcwd()
 
-    def log(self, msg, *args):
+    def info(self, msg, *args):
         """Logs a message to stderr."""
         if args:
             msg %= args
