@@ -39,10 +39,9 @@ Create the LTS/hotfix branch
  Update the project version to the next one (patch version for LTS, minor version for all others).
  Options:
    --no-commit       - Only update the file without committing.
-   --snapshot        - Increments the snapshot version. Only useful for C# and Python, ie 1.0.0-pre1, 1.0.0b1. Java doesn't have this concept.
+   --snapshot        - Increments the snapshot version. 
    --release         - Use this option on create release step.
    --grow-changelog  - Updates changelog by inserting EDNAR-style template instead of resetting it to the regular one.
-    TODO: add `build_lang_options` where relevant (i.e reimplement build_lang_options and java_build_tool_options in ../../scripts/common.sh)
  Args:
    1  - Project file.
   [2] - Changelog file.
@@ -56,7 +55,6 @@ Create the LTS/hotfix branch
  * A new entry of changelog is added when command is specified.
  Options:
    --no-commit     - Only update the file without committing.
-    TODO: add `build_lang_options` where relevant (i.e reimplement build_lang_options and java_build_tool_options in ../../scripts/common.sh)
  Args:
    1  - Project file.
   [2] - EDNAR-style changelog file.

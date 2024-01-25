@@ -60,6 +60,8 @@ class Git():
 
         self.repo.index.commit(comment, author=Actor("CI", "ci@zepben.com"))
 
+    def pull(self, branch):
+        self.repo.remotes.origin.pull(branch)
 
     def push(self, branch):
         self.repo.remotes.origin.push(
