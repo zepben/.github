@@ -123,8 +123,8 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
         if release:
             git.commit_update_version()
             git.checkout(branch)
-            git.pull("origin", "release")
-            git.push("origin", branch)
+            git.pull("release")
+            git.push(branch)
             git.delete_remote_branch("release")
         else:
             git.commit_update_version(branch)
