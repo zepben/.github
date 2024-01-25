@@ -5,6 +5,7 @@ from src.utils.slack import Slack
 
 import click
 import re
+import os
 
 
 @click.command("create-branch",
@@ -16,9 +17,9 @@ def cli(ctx, btype, version):
     """Creates a branch from a list of (lts, hotfix, release)"""
 
     if btype != "release" and version is None:
-        ctx.err("Err")
+        ctx.fail("Error: version cannot be empty for lts/hotfix branch")
     else:
-        ctx.log(f"Creating branch of type {btype} for version {version}")
+        ctx.info(f"Creating branch of type {btype} for version {version}")
 
     git = Git()
 
@@ -38,7 +39,7 @@ def cli(ctx, btype, version):
         # if found tags, pick the last one
         if len(tags) > 0:
             tag = tags[-1]
-            ctx.log(f"Found {tag}")
+            ctx.info(f"Found {tag}")
         else:
             ctx.err(f"Couldn't find the tag for the version {version}")
             return
@@ -51,41 +52,41 @@ def cli(ctx, btype, version):
         version_utils.validate_version(version)
         version_array = version.split('.')
 
-        ctx.log(f"commit={commit}")
+        ctx.info(f"commit={commit}")
 
     match btype:
         case "lts":
             branch = f"LTS/{version_array[0]}.{version_array[1]}.X"
-            if branch in git.ls_remotes()["heads"]:
+            if branch in git.remote_refs["heads"]:
                 ctx.fail(
                     "There is already a LTS branch named {branch}.")
 
         case "hotfix":
             # figure out the next version
-            next_version = f"{version_array[0]}.{version_array[1]}.{int(version_array[2]) + 1}"
-            if f"v{next_version}" in git.ls_remotes()["tags"]:
+            next_version = f"{version_array[0]}.{
+                version_array[1]}.{int(version_array[2]) + 1}"
+            if f"v{next_version}" in git.remote_refs["tags"]:
                 ctx.fail(
                     f"{version} is not the latest tag for {version_array[0]}.{version_array[1]}.")
 
-            ctx.log(next_version)
             branch = f"hotfix/{next_version}"
-            if branch in git.ls_remotes()["heads"]:
+            if branch in git.remote_refs["heads"]:
                 ctx.fail(f"There is already a hotfix branch named {branch}.")
 
         case "release":
-            if "release" in git.ls_remotes()["heads"]:
+            if "release" in git.remote_refs["heads"]:
                 ctx.fail("There is already a branch named 'release'.")
 
             branch = "release"
 
     # info "Creating the branch and checkout"
 
-    ctx.log(f"Checking out {branch} off {commit}")
+    ctx.info(f"Checking out {branch} off {commit}")
     try:
+        actor = os.getenv('GITHUB_ACTOR')
         git.repo.head.ref = git.repo.create_head(branch, commit)
         git.repo.head.ref.checkout()
-        # TODO: make it static or nest in the ctx
-        Slack().send_message(f"/ci-utils/slack-notification.sh \"Created branch {branch}.\"")
-        ctx.success("Branch {branch} created successfully")
+        Slack(ctx).send_message(f"Created branch *{branch}* (by *{actor}*)")
+        ctx.info(f"Branch {branch} created successfully")
     except Exception as err:
         ctx.fail(f"Failed to checkout branch {branch}: {err}")

@@ -45,4 +45,4 @@ def cli(ctx, lang, project_file):
             if re.match(f"[v]?{version_utils.sem_version}"):
                 ctx.fail(f"Can't run release pipeline. There is already a tag for {tag}.")
 
-    Slack().send_message(f"slack-notification.sh \"Release has been triggered for {branch} by *{actor}*\"")
+    Slack(ctx).send_message(f"Release has been triggered for {branch} by *{actor}*")

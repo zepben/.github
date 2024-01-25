@@ -1,7 +1,7 @@
 import os
 import re
 
-from git import Repo
+from git import Repo, Actor
 
 
 class Git():
@@ -13,11 +13,11 @@ class Git():
 
     def init_git(self):
         self.repo = Repo(os.getcwd())
+        self.ls_remotes()
 
     # TODO: consider renaming to fetch_remotes() and just use the object field
     # Also, obviously, test if we even need to use ls_remotes or local tags are ok
     def ls_remotes(self):
-        # git ls-remote is not wrapped yet
         if self.remote_refs["heads"]:
             return self.remote_refs
 
@@ -36,31 +36,35 @@ class Git():
     def delete_remote_branch(self, branch: str):
         self.repo.remotes.origin.push(refspec=(f":{branch}"))
 
+    # TODO: check what happens if we just create_head without the second param
+    # if that works, then we only need to track the remote branch, everything
+    # else should be the same
     def checkout(self, branch: str):
-        ref = ""
-        current = "main"
-        if branch in self.repo.tags:
-            ref = self.repo.commit(branch)
+        if branch in self.repo.heads:
+            self.repo.create_head(branch, self.repo.remotes.origin.refs[branch])
+            self.repo.heads[branch].set_tracking_branch(self.repo.remotes.origin.refs[branch])
         else:
-            ref = self.repo.create_head(branch, current)
-        self.repo.head.reference = ref
+            self.repo.create_head(branch)
+        self.repo.heads[branch].checkout()
         self.repo.head.reset(index=True, working_tree=True)
-        self.ctx.fail("GIT CHECKOUT BRANCH not implemented yet")
 
-    def stage(self):
-        self.ctx.fail("GIT STAGE not implemented yet")
+    def stage(self, files: list[str]):
+        self.repo.index.add(files)
 
     def status(self):
-        self.ctx.fail("GIT STATUS not implemented yet")
+        self.ctx.info(self.repo.git.status("-uno"))
 
     def commit(self, comment: str = ""):
         if len(comment) == 0:
             self.ctx.fail("Cannot commit code without comment!")
 
-        self.ctx.fail("GIT COMMIT is not yet implemented!")
+        self.repo.index.commit(comment, author=Actor("CI", "ci@zepben.com"))
 
-    def push(self, remote, branch):
-        self.ctx.fail("Push is not yet implemented!")
+
+    def push(self, branch):
+        self.repo.remotes.origin.push(
+            refspec=(f"{branch}:{branch}")
+        ).raise_if_error()
 
     def commit_update_version(self, branch: str = ""):
         if len(branch) == 0:
@@ -68,4 +72,4 @@ class Git():
 
         self.ctx.info(f"Commiting changes to {branch}...")
         self.commit(comment="Update version to next snapshot [skip ci]")
-        self.push("origin", branch)
+        self.push(branch)
