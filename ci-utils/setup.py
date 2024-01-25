@@ -7,7 +7,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'Click',
-        'gitpython'
+        'gitpython',
+        'slack_sdk'
     ],
     entry_points={
         'console_scripts': [
