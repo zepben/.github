@@ -98,11 +98,11 @@ jobs:
           echo "artifact-path=$(echo target/$artifact)" >> ${GITHUB_ENV}
           mvn clean package -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
 
-      - name: Upload coverage to Codecov
-        if: steps.build.outcome == 'success'
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          #  - name: Upload coverage to Codecov
+          #    if: steps.build.outcome == 'success'
+          #    uses: codecov/codecov-action@v3
+          #    with:
+          #      token: ${{ secrets.CODECOV_TOKEN }}
 
       - uses: actions/upload-artifact@v3
         with:

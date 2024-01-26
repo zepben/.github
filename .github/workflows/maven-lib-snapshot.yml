@@ -159,7 +159,10 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
 
   build-docs:
     runs-on: ubuntu-latest

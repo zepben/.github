@@ -80,9 +80,11 @@ jobs:
           #     repository-url: https://pypi.org/p/${{ inputs.pypi-project-name }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
 
       - name: Check if docs present
         id: docs
