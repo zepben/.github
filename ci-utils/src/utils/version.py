@@ -107,13 +107,13 @@ class VersionUtils:
                 text = f.read().split('\n')
                 for line in text:
                     if re.match("^# ", line):
-                        # Append template
-                        line = f"## [{self.new_version}-SNAPSHOT*] - UNRELEASED\n{release_notes_template}\n{line}"
+                        ## Make a new line with a template
+                        line = f"{line}\n## [{self.new_version}-SNAPSHOT*] - UNRELEASED\n{release_notes_template}"
                     else:
-                        # Replace the existing UNRELEASED with date
+                        # Replace the *existing* UNRELEASED with date
                         unreleased_line = re.search("UNRELEASED", line)
                         if unreleased_line:
-                            line.replace("UNRELEASED", datetime.datetime.now().strftime("%Y-%m-%d"))
+                            line = line.replace("UNRELEASED", datetime.datetime.now().strftime("%Y-%m-%d"))
                             # sed -i "s/UNRELEASED/$(date +'%Y-%m-%d')/g" $changelog
                     new_changelog.append(line)
 

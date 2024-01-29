@@ -1,9 +1,9 @@
 from src.cli import Environment 
 import os
-import shutil
 from src.utils.lang.csutils import CsUtils
 
 ctx = Environment()
+
 
 def test_cs_parse_version_cproj():
     test_file = "/".join((os.path.dirname(__file__), "test_files/test.csproj"))
@@ -11,11 +11,13 @@ def test_cs_parse_version_cproj():
     assert version == "0.26.0-pre3"
     assert sem_version == "0.26.0"
 
+
 def test_cs_parse_version_nuspec():
     test_file = "/".join((os.path.dirname(__file__), "test_files/test.nuspec"))
     version, sem_version = CsUtils(ctx).parseProjectVersion(test_file)
     assert version == "0.26.0-pre3"
     assert sem_version == "0.26.0"
+
 
 def test_cs_parse_version_assemblyinfo():
     test_file = "/".join((os.path.dirname(__file__), "test_files/AssemblyInfo.cs"))

@@ -10,8 +10,7 @@ class CsUtils():
 
     def updateSnapshotVersion(self, version: str, project_file: str):
         if not project_file.endswith(".csproj"):
-            self.ctx.fail(
-                f"Project file must be a csproj file! Cannot update the snapshot version")
+            self.ctx.fail("Project file must be a csproj file! Cannot update the snapshot version")
 
         v = re.search(r"(?P<base>.*)-pre(?P<beta>\d+)", version)
         if not v:
@@ -54,8 +53,7 @@ class CsUtils():
                 root = tree.getroot()
 
                 # now find the project and namespace
-                m = re.search(r".*(?P<project>{(?P<ns>http://.*)}).*", root.tag)
-                project = m.group("project")
+                m = re.search(r".*{(?P<ns>http://.*)}.*", root.tag)
                 ns = m.group("ns")
 
                 # Register the namespace for the writing out
