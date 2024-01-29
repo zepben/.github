@@ -1,7 +1,6 @@
 from src.cli import pass_environment
 from src.utils.git import Git
 from src.utils.version import VersionUtils
-from src.utils.slack import Slack
 
 import click
 import os
