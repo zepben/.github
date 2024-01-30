@@ -14,8 +14,8 @@ class VersionUtils:
 
     lang: str
     project_file: str
-    version: str 
-    new_version: str 
+    version: str
+    new_version: str
     sem_version: str
 
     lang_utils: Union[JsUtils, JvmUtils, PyUtils, CsUtils]
@@ -24,7 +24,8 @@ class VersionUtils:
         self.ctx = ctx
         self.lang = lang
         self.project_file = project_file
-        self.get_versions()
+        self.version = ""
+        self.sem_version = ""
 
         match lang:
             case "js": self.lang_utils = JsUtils(ctx)
@@ -33,19 +34,22 @@ class VersionUtils:
             case "csharp": self.lang_utils = CsUtils(ctx)
             case _: self.ctx.fail(f"Unsupported language provided: {lang}")
 
+        self.get_versions()
+
     def validate_version(self, version: str):
         if not re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version):
             self.ctx.fail(
                 f"Could not proceed due to the tag {version} not having #.#.# format.")
 
         version_array = version.split('.')
+        print(version_array)
         if len(version_array) > 3:
             self.ctx.fail(f"Version {version} had more than 3 parts and is not a valid version. Did you enter the correct minor version?")
 
     def increment_version(self, version_type: str):
         self.ctx.info(f"Updating {version_type} version...")
 
-        version_array = [int(i) for i in self.version.split('.')]
+        version_array = [int(i) for i in self.sem_version.split('.')]
         match version_type:
             case "patch":
                 version_array[2] += 1
