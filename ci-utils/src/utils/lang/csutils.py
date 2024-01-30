@@ -19,6 +19,7 @@ class CsUtils():
 
         base = v.group("base")
         beta = (int(v.group("beta")) + 1)
+        print(f"{base}-pre{beta}")
         self.writeNewVersion(project_file, version, f"{base}-pre{beta}")
 
     def writeNewVersion(self, project_file: str, old: str, new: str):
@@ -30,8 +31,11 @@ class CsUtils():
                 tree = ET.parse(project_file)
                 root = tree.getroot()
                 version_elem = root.find("./PropertyGroup/Version")
-                if version_elem and version_elem.text == old:
+                if version_elem is not None and version_elem.text == old:
+                    self.ctx.info(f"Found {old} version, updating to {new}")
                     version_elem.text = new
+                else:
+                    self.ctx.info("Did't find version!")
 
                 # these turn "12.23.12.44-pre34" into "12.23.12.44.34"
                 assembly = root.find("./PropertyGroup/AssemblyVersion")
@@ -45,10 +49,9 @@ class CsUtils():
                 # Save the changes
                 tree.write(project_file, encoding="utf-8", xml_declaration=True)
 
-
             elif project_file.endswith(".nuspec"):
                 # parse XML with comments included to keep the original content
-                parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True)) # 
+                parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
                 tree = ET.parse(project_file, parser)
                 root = tree.getroot()
 
@@ -71,7 +74,6 @@ class CsUtils():
 
                 with open(project_file, "w") as f:
                     f.write(new_text)
-
 
     def parseProjectVersion(self, project_file: str) -> tuple[str, str]:
         version: Any = None

@@ -20,9 +20,10 @@ class Environment:
         if self.verbose:
             self.log(msg, *args)
 
-    def err(self, msg, *args):
+    def fail(self, msg, *args):
         """ Logs an error to stdout """
         click.echo(msg, *args)
+        raise Exception(msg)
 
     def warn(self, msg, *args):
         """ Logs an warning to stdout """
