@@ -18,7 +18,7 @@ class Git():
     # TODO: consider renaming to fetch_remotes() and just use the object field
     # Also, obviously, test if we even need to use ls_remotes or local tags are ok
     def ls_remotes(self):
-        if self.remote_refs["heads"]:
+        if len(self.remote_refs["heads"]) > 0:
             return self.remote_refs
 
         def parse_refs(ref: str):
@@ -26,15 +26,24 @@ class Git():
             if found_ref:
                 ref_type = found_ref.group("ref_type")
                 # only keep the actual tag or reference (branch) name
-                self.remote_refs[ref_type].append(found_ref.group(0).split('/')[-1])
+                return (ref_type, found_ref.group(0).split('/')[-1])
 
         # Now filter out heads/tags
-        map(parse_refs,
-            (ref.split('\t')[1] for ref in self.repo.git.ls_remote().split('\n')))
-        return self.remote_refs
+        for pair in list(map(parse_refs, (ref.split('\t')[1] for ref in self.repo.git.ls_remote().split('\n')))):
+            if pair is not None:
+                self.remote_refs[pair[0]].append(pair[1])
 
     def delete_remote_branch(self, branch: str):
         self.repo.remotes.origin.push(refspec=(f":{branch}"))
+
+    def check_tag_exists(self, version: str):
+        self.ctx.info("Checking remote tags if version exists...")
+        for tag in self.remote_refs["tags"]:
+            if re.match(f"(^v)*{version}$", tag):
+                #     old_tag=$(git tag -l | grep "^$version$" || true)
+                #     tag=$(git tag -l | grep "^v$version$" || true)
+                # if [[ ! -z $tag || ! -z $old_tag ]]; then
+                self.ctx.fail("Tag for this version already exists")
 
     # TODO: check what happens if we just create_head without the second param
     # if that works, then we only need to track the remote branch, everything
@@ -75,3 +84,6 @@ class Git():
         self.ctx.info(f"Commiting changes to {branch}...")
         self.commit(comment="Update version to next snapshot [skip ci]")
         self.push(branch)
+
+    def commit_finalise_version(self):
+        self.ctx.fail("commit finalise version is not yet implemented")

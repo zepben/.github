@@ -118,7 +118,6 @@ class VersionUtils:
                         unreleased_line = re.search("UNRELEASED", line)
                         if unreleased_line:
                             line = line.replace("UNRELEASED", datetime.datetime.now().strftime("%Y-%m-%d"))
-                            # sed -i "s/UNRELEASED/$(date +'%Y-%m-%d')/g" $changelog
                     new_changelog.append(line)
 
             self.ctx.info("Inserting template into changelog...")
