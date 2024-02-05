@@ -11,7 +11,6 @@ from src.utils.lang.csutils import CsUtils
 
 
 class VersionUtils:
-
     lang: str
     project_file: str
     version: str
@@ -28,28 +27,34 @@ class VersionUtils:
         self.sem_version = ""
 
         match lang:
-            case "js": self.lang_utils = JsUtils(ctx)
-            case "jvm": self.lang_utils = JvmUtils(ctx)
-            case "python": self.lang_utils = PyUtils(ctx)
-            case "csharp": self.lang_utils = CsUtils(ctx)
-            case _: self.ctx.fail(f"Unsupported language provided: {lang}")
+            case "js":
+                self.lang_utils = JsUtils(ctx)
+            case "jvm":
+                self.lang_utils = JvmUtils(ctx)
+            case "python":
+                self.lang_utils = PyUtils(ctx)
+            case "csharp":
+                self.lang_utils = CsUtils(ctx)
+            case _:
+                self.ctx.fail(f"Unsupported language provided: {lang}")
 
         self.get_versions()
 
     def validate_version(self, version: str):
         if not re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version):
-            self.ctx.fail(
-                f"Could not proceed due to the tag {version} not having #.#.# format.")
+            self.ctx.fail(f"Could not proceed due to the tag {version} not having #.#.# format.")
 
-        version_array = version.split('.')
+        version_array = version.split(".")
         print(version_array)
         if len(version_array) > 3:
-            self.ctx.fail(f"Version {version} had more than 3 parts and is not a valid version. Did you enter the correct minor version?")
+            self.ctx.fail(
+                f"Version {version} had more than 3 parts and is not a valid version. Did you enter the correct minor version?"
+            )
 
     def increment_version(self, version_type: str):
         self.ctx.info(f"Updating {version_type} version...")
 
-        version_array = [int(i) for i in self.sem_version.split('.')]
+        version_array = [int(i) for i in self.sem_version.split(".")]
         match version_type:
             case "patch":
                 version_array[2] += 1
@@ -75,7 +80,6 @@ class VersionUtils:
         self.lang_utils.updateSnapshotVersion(self.version, self.project_file)
 
     def get_versions(self):
-
         # Check that file exists
         if not os.path.exists(self.project_file):
             self.ctx.fail(f"The provided file {self.project_file} doesn't exist!")
@@ -87,17 +91,18 @@ class VersionUtils:
 
         if not self.version:
             # If version not found
-            self.ctx.fail(f"Error parsing {self.project_file}. Check that {self.lang} is matching and the format of the file is correct.")
+            self.ctx.fail(
+                f"Error parsing {self.project_file}. Check that {self.lang} is matching and the format of the file is correct."
+            )
 
         return (self.version, self.sem_version)
 
     def update_changelog(self, grow_changelog: bool, changelog_file: str):
-
-        release_notes_template="### Breaking Changes\n* None.\n\n### New Features\n* None.\n\n### Enhancements\n* None.\n\n### Fixes\n* None.\n\n### Notes\n* None.\n"
+        release_notes_template = "### Breaking Changes\n* None.\n\n### New Features\n* None.\n\n### Enhancements\n* None.\n\n### Fixes\n* None.\n\n### Notes\n* None.\n"
         # Check if the version pattern matches ## [num.num.num - ]
         with open(changelog_file, "r") as f:
             grow_pattern_ok: bool = False
-            text = f.read().split('\n')
+            text = f.read().split("\n")
             for line in text:
                 if re.match(r"## \[[0-9]+\.[0-9]+\.[0-9]\] -", line):
                     grow_pattern_ok = True
@@ -108,7 +113,7 @@ class VersionUtils:
 
             new_changelog: list[str] = []
             with open(changelog_file, "r") as f:
-                text = f.read().split('\n')
+                text = f.read().split("\n")
                 for line in text:
                     if re.match("^# ", line):
                         ## Make a new line with a template
@@ -123,7 +128,7 @@ class VersionUtils:
             self.ctx.info("Inserting template into changelog...")
             if len(new_changelog) > 0:
                 with open(changelog_file, "w") as f:
-                    f.write('\n'.join(new_changelog))
+                    f.write("\n".join(new_changelog))
         else:
             self.ctx.info("Resetting changelog to template...")
             with open(changelog_file, "w") as f:
