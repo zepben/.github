@@ -113,6 +113,7 @@ jobs:
         id: docs
         run: |
           if [ -d docs ]; then
+            echo "Current repository is ${GITHUB_REPOSITORY}"
             echo "Docs folder found, will run the build-docs job"
             echo "present=yes" >> "${GITHUB_OUTPUT}"
             echo "present=yes" >> "${GITHUB_ENV}"
