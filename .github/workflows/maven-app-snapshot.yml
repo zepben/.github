@@ -20,11 +20,13 @@ on:
         default: "src"
       product-key:
         description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
-        required: true
+        required: false
+        default: "productkeynotprovided"
         type: string
       product-repo:
         description: 'Product repository used for downloading snapshot docs'
-        required: true
+        required: false
+        default: "productreponotprovided"
         type: string
     secrets:
       CI_GITHUB_TOKEN:
@@ -153,6 +155,8 @@ jobs:
     if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
     outputs:
       artifact-uploaded: ${{ steps.artifact.outputs.uploaded }}
+      product-key: ${{ steps.docs-component.outputs.name }}
+      product-repo: ${{ steps.docs-component.outputs.repo }}
     steps:
       - uses: actions/checkout@v3
 
@@ -206,6 +210,30 @@ jobs:
         run:
           echo "uploaded=yes" >> "${GITHUB_OUTPUT}"
 
+      - name: Fetch the document component name
+        id: docs-component
+        shell: sh {0}
+        run: |
+            # if product key is supplied
+            if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
+              echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"
+            else
+              # This is just so we know that we can parse the docs component properly
+              if [ -f docs/docusaurus.config.js ]; then
+                # Parse out the baseUrl from the docusaurus configuration.
+                baseurl=$(grep baseUrl docs/docusaurus.config.js | sed -e "s#/\",##g")
+                # Find the component name
+                doc_comp=${baseurl##*/}
+                echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
+                echo "repo=${GITHUB_REPOSITORY}" >> "${GITHUB_OUTPUT}"
+              else
+                  echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
+                  echo " :boom: Docs folder exists, but there's no docusaurus.config.js; check your code!" >> "${GITHUB_STEP_SUMMARY}"
+                  exit 1
+              fi
+            fi
+
+
   update-snapshot-version:
     needs: [build-app]
     container: zepben/pipeline-basic
@@ -244,5 +272,4 @@ jobs:
           token: ${{ secrets.CI_GITHUB_TOKEN }}
           repository: ${{ secrets.DOCS_REPO }}
           event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
-          client-payload: '{"product_key": "${{ inputs.product-key }}", "download_url": "${{inputs.product-repo}}"}'
-
+          client-payload: '{"product_key": "${{needs.build-docs.outputs.product-key}}", "download_url": "${{needs.build-docs.outputs.product-repo}}"}'
