@@ -42,7 +42,9 @@ class VersionUtils:
 
     def validate_version(self, version: str):
         if not re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version):
-            self.ctx.fail(f"Could not proceed due to the tag {version} not having #.#.# format.")
+            self.ctx.fail(
+                f"Could not proceed due to the tag {version} not having #.#.# format."
+            )
 
         version_array = version.split(".")
         print(version_array)
@@ -74,7 +76,9 @@ class VersionUtils:
     def update_version(self, vtype):
         self.increment_version(vtype)
         self._update_new_version(self.new_version)
-        self.lang_utils.writeNewVersion(self.project_file, old=self.version, new=self.new_version)
+        self.lang_utils.writeNewVersion(self.project_file,
+                                        old=self.version,
+                                        new=self.new_version)
 
     def update_snapshot_version(self):
         self.lang_utils.updateSnapshotVersion(self.version, self.project_file)
@@ -82,12 +86,14 @@ class VersionUtils:
     def get_versions(self):
         # Check that file exists
         if not os.path.exists(self.project_file):
-            self.ctx.fail(f"The provided file {self.project_file} doesn't exist!")
+            self.ctx.fail(
+                f"The provided file {self.project_file} doesn't exist!")
 
         if self.version or self.sem_version:
             return (self.version, self.sem_version)
 
-        (self.version, self.sem_version) = self.lang_utils.parseProjectVersion(self.project_file)
+        (self.version, self.sem_version) = self.lang_utils.parseProjectVersion(
+            self.project_file)
 
         if not self.version:
             # If version not found
@@ -122,7 +128,9 @@ class VersionUtils:
                         # Replace the *existing* UNRELEASED with date
                         unreleased_line = re.search("UNRELEASED", line)
                         if unreleased_line:
-                            line = line.replace("UNRELEASED", datetime.datetime.now().strftime("%Y-%m-%d"))
+                            line = line.replace(
+                                "UNRELEASED",
+                                datetime.datetime.now().strftime("%Y-%m-%d"))
                     new_changelog.append(line)
 
             self.ctx.info("Inserting template into changelog...")
@@ -132,11 +140,15 @@ class VersionUtils:
         else:
             self.ctx.info("Resetting changelog to template...")
             with open(changelog_file, "w") as f:
-                f.write(f"## [{self.new_version}-SNAPSHOT*] - UNRELEASED\n{release_notes_template}")
+                f.write(
+                    f"## [{self.new_version}-SNAPSHOT*] - UNRELEASED\n{release_notes_template}"
+                )
 
     def _update_new_version(self, base: str):
         if not self.new_version:
-            self.ctx.fail("New version was not generated, check you've ran increment_version prior to updating it")
+            self.ctx.fail(
+                "New version was not generated, check you've ran increment_version prior to updating it"
+            )
 
         match self.lang:
             case "js":
@@ -146,5 +158,6 @@ class VersionUtils:
             case "python":
                 self.new_version = f"{base}b"
             case "csharp":
-                if self.project_file.endswith(".csproj") or self.project_file.endswith(".nuspec"):
+                if self.project_file.endswith(
+                        ".csproj") or self.project_file.endswith(".nuspec"):
                     self.new_version = f"${self.new_version}-pre1"
