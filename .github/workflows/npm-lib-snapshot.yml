@@ -149,6 +149,8 @@ jobs:
     if: ${{ needs.build-artifact.outputs.docs-present == 'yes' }}
     outputs:
       artifact-uploaded: ${{ steps.artifact.outputs.uploaded }}
+      product-key: ${{ steps.docs-component.outputs.name }}
+      product-repo: ${{ steps.docs-component.outputs.repo }}
     steps:
       - uses: actions/checkout@v3
 
