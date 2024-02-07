@@ -210,6 +210,7 @@ jobs:
         id: docs-component
         shell: sh {0}
         run: |
+            echo "repo=${GITHUB_REPOSITORY}" >> "${GITHUB_OUTPUT}"
             # if product key is supplied
             if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
               echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"
@@ -221,7 +222,6 @@ jobs:
                 # Find the component name
                 doc_comp=${baseurl##*/}
                 echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
-                echo "repo=${GITHUB_REPOSITORY}" >> "${GITHUB_OUTPUT}"
               else
                   echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
                   echo " :boom: Docs folder exists, but there's no docusaurus.config.js; check your code!" >> "${GITHUB_STEP_SUMMARY}"
