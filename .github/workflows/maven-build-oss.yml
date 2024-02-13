@@ -32,7 +32,7 @@ jobs:
 
       - name: Maven build and test
         id: build
-        run: mvn clean test -P '!zepben-maven' -f pom.xml
+        run: mvn clean test -P '!zepben-maven' -f pom.xml -Dgpg.keyname=
         shell: bash
 
       - name: Upload coverage to Codecov

@@ -122,7 +122,7 @@ jobs:
       - name: Maven package
         id: build
         run: |
-          mvn clean package -f pom.xml -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.release.url=$NEXUS_RELEASE_URL -Dserver.snapshot.url=$NEXUS_SNAPSHOT_URL
+          mvn clean package -f pom.xml -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.release.url=$NEXUS_RELEASE_URL -Dserver.snapshot.url=$NEXUS_SNAPSHOT_URL -Dgpg.keyname=
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           artifact="${artifactId}-${version}.jar"
