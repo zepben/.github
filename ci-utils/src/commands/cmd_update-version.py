@@ -8,8 +8,9 @@ import re
 
 
 @click.command("update-version",
-               help="",
-               short_help="")
+               help="Update the project version to the next one (patch version for LTS, minor version for all others).",
+               short_help="Update the project version to the next one (patch version for LTS, minor version for all others)."
+               )
 @click.option("--lang",
               required=True,
               type=click.Choice(["jvm", "csharp", "python", "js"]),
