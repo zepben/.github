@@ -40,9 +40,6 @@ class Git():
         self.ctx.info("Checking remote tags if version exists...")
         for tag in self.remote_refs["tags"]:
             if re.match(f"(^v)*{version}$", tag):
-                #     old_tag=$(git tag -l | grep "^$version$" || true)
-                #     tag=$(git tag -l | grep "^v$version$" || true)
-                # if [[ ! -z $tag || ! -z $old_tag ]]; then
                 self.ctx.fail("Tag for this version already exists")
 
     # TODO: check what happens if we just create_head without the second param
