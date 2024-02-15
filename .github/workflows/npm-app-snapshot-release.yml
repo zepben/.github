@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
-    container: node:14-alpine
+    container: node:20-alpine
     steps:
     - name: Install Dependencies
       run: |

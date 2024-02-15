@@ -127,7 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       artifact: docs
-    container: node:16-alpine
+    container: node:20-alpine
     steps:
       - name: Install Git
         run: |
