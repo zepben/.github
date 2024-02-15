@@ -45,7 +45,7 @@ jobs:
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
     runs-on: ubuntu-latest
-    container: node:14-alpine
+    container: node:20-alpine
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
     steps:
