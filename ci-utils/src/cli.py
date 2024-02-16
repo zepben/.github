@@ -21,12 +21,12 @@ class Environment:
             self.log(msg, *args)
 
     def fail(self, msg, *args):
-        """ Logs an error to stdout """
+        """Logs an error to stdout and exits"""
         click.echo(msg, *args)
         raise Exception(msg)
 
     def warn(self, msg, *args):
-        """ Logs an warning to stdout """
+        """Logs a warning to stdout"""
         print(" ctx.warn is not implemented yet!")
         pass
 
@@ -57,4 +57,3 @@ class ComplexCLI(click.Group):
 @pass_environment
 def cli(ctx, version):
     """Zepben CI utilities"""
-    click.echo("Let's go")
