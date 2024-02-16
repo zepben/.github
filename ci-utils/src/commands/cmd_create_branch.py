@@ -9,6 +9,12 @@ import os
 
 
 @click.command("create-branch",
+               help="""Creates a branch from a list of (lts, hotfix, release). 
+               The version provided (git tag) should match the type of the branch:\n
+                   * For LTS, it should match the preexisting tag, i.e. for a new LTS in 0.9 line, the version should be 0.9, this will create a branch LTS/0.9.X\n
+                   * For Hotfix, it should match the preexisting tag, i.e. for a new hotfix in 0.9 line, the version should be 0.9, this will create a branch hotfix/0.9.X\n
+                   * Release branch creation doesn't require version and will ignore it if provided. It will spawn the "release" branch from the currently checked out branch.\n
+               """,
                short_help="Creates a branch from a list of (lts, hotfix, release)")
 @click.option("--type", "btype", required=True, type=click.Choice(["lts", "hotfix", "release"]))
 @click.option("--version", required=False, type=str)
