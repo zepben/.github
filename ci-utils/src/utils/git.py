@@ -1,18 +1,23 @@
 import os
 import re
 
+import subprocess
+
 from git import Repo, Actor
 
 
-class Git():
-
-    def __init__(self, ctx):
+class Git:
+    def __init__(self, ctx, path: str = ""):
         self.ctx = ctx
         self.remote_refs = {"heads": [], "tags": []}
+        self.path = path
         self.init_git()
 
     def init_git(self):
-        self.repo = Repo(os.getcwd())
+        if self.path != "":
+            os.chdir(self.path)
+        path = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).strip().decode("utf-8")
+        self.repo = Repo(path)
         self.ls_remotes()
 
     # TODO: consider renaming to fetch_remotes() and just use the object field
@@ -26,21 +31,24 @@ class Git():
             if found_ref:
                 ref_type = found_ref.group("ref_type")
                 # only keep the actual tag or reference (branch) name
-                return (ref_type, found_ref.group(0).split('/')[-1])
+                return (ref_type, found_ref.group(0).split("/")[-1])
 
         # Now filter out heads/tags
-        for pair in list(map(parse_refs, (ref.split('\t')[1] for ref in self.repo.git.ls_remote().split('\n')))):
+        for pair in list(map(parse_refs, (ref.split("\t")[1] for ref in self.repo.git.ls_remote().split("\n")))):
             if pair is not None:
                 self.remote_refs[pair[0]].append(pair[1])
 
     def delete_remote_branch(self, branch: str):
         self.repo.remotes.origin.push(refspec=(f":{branch}"))
 
-    def check_tag_exists(self, version: str):
+    def tag_exists(self, version: str) -> bool:
         self.ctx.info("Checking remote tags if version exists...")
         for tag in self.remote_refs["tags"]:
             if re.match(f"(^v)*{version}$", tag):
-                self.ctx.fail("Tag for this version already exists")
+                self.ctx.warn(f"Tag for this version {version} already exists")
+                return True
+
+        return False
 
     # TODO: check what happens if we just create_head without the second param
     # if that works, then we only need to track the remote branch, everything
@@ -70,9 +78,7 @@ class Git():
         self.repo.remotes.origin.pull(branch)
 
     def push(self, branch):
-        self.repo.remotes.origin.push(
-            refspec=(f"{branch}:{branch}")
-        ).raise_if_error()
+        self.repo.remotes.origin.push(refspec=(f"{branch}:{branch}")).raise_if_error()
 
     def commit_update_version(self, branch: str = ""):
         if len(branch) == 0:
@@ -83,4 +89,5 @@ class Git():
         self.push(branch)
 
     def commit_finalise_version(self):
-        self.ctx.fail("commit finalise version is not yet implemented")
+        self.commit(comment="Update version to next snapshot [skip ci]")
+        self.push("release")

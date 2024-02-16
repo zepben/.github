@@ -1,5 +1,6 @@
 import logging
 import os
+import click
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
@@ -9,8 +10,7 @@ client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
 logger = logging.getLogger(__name__)
 
 
-class Slack():
-
+class Slack:
     def __init__(self, ctx):
         self.ctx = ctx
         self.channel = "evolve-builds"
@@ -18,8 +18,9 @@ class Slack():
     def send_message(self, msg: str):
         should_notify = os.getenv("SLACK_NOTIFICATION", None)
         if should_notify is None or should_notify != "YES":
-            self.ctx.info(
-                "Slack notification is turned off. Please see SLACK_NOTIFICATION environment variable.")
+            self.ctx.info("Slack notification is turned off. Please see SLACK_NOTIFICATION environment variable.")
+            click.echo(msg)
+            return
 
         # extra_args=""
         # if [[ "${DEBUG}" == "true" ]]; then
@@ -69,11 +70,11 @@ class Slack():
                         "color": "#439FE0",
                         "pretext": f"*<{GITHUB_SERVER_URL}/{GITHUB_REPOSITORY}>*: <{GITHUB_SERVER_URL}/{GITHUB_REPOSITORY}/actions/runs/{GITHUB_RUN_ID}|Pipeline #{GITHUB_RUN_NUMBER}>",
                         "text": msg,
-                        "mrkdwn_in": ["pretext"]
+                        "mrkdwn_in": ["pretext"],
                     }
                 ],
                 channel=conversation_id,
-                text=msg
+                text=msg,
                 # You could also use a blocks[] array to send richer content
             )
             # Print result, which includes information about the message (like TS)
