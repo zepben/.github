@@ -21,7 +21,7 @@ def cli(ctx, btype, version):
     else:
         ctx.info(f"Creating branch of type {btype} for version {version}")
 
-    git = Git()
+    git = Git(ctx)
 
     # Definitions
     tag: str = None
@@ -32,7 +32,7 @@ def cli(ctx, btype, version):
     # tag list matching the provided version
     if btype == "release":
         commit = "main"
-    elif version:
+    elif version is not None:
         tags = [t.name for t in git.repo.tags
                 if re.match(rf"{version}\.[0-9]+", t.name)]
 
@@ -41,7 +41,7 @@ def cli(ctx, btype, version):
             tag = tags[-1]
             ctx.info(f"Found {tag}")
         else:
-            ctx.err(f"Couldn't find the tag for the version {version}")
+            ctx.fail(f"Couldn't find the tag for the version {version}")
             return
 
         version = tag.replace('v', '')
@@ -83,10 +83,10 @@ def cli(ctx, btype, version):
 
     ctx.info(f"Checking out {branch} off {commit}")
     try:
+        ref = git.repo.create_head(branch, commit)
+        ref.checkout()
         actor = os.getenv('GITHUB_ACTOR')
-        git.repo.head.ref = git.repo.create_head(branch, commit)
-        git.repo.head.ref.checkout()
         Slack(ctx).send_message(f"Created branch *{branch}* (by *{actor}*)")
-        ctx.info(f"Branch {branch} created successfully")
+        ctx.info(f"Branch {branch} created and checked out successfully")
     except Exception as err:
         ctx.fail(f"Failed to checkout branch {branch}: {err}")

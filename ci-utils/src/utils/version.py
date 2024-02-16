@@ -17,28 +17,33 @@ class VersionUtils:
     new_version: str
     sem_version: str
 
-    lang_utils: Union[JsUtils, JvmUtils, PyUtils, CsUtils]
+    lang_utils: Union[JsUtils, JvmUtils, PyUtils, CsUtils, None]
 
-    def __init__(self, ctx, lang: str, project_file: str):
+    def __init__(self, ctx, lang: str = "", project_file: str = ""):
         self.ctx = ctx
         self.lang = lang
         self.project_file = project_file
         self.version = ""
         self.sem_version = ""
 
-        match lang:
-            case "js":
-                self.lang_utils = JsUtils(ctx)
-            case "jvm":
-                self.lang_utils = JvmUtils(ctx)
-            case "python":
-                self.lang_utils = PyUtils(ctx)
-            case "csharp":
-                self.lang_utils = CsUtils(ctx)
-            case _:
-                self.ctx.fail(f"Unsupported language provided: {lang}")
+        # For some operaions we don't really need the whole set of utils.
+        # So just do work if lang is provided
+        if lang != "":
+            match lang:
+                case "js":
+                    self.lang_utils = JsUtils(ctx)
+                case "jvm":
+                    self.lang_utils = JvmUtils(ctx)
+                case "python":
+                    self.lang_utils = PyUtils(ctx)
+                case "csharp":
+                    self.lang_utils = CsUtils(ctx)
+                case "":
+                    self.lang_utils = None
+                case _:
+                    self.ctx.fail(f"Unsupported language provided: {lang}")
 
-        self.get_versions()
+            self.get_versions()
 
     def validate_version(self, version: str):
         if not re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version):
@@ -47,7 +52,6 @@ class VersionUtils:
             )
 
         version_array = version.split(".")
-        print(version_array)
         if len(version_array) > 3:
             self.ctx.fail(
                 f"Version {version} had more than 3 parts and is not a valid version. Did you enter the correct minor version?"
