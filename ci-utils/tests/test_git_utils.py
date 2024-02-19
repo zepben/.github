@@ -1,18 +1,32 @@
 from src.cli import Environment
 from src.utils.git import Git
-from tests.test_utils.repo import create_repos
+from tests.test_utils.repo import create_repos_with_tags_branches
+
+from pathlib import Path
+
+import os
+import pytest
 
 
 ctx = Environment()
-
-
 branch = "test-branch"
-repo_path = create_repos("repo1", branch)
-git = Git(ctx, repo_path)
+
+
+@pytest.fixture
+def local_repo_name(name: str = "local") -> str:
+    yield name
+
+
+@pytest.fixture
+def git(local_repo_name: str):
+    local_path = Path().absolute()
+    repo_path = create_repos_with_tags_branches(local_repo_name, [branch])
+    yield Git(ctx, repo_path)
+    os.chdir(local_path)
 
 
 # Delete branch from remote and check it's gone
-def test_delete_remote_branch():
+def test_delete_remote_branch(git):
     git.delete_remote_branch(branch)
     git.repo.remotes.origin.fetch()
     assert branch not in git.repo.remotes.origin.refs
@@ -24,12 +38,12 @@ def test_delete_remote_branch():
 # Positive test.
 #    check that tag1 and tag2 are present
 # Check it exists
-def test_tag_exists():
+def test_tag_exists(git):
     assert git.tag_exists("aklsdfjlasjdlkfjalsdflk") is False
     assert git.tag_exists("tag1") is True
     assert git.tag_exists("tag2") is True
 
 
-def test_checkout():
+def test_checkout(git):
     git.checkout("good_branch")
-    assert git.repo.head.ref.name == "good_branch"
+    assert git.repo.active_branch.name == "good_branch"

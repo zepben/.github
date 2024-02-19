@@ -31,7 +31,7 @@ class Git:
             if found_ref:
                 ref_type = found_ref.group("ref_type")
                 # only keep the actual tag or reference (branch) name
-                return (ref_type, found_ref.group(0).split("/")[-1])
+                return (ref_type, found_ref.group(0).replace(f"refs/{ref_type}/",''))
 
         # Now filter out heads/tags
         for pair in list(map(parse_refs, (ref.split("\t")[1] for ref in self.repo.git.ls_remote().split("\n")))):
@@ -42,7 +42,7 @@ class Git:
         self.repo.remotes.origin.push(refspec=(f":{branch}"))
 
     def tag_exists(self, version: str) -> bool:
-        self.ctx.info("Checking remote tags if version exists...")
+        self.ctx.info(f"Checking remote tags if version {version} exists...")
         for tag in self.remote_refs["tags"]:
             if re.match(f"(^v)*{version}$", tag):
                 self.ctx.warn(f"Tag for this version {version} already exists")
