@@ -40,7 +40,7 @@ def cli(ctx, btype, version):
         commit = "main"
     elif version is not None:
         tags = [t.name for t in git.repo.tags
-                if re.match(rf"{version}\.[0-9]+", t.name)]
+                if re.match(rf"v*{version}\.[0-9]+", t.name)]
 
         # if found tags, pick the last one
         if len(tags) > 0:
@@ -65,7 +65,7 @@ def cli(ctx, btype, version):
             branch = f"LTS/{version_array[0]}.{version_array[1]}.X"
             if branch in git.remote_refs["heads"]:
                 ctx.fail(
-                    "There is already a LTS branch named {branch}.")
+                    f"There is already a LTS branch named {branch}.")
 
         case "hotfix":
             # figure out the next version

@@ -27,22 +27,21 @@ def cli(ctx, lang, project_file):
     """)
 
     # Do the repo init via the ctx object
-    git = Git()
+    git = Git(ctx)
 
     # Fetch just in case
     git.repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
 
-    current_commit_id = git.repo.rev_parse("HEAD")
+    current_commit_id = str(git.repo.head.commit.hexsha)
     ctx.info(f"Checking to make sure commit {current_commit_id} has not been already released.")
 
     # Versions util
     version_utils = VersionUtils(ctx, lang, project_file)
     for tag in git.repo.tags:
-        if current_commit_id == git.repo.rev_parse(tag):
-            ctx.fail(f"Can't run release pipeline. This commit {current_commit_id} is part of the {tag} release.")
+        if current_commit_id == str(tag.commit):
+            ctx.fail(f"Can't run release pipeline. This commit {current_commit_id} is a part of the {tag} release.")
         else:
-            version_utils.get_versions()
-            if re.match(f"[v]?{version_utils.sem_version}"):
+            if re.match(f"[v]?{version_utils.sem_version}", tag.name):
                 ctx.fail(f"Can't run release pipeline. There is already a tag for {tag}.")
 
     Slack(ctx).send_message(f"Release has been triggered for {branch} by *{actor}*")
