@@ -60,7 +60,7 @@ def test_update_js_snapshot_version():
     test_file = "/".join((os.path.dirname(__file__), js_config.orig))
     shutil.copy(test_file, js_config.dest)
     utils = VersionUtils(ctx, "js", js_config.dest)
-    # Update the pre$ version and write the file
+    # Update the next$ version and write the file
     utils.update_snapshot_version()
     # now fetch it and check the version was updated
     version, sem_version = utils.lang_utils.parseProjectVersion(js_config.dest)
@@ -73,7 +73,7 @@ def test_update_jvm_snapshot_version():
     test_file = "/".join((os.path.dirname(__file__), jvm_config.orig))
     shutil.copy(test_file, jvm_config.dest)
     utils = VersionUtils(ctx, "jvm", jvm_config.dest)
-    # Update the pre$ version and write the file
+    # Update the SNAPSHOT$ version and write the file
     utils.update_snapshot_version()
     # now fetch it and check the version was updated
     version, sem_version = utils.lang_utils.parseProjectVersion(jvm_config.dest)
@@ -86,7 +86,7 @@ def test_update_python_snapshot_version():
     test_file = "/".join((os.path.dirname(__file__), python_config.orig))
     shutil.copy(test_file, python_config.dest)
     utils = VersionUtils(ctx, "python", python_config.dest)
-    # Update the pre$ version and write the file
+    # Update the b$ version and write the file
     utils.update_snapshot_version()
     # now fetch it and check the version was updated
     version, sem_version = utils.lang_utils.parseProjectVersion(python_config.dest)
