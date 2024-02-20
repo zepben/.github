@@ -160,7 +160,7 @@ class VersionUtils:
             case "jvm":
                 self.new_version = f"{base}-SNAPSHOT1"
             case "python":
-                self.new_version = f"{base}b"
+                self.new_version = f"{base}b1"
             case "csharp":
                 if self.project_file.endswith(
                         ".csproj") or self.project_file.endswith(".nuspec"):

@@ -3,9 +3,11 @@ import os
 import shutil
 from src.utils.lang.pyutils import PyUtils
 
+from tests.test_utils.configs import configs
+
 ctx = Environment()
 
-test_file = "/".join((os.path.dirname(__file__), "test_files/test_setup.pp"))
+test_file = "/".join((os.path.dirname(__file__), "test_files", configs["python"].project_file))
 
 def test_py_parse_version():
     version, sem_version = PyUtils(ctx).parseProjectVersion(test_file)
