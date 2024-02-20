@@ -67,16 +67,16 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
     """)
 
     # Do the repo init via the ctx object?
-    git = Git()
+    git = Git(ctx)
 
     # Fetch just in case
     if no_commit:
         git.repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
 
-    # if --release, drop the current branch and release branch and ...we're done??
-    branch = os.getenv('GITHUB_REF_NAME', None)
+    branch = os.getenv('GITHUB_REF_NAME', git.repo.active_branch.name)
     if branch:
         ctx.info(f"Running on branch: {branch}")
+        # if --release, drop the current branch and release branch and ...we're done??
         if release and re.match(".*hotfix/.*", branch):
             git.delete_remote_branch(branch)
             if "remotes/origin/release" in git.repo.refs:
@@ -89,7 +89,7 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
         ctx.fail(f"The provided {project_file} doesn't seem to exist!")
 
     # Update project version
-    ctx.log("Updating version...")
+    ctx.info("Updating version...")
 
     utils = VersionUtils(ctx, lang=lang, project_file=project_file)
 
