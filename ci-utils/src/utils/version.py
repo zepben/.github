@@ -108,44 +108,50 @@ class VersionUtils:
         return (self.version, self.sem_version)
 
     def update_changelog(self, grow_changelog: bool, changelog_file: str):
+        print(f"Update changelog requested for {changelog_file}")
         release_notes_template = "### Breaking Changes\n* None.\n\n### New Features\n* None.\n\n### Enhancements\n* None.\n\n### Fixes\n* None.\n\n### Notes\n* None.\n"
         # Check if the version pattern matches ## [num.num.num - ]
         with open(changelog_file, "r") as f:
             grow_pattern_ok: bool = False
             text = f.read().split("\n")
             for line in text:
-                if re.match(r"## \[[0-9]+\.[0-9]+\.[0-9]\] -", line):
+                if re.match(r"## \[[0-9]+\.[0-9]+\.[0-9]+\] -+", line):
                     grow_pattern_ok = True
                     break
 
         if grow_changelog and grow_pattern_ok:
-            self.ctx.info("Updating the release date")
-
             new_changelog: list[str] = []
             with open(changelog_file, "r") as f:
                 text = f.read().split("\n")
                 for line in text:
                     if re.match("^# ", line):
                         ## Make a new line with a template
-                        line = f"{line}\n## [{self.new_version}-SNAPSHOT*] - UNRELEASED\n{release_notes_template}"
+                        self.ctx.info("Inserting template into changelog...")
+                        self.ctx.info(f"The current line is 1: '{line}'")
+                        line = "\n".join((line, f"## [{self.new_version}] - UNRELEASED", release_notes_template))
+                        self.ctx.info(f"The current line is 2: '{line}'")
                     else:
                         # Replace the *existing* UNRELEASED with date
                         unreleased_line = re.search("UNRELEASED", line)
                         if unreleased_line:
+                            self.ctx.info("Updating the release date")
                             line = line.replace(
                                 "UNRELEASED",
                                 datetime.datetime.now().strftime("%Y-%m-%d"))
                     new_changelog.append(line)
 
-            self.ctx.info("Inserting template into changelog...")
             if len(new_changelog) > 0:
+                self.ctx.info("Saving the changelog")
                 with open(changelog_file, "w") as f:
                     f.write("\n".join(new_changelog))
+            else:
+                self.ctx.info("Changelog seems to be empty, not updating")
+            self.ctx.info("All done")
         else:
             self.ctx.info("Resetting changelog to template...")
             with open(changelog_file, "w") as f:
                 f.write(
-                    f"## [{self.new_version}-SNAPSHOT*] - UNRELEASED\n{release_notes_template}"
+                    f"## [{self.new_version}] - UNRELEASED\n{release_notes_template}"
                 )
 
     def _update_new_version(self, base: str):

@@ -54,12 +54,13 @@ class Git:
     # if that works, then we only need to track the remote branch, everything
     # else should be the same
     def checkout(self, branch: str):
-        if branch in self.repo.heads:
-            self.repo.create_head(branch, self.repo.remotes.origin.refs[branch])
-            self.repo.heads[branch].set_tracking_branch(self.repo.remotes.origin.refs[branch])
+        for b in self.repo.heads:
+            if branch == b.name:
+                b.checkout()
         else:
-            self.repo.create_head(branch)
-        self.repo.heads[branch].checkout()
+            ref = self.repo.create_head(branch)
+            ref.checkout()
+
         self.repo.head.reset(index=True, working_tree=True)
 
     def stage(self, files: list[str]):

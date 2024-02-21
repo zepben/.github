@@ -73,15 +73,19 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
     if no_commit:
         git.repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
 
-    branch = os.getenv('GITHUB_REF_NAME', git.repo.active_branch.name)
+    branch = os.getenv('GITHUB_REF', git.repo.active_branch.name)
     if branch:
         ctx.info(f"Running on branch: {branch}")
         # if --release, drop the current branch and release branch and ...we're done??
         if release and re.match(".*hotfix/.*", branch):
             git.delete_remote_branch(branch)
-            if "remotes/origin/release" in git.repo.refs:
+            if "remotes/origin/release" in git.remote_refs['heads']:
                 git.delete_remote_branch("release")
             os.exit(0)
+        else:
+            # checkout the branch
+            ctx.info(f"Checking out {branch}")
+            git.checkout(branch)
     else:
         ctx.fail("Cannot detect branch name!")
 

@@ -1,6 +1,7 @@
 from src.cli import Environment
 from src.utils.git import Git
 from tests.test_utils.repo import create_repos_with_tags_branches
+from tests.test_utils.configs import goodbranch
 
 from pathlib import Path
 
@@ -20,7 +21,7 @@ def local_repo_name(name: str = "local") -> str:
 @pytest.fixture
 def git(local_repo_name: str):
     local_path = Path().absolute()
-    repo_path = create_repos_with_tags_branches(local_repo_name, [branch])
+    repo_path = create_repos_with_tags_branches(name=local_repo_name, branches=[branch])
     yield Git(ctx, repo_path)
     os.chdir(local_path)
 
@@ -45,5 +46,5 @@ def test_tag_exists(git):
 
 
 def test_checkout(git):
-    git.checkout("good_branch")
-    assert git.repo.active_branch.name == "good_branch"
+    git.checkout(goodbranch)
+    assert git.repo.active_branch.name == goodbranch
