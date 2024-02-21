@@ -14,12 +14,6 @@ on:
         type: string
         default: "src"
     secrets:
-      NEXUS_MAVEN_REPO:
-        required: true
-      NEXUS_USERNAME:
-        required: true
-      NEXUS_PASSWORD:
-        required: true
       LC_URL:
         required: false
 
@@ -32,9 +26,6 @@ jobs:
       docs-present: ${{ steps.docs.outputs.present }}
     env:
       LICENCE_CHECK: ${{ inputs.licencecheck }}
-      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
-      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
 
@@ -60,7 +51,7 @@ jobs:
 
       - name: Maven build and test
         id: build
-        run: mvn clean test -P '!zepben-maven' -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+        run: mvn clean test -P '!zepben-maven' -f pom.xml
         shell: bash
 
       - name: Upload coverage to Codecov
