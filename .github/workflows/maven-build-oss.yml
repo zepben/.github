@@ -2,6 +2,26 @@ name: Maven Build OSS
 
 on: 
   workflow_call:
+    inputs:
+      licencecheck:
+        description: 'Need to check licence headers/files'
+        required: false
+        type: boolean
+        default: true
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
+    secrets:
+      NEXUS_MAVEN_REPO:
+        required: true
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD:
+        required: true
+      LC_URL:
+        required: false
 
 
 jobs:
@@ -10,19 +30,27 @@ jobs:
     container: zepben/pipeline-java
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
+    env:
+      LICENCE_CHECK: ${{ inputs.licencecheck }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
 
       - name: Cache licence-check
+        if: ${{ env.LICENCE_CHECK == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
+        if: ${{ env.LICENCE_CHECK == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
 
       - name: Cache maven deps
         uses: actions/cache@v3
@@ -32,7 +60,7 @@ jobs:
 
       - name: Maven build and test
         id: build
-        run: mvn clean test -P '!zepben-maven' -f pom.xml
+        run: mvn clean test -P '!zepben-maven' -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
         shell: bash
 
       - name: Upload coverage to Codecov
