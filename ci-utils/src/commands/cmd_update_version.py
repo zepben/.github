@@ -24,7 +24,7 @@ import re
               type=str,
               default="changelog.md",
               show_default=True,
-              help="The changelog file path, i.e changelog.md")
+              help="The changelog file path, i.e changelog.md. Cannot be used together with --snapshot")
 @click.option("--no-commit",
               is_flag=True,
               required=False,
@@ -38,7 +38,7 @@ import re
               type=bool,
               default=False,
               show_default=True,
-              help="Increments the snapshot version. Only useful for C# and Python, ie 1.0.0-pre1, 1.0.0b1. Java doesn't have this concept.")
+              help="Increments the snapshot version. Only useful for snapshot builds. Cannot be used together with --changelog-file")
 @click.option("--release",
               is_flag=True,
               required=False,
@@ -66,6 +66,9 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
         grow-changelog: {grow_changelog}
     """)
 
+    if snapshot and changelog_file:
+        ctx.fail("Snapshot option was provided. It cannot be used together with changelog_file.")
+
     # Do the repo init via the ctx object?
     git = Git(ctx)
 
@@ -74,26 +77,25 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
         git.repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
 
     branch = os.getenv('GITHUB_REF', git.repo.active_branch.name)
-    if branch:
-        ctx.info(f"Running on branch: {branch}")
-        # if --release, drop the current branch and release branch and ...we're done??
-        if release and re.match(".*hotfix/.*", branch):
-            git.delete_remote_branch(branch)
-            if "remotes/origin/release" in git.remote_refs['heads']:
-                git.delete_remote_branch("release")
-            os.exit(0)
-        else:
-            # checkout the branch
-            ctx.info(f"Checking out {branch}")
-            git.checkout(branch)
-    else:
-        ctx.fail("Cannot detect branch name!")
+    ctx.info(f"Running on branch: {branch}")
+
+    # if --release option was provided and we're on a hotfix branch, drop the current branch and release branch and ...we're done
+    if release and re.match(".*hotfix/.*", branch):
+        git.delete_remote_branch(branch)
+        if "release" in git.remote_refs['heads']:
+            git.delete_remote_branch("release")
+        os.exit(0)
 
     if not os.path.exists(project_file):
         ctx.fail(f"The provided {project_file} doesn't seem to exist!")
 
     # Update project version
     ctx.info("Updating version...")
+
+    # # checkout the branch
+    # ctx.info(f"Checking out {branch}")
+    # git.checkout(branch)
+
 
     utils = VersionUtils(ctx, lang=lang, project_file=project_file)
 
@@ -102,13 +104,9 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
     else:
         # TODO: consider uniting both ifs
         if not no_commit:
-            if release:
-                # if remotes/origin/release exists, check it out.
-                # else, create a new branch
-                git.checkout("release")
-            else:
-                # what is this. We should be checked out already
-                git.checkout(branch)
+            # if we commit stuff...checkout release branch or current.
+            co_branch = "release" if release else branch
+            git.checkout(co_branch)
 
         version_type = "patch" if re.match(".*[LTS|hotfix]/.*", branch) else "minor"
         utils.update_version(version_type)

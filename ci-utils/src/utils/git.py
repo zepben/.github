@@ -54,10 +54,28 @@ class Git:
     # if that works, then we only need to track the remote branch, everything
     # else should be the same
     def checkout(self, branch: str):
+        found_branch = False
+
+        # Check if local exists and checkout if so
         for b in self.repo.heads:
             if branch == b.name:
                 b.checkout()
-        else:
+                found_branch = True
+                break
+
+        # if not found the local, check remotes
+        if not found_branch:
+            for b in self.repo.remotes.origin.refs:
+                if branch == b.name.split('/')[-1]:
+                    # create a new branch and set tracking to remote
+                    ref = self.repo.create_head(branch, b)
+                    self.repo.heads[branch].set_tracking_branch(b)
+                    ref.checkout()
+                    found_branch = True
+                    break
+
+        # If still not found, just create a new
+        if not found_branch:
             ref = self.repo.create_head(branch)
             ref.checkout()
 
