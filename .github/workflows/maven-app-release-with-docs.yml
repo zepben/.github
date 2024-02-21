@@ -15,9 +15,9 @@ on:
         default: true
       licencecheck:
         description: 'Need to check licence headers/files'
-        required: true
+        required: false
         type: boolean
-        default: false
+        default: true
       sourcepath:
         description: 'Path to source directory (used for licence check)'
         required: false
