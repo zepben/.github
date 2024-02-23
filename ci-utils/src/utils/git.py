@@ -39,7 +39,8 @@ class Git:
                 self.remote_refs[pair[0]].append(pair[1])
 
     def delete_remote_branch(self, branch: str):
-        self.repo.remotes.origin.push(refspec=(f":{branch}"))
+        if branch in (b.split('/')[-1] for b in self.remote_refs['heads']):
+            self.repo.remotes.origin.push(refspec=(f":{branch}"))
 
     def tag_exists(self, version: str) -> bool:
         self.ctx.info(f"Checking remote tags if version {version} exists...")
@@ -82,7 +83,8 @@ class Git:
         self.repo.head.reset(index=True, working_tree=True)
 
     def stage(self, files: list[str]):
-        self.repo.index.add(files)
+        # Handle the None case
+        self.repo.index.add((f for f in files if f))
 
     def status(self):
         self.ctx.info(self.repo.git.status("-uno"))

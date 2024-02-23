@@ -7,17 +7,19 @@ from tests.test_utils.configs import configs
 
 ctx = Environment()
 
-test_file = "/".join((os.path.dirname(__file__), "test_files", configs["python"].project_file))
+config = configs["python"]
+test_file = "/".join((os.path.dirname(__file__), "test_files", config.project_file))
 
 def test_py_parse_version():
     version, sem_version = PyUtils(ctx).parseProjectVersion(test_file)
-    assert version == "0.38.0b1"
-    assert sem_version == "0.38.0"
+    assert version == config.current_version
+    assert sem_version == config.current_version.split("b")[0]
 
 def test_py_update_snapshot_version():
-    shutil.copy(test_file, "/tmp/test_setup.py")
-    PyUtils(ctx).updateSnapshotVersion("0.38.0b1", "/tmp/test_setup.py") 
+    tmp_path = "/tmp/test_setup.py"
+    shutil.copy(test_file, tmp_path)
+    PyUtils(ctx).updateSnapshotVersion(config.current_version, tmp_path) 
     # # now fetch it and check the version was updated
-    version, sem_version = PyUtils(ctx).parseProjectVersion("/tmp/test_setup.py")
-    assert version == "0.38.0b2"
-    assert sem_version == "0.38.0"
+    version, sem_version = PyUtils(ctx).parseProjectVersion(tmp_path)
+    assert version == config.next_snapshot
+    assert sem_version == config.current_version.split("b")[0]

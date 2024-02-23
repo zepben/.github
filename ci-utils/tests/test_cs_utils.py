@@ -1,15 +1,17 @@
 from src.cli import Environment 
 import os
 from src.utils.lang.csutils import CsUtils
+from tests.test_utils.configs import configs
 
 ctx = Environment()
 
 
 def test_cs_parse_version_cproj():
+    config = configs["csharp"]
     test_file = "/".join((os.path.dirname(__file__), "test_files/test.csproj"))
     version, sem_version = CsUtils(ctx).parseProjectVersion(test_file)
-    assert version == "0.26.0-pre3"
-    assert sem_version == "0.26.0"
+    assert version == config.current_version
+    assert sem_version == config.current_version.split("-")[0]
 
 
 def test_cs_parse_version_nuspec():
