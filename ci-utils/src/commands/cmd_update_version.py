@@ -22,16 +22,15 @@ import re
 @click.option("--changelog-file",
               required=False,
               type=str,
-              default="changelog.md",
               show_default=True,
               help="The changelog file path, i.e changelog.md. Cannot be used together with --snapshot")
-@click.option("--no-commit",
+@click.option("--commit",
               is_flag=True,
               required=False,
               type=bool,
-              default=False,
+              default=True,
               show_default=True,
-              help="Only update the project file without committing")
+              help="Commit updates to the origin")
 @click.option("--snapshot",
               is_flag=True,
               required=False,
@@ -54,27 +53,26 @@ import re
               show_default=True,
               help="Updates changelog by inserting EDNAR-style template instead of resetting it to the regular one.")
 @pass_environment
-def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, grow_changelog):
+def cli(ctx, lang, project_file, changelog_file, commit, snapshot, release, grow_changelog):
 
     ctx.info(f"""Running with following parameters:
         language: {lang}
         project file: {project_file}
         changelog file: {changelog_file}
-        no-commit: {no_commit}
+        commit: {commit}
         snapshot: {snapshot}
         release: {release}
         grow-changelog: {grow_changelog}
     """)
 
     if snapshot and changelog_file:
-        ctx.fail("Snapshot option was provided. It cannot be used together with changelog_file.")
+        ctx.fail("Snapshot and changelog options were provided at the same time. They cannot be used together.")
 
     # Do the repo init via the ctx object?
     git = Git(ctx)
 
     # Fetch just in case
-    if no_commit:
-        git.repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
+    git.repo.remotes.origin.fetch(refspec="+refs/heads/*:refs/remotes/origin/*")
 
     branch = os.getenv('GITHUB_REF', git.repo.active_branch.name)
     ctx.info(f"Running on branch: {branch}")
@@ -82,8 +80,8 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
     # if --release option was provided and we're on a hotfix branch, drop the current branch and release branch and ...we're done
     if release and re.match(".*hotfix/.*", branch):
         git.delete_remote_branch(branch)
-        if "release" in git.remote_refs['heads']:
-            git.delete_remote_branch("release")
+        # delete release branch if it exists
+        git.delete_remote_branch("release")
         os.exit(0)
 
     if not os.path.exists(project_file):
@@ -92,19 +90,15 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
     # Update project version
     ctx.info("Updating version...")
 
-    # # checkout the branch
-    # ctx.info(f"Checking out {branch}")
-    # git.checkout(branch)
-
-
+    # Create version utils
     utils = VersionUtils(ctx, lang=lang, project_file=project_file)
 
     if snapshot:
         utils.update_snapshot_version()
     else:
         # TODO: consider uniting both ifs
-        if not no_commit:
-            # if we commit stuff...checkout release branch or current.
+        if commit:
+            # if we commit stuff...checkout release branch or current GITHUB_REF.
             co_branch = "release" if release else branch
             git.checkout(co_branch)
 
@@ -116,12 +110,15 @@ def cli(ctx, lang, project_file, changelog_file, no_commit, snapshot, release, g
         utils.update_changelog(grow_changelog, changelog_file)
 
     # stage updates
+    ctx.info("Stage updates")
     git.stage([project_file, changelog_file])
     # show status for debugging
+    ctx.info("Git status:")
     git.status()
 
     # TODO: Double negative yay
-    if not no_commit:
+    if commit:
+        ctx.info("Commit updates")
         if release:
             git.commit_update_version()
             git.checkout(branch)
