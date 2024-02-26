@@ -110,16 +110,18 @@ class VersionUtils:
     def update_changelog(self, grow_changelog: bool, changelog_file: str):
         print(f"Update changelog requested for {changelog_file}")
         release_notes_template = "### Breaking Changes\n* None.\n\n### New Features\n* None.\n\n### Enhancements\n* None.\n\n### Fixes\n* None.\n\n### Notes\n* None.\n"
-        # Check if the version pattern matches ## [num.num.num - ]
-        with open(changelog_file, "r") as f:
-            grow_pattern_ok: bool = False
-            text = f.read().split("\n")
-            for line in text:
-                if re.match(r"## \[[0-9]+\.[0-9]+\.[0-9]+\] -+", line):
-                    grow_pattern_ok = True
-                    break
 
-        if grow_changelog and grow_pattern_ok:
+        grow_pattern_ok: bool = False
+        if not grow_changelog:
+            # Check if the version pattern matches ## [num.num.num - ]
+            with open(changelog_file, "r") as f:
+                text = f.read().split("\n")
+                for line in text:
+                    if re.match(r"## \[[0-9]+\.[0-9]+\.[0-9]+\] -+", line):
+                        grow_pattern_ok = True
+                        break
+
+        if grow_changelog or grow_pattern_ok:
             new_changelog: list[str] = []
             with open(changelog_file, "r") as f:
                 text = f.read().split("\n")
@@ -170,4 +172,4 @@ class VersionUtils:
             case "csharp":
                 if self.project_file.endswith(
                         ".csproj") or self.project_file.endswith(".nuspec"):
-                    self.new_version = f"${self.new_version}-pre1"
+                    self.new_version = f"{self.new_version}-pre1"

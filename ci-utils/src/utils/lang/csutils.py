@@ -19,7 +19,6 @@ class CsUtils():
 
         base = v.group("base")
         beta = (int(v.group("beta")) + 1)
-        print(f"{base}-pre{beta}")
         self.writeNewVersion(project_file, version, f"{base}-pre{beta}")
 
     def writeNewVersion(self, project_file: str, old: str, new: str):

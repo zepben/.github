@@ -65,7 +65,7 @@ def cli(ctx, btype, version):
             branch = f"LTS/{version_array[0]}.{version_array[1]}.X"
             if branch in git.remote_refs["heads"]:
                 ctx.fail(
-                    f"There is already a LTS branch named {branch}.")
+                    f"There is already an LTS branch named {branch}.")
 
         case "hotfix":
             # figure out the next version

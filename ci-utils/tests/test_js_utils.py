@@ -1,24 +1,40 @@
-from src.cli import Environment 
+from src.cli import Environment
 import os
-import shutil
+import pytest
+
 from src.utils.lang.jsutils import JsUtils
 from tests.test_utils.configs import configs
+from jinja2 import Environment as JEnv, FileSystemLoader
 
 ctx = Environment()
+environment = JEnv(loader=FileSystemLoader(
+    os.path.join(os.path.dirname(__file__), "test_files")))
 
-test_file = "/".join((os.path.dirname(__file__), "test_files/test_package.json"))
 config = configs["js"]
 
-def test_js_parse_version():
-    version, sem_version = JsUtils(ctx).parseProjectVersion(test_file)
+
+@pytest.fixture
+def test_path():
+    template = environment.get_template(config.project_file)
+    content = template.render(current_version=config.current_version)
+    fpath = os.path.join("/tmp", config.project_file)
+    with open(fpath, "w") as f:
+        f.write(content)
+    yield fpath
+
+
+def test_js_parse_version(test_path):
+    version, sem_version = JsUtils(ctx).parseProjectVersion(test_path)
     assert version == config.current_version
     assert sem_version == config.current_version.split("-")[0]
-    
-def test_js_update_snapshot_version():
-    shutil.copy(test_file, "/tmp/")
-    JsUtils(ctx).updateSnapshotVersion(config.current_version, "/tmp/test_package.json") 
+
+
+def test_js_update_snapshot_version(test_path):
+    JsUtils(ctx).updateSnapshotVersion(config.current_version,
+                                       test_path)
 
     # # now fetch it and check the version was updated
-    version, sem_version = JsUtils(ctx).parseProjectVersion("/tmp/test_package.json")
+    version, sem_version = JsUtils(ctx).parseProjectVersion(
+        test_path)
     assert version == config.next_snapshot
     assert sem_version == config.current_version.split("-")[0]

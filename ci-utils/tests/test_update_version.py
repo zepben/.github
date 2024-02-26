@@ -14,6 +14,7 @@ from src.utils.git import Git
 
 # Create a couple of repos without any specific branches
 runner = CliRunner()
+ctx = Environment()
 
 
 @pytest.fixture
@@ -33,7 +34,6 @@ def repo_path(local_repo_name: str, local_path, request):
 
 
 def test_update_snapshot_version(repo_path):
-    ctx = Environment()
     for config in configs.values():
         # Test command: ci update_version --lang ... --project-file  --snapshot
         #   will test all languages and project files
@@ -59,9 +59,8 @@ def test_update_snapshot_version(repo_path):
                 assert git.repo.head.commit.hexsha == br.commit.hexsha
 
 def test_update_version(repo_path):
-    ctx = Environment()
     for config in configs.values():
-        # Test command: ci update_version --lang ... --project-file  --snapshot
+        # Test command: ci update_version --lang ... --project-file ... --changelog-file ...
         #   will test all languages and project files
         os.chdir(repo_path)
 
@@ -69,15 +68,20 @@ def test_update_version(repo_path):
         git = Git(ctx)
         git.checkout(goodbranch)
 
-        runner.invoke(cli, 
+        res = runner.invoke(cli, 
               ["--lang", config.lang, 
                "--project-file", config.project_file, 
-               "--snapshot"])
+               "--changelog-file", config.changelog])
+
+        print(res.output)
 
         # now fetch it and check the version was updated
         utils = VersionUtils(ctx, config.lang, config.project_file)
-        version, sem_version = utils.lang_utils.parseProjectVersion(config.project_file)
-        assert version == f"{config.next_snapshot}"
+        version, sem_version = utils.lang_utils.parseProjectVersion(os.path.join(repo_path, config.project_file))
+
+        # so we've upgraded the whole version, it means it needs to be minor update
+        new_version = config.released_tag.split(".")
+        assert sem_version == f"{new_version[0]}.{int(new_version[1])+1}.0"
 
         # now check it's been pushed to the origin
         for br in git.repo.remotes.origin.refs:
