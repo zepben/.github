@@ -2,13 +2,24 @@ from src.cli import Environment
 import os
 from src.utils.lang.csutils import CsUtils
 from tests.test_utils.configs import configs
+from jinja2 import Environment as JEnv, FileSystemLoader
 
 ctx = Environment()
+environment = JEnv(loader=FileSystemLoader(
+    os.path.join(os.path.dirname(__file__), "test_files")))
+
+def create_test_file(config):
+    template = environment.get_template(config.project_file)
+    content = template.render(current_version=config.current_version)
+    fpath = os.path.join("/tmp", config.project_file)
+    with open(fpath, "w") as f:
+        f.write(content)
+    return fpath
 
 
 def test_cs_parse_version_cproj():
     config = configs["csharp"]
-    test_file = "/".join((os.path.dirname(__file__), "test_files/test.csproj"))
+    test_file = create_test_file(config)
     version, sem_version = CsUtils(ctx).parseProjectVersion(test_file)
     assert version == config.current_version
     assert sem_version == config.current_version.split("-")[0]
@@ -26,34 +37,3 @@ def test_cs_parse_version_assemblyinfo():
     version, sem_version = CsUtils(ctx).parseProjectVersion(test_file)
     assert version == "2.5.39.4"
     assert sem_version == "2.5.39.4"
-
-# def test_cs_update_snapshot_version_csproj():
-#     test_file = "/".join((os.path.dirname(__file__), "test_files/test.csproj"))
-#     shutil.copy(test_file, "/tmp/")
-#     CsUtils(ctx).updateSnapshotVersion("2.5.39.4-pre28", "/tmp/test.csproj") 
-#
-#     # # now fetch it and check the version was updated
-#     version, sem_version = CsUtils(ctx).parseProjectVersion("/tmp/test.csproj")
-#     assert version == "2.5.39.4-pre28"
-#     assert sem_version == "2.5.39.4"
-#     # assert 1==0
-#
-# def test_cs_update_snapshot_version_nuspec():
-#     test_file = "/".join((os.path.dirname(__file__), "test_files/test.nuspec"))
-#     shutil.copy(test_file, "/tmp/")
-#     CsUtils(ctx).updateSnapshotVersion("2.5.39.4-pre28", "/tmp/test.nuspec") 
-#     # # now fetch it and check the version was updated
-#     version, sem_version = CsUtils(ctx).parseProjectVersion("/tmp/test.nuspec")
-#     assert version == "2.5.39.4-pre28"
-#     assert sem_version == "2.5.39.4"
-#     # assert 1==0
-#
-# def test_cs_update_snapshot_version_assemblyinfo():
-#     test_file = "/".join((os.path.dirname(__file__), "test_files/AssemblyInfo.cs"))
-#     shutil.copy(test_file, "/tmp/")
-#     CsUtils(ctx).updateSnapshotVersion("0.222.88-pre5", "/tmp/AssemblyInfo.cs") 
-#     # # now fetch it and check the version was updated
-#     # version, sem_version = CsUtils(ctx).parseProjectVersion(test_file)
-#     # assert version == "2.5.39.4"
-#     # assert sem_version == "2.5.39.4"
-#     assert 1==0
