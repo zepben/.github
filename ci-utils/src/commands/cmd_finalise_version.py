@@ -8,70 +8,73 @@ import datetime
 # finalise-version --lang (csharp, js, kotlin, python) [--no-commit] --project-file <package.json, pom.xml, setup.py> --changelog <changelog.md>
 
 
-@click.command("finalise-version",
-               help="""
-                 Finalise release version by removing SNAPSHOT, next, etc.;
-                 tag and push the commit to a branch named `release`;
-                 add a new entry to the changelog when command is specified.
-               """,
-               short_help="Finalise, tag and push release version (and update changelog)")
-@click.option("--lang",
-              required=True,
-              type=click.Choice(["jvm", "csharp", "python", "js"]),
-              help="Language that's used for various project file parsing")
+@click.command(
+    "finalise_version",
+    help="""Finalise release version by removing SNAPSHOT, next, etc.;
+            tag and push the commit to a branch named `release`;
+            add a new entry to the changelog when command is specified.
+    """,
+    short_help="Finalise, tag and push release version (and update changelog)",
+)
+@click.option(
+    "--lang",
+    required=True,
+    type=click.Choice(["jvm", "csharp", "python", "js"]),
+    help="Language that's used for various project file parsing",
+)
 @click.option("--project-file",
               required=True,
               type=str,
               help="The project file path, i.e setup.py, pom.xml, etc")
-@click.option("--changelog-file",
-              required=False,
-              type=str,
-              default="changelog.md",
-              show_default=True,
-              help="The changelog file path, i.e changelog.md")
-@click.option("--no-commit",
+@click.option(
+    "--changelog-file",
+    required=False,
+    type=str,
+    default="changelog.md",
+    show_default=True,
+    help="The changelog file path, i.e changelog.md",
+)
+@click.option("--commit",
               is_flag=True,
               required=False,
               type=bool,
-              default=False,
+              default=True,
               show_default=True,
-              help="Only update the project file without committing")
+              help="Commit updates")
 @pass_environment
-def cli(ctx, lang, project_file, changelog_file, no_commit):
-
+def cli(ctx, lang, project_file, changelog_file, commit):
     ctx.info(f"""Running with following parameters:
         language: {lang}
         project file: {project_file}
         changelog file: {changelog_file}
-        no-commit: {no_commit}
+        commit: {commit}
     """)
 
-    # Do the repo init via the ctx object?
-    git = Git()
+    ctx.info("Finalizing version...")
+    git = Git(ctx)
 
-    if no_commit is None:
+    if commit:
         git.checkout("release")
 
-    version_utils = VersionUtils(lang, project_file)
-
-    ctx.info("Finalizing version...")
-    version_utils.finalize_version()
+    version_utils = VersionUtils(ctx, lang, project_file)
 
     if changelog_file:
         ctx.info("Timestamping version in changelog...")
         new_changelog: list[str] = []
         with open(changelog_file, "r") as f:
             text = f.read()
-            new_changelog = text.replace("UNRELEASED", datetime.datetime.now().strftime("%Y-%m-%d"))
+            new_changelog = text.replace(
+                "UNRELEASED",
+                datetime.datetime.now().strftime("%Y-%m-%d"))
         if len(new_changelog) > 0:
             with open(changelog_file, "w") as f:
-                f.write('\n'.join(new_changelog))
+                f.write("\n".join(new_changelog))
 
     # stage updates
     git.stage([project_file, changelog_file])
     # show status for debugging
     git.status()
 
-    if no_commit is None:
+    if commit:
         if not git.tag_exists(version_utils.new_version):
             git.commit_finalise_version()
