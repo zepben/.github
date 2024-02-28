@@ -1,6 +1,5 @@
 from src.cli import Environment
 import os
-import shutil
 import pytest
 
 from src.utils.lang.pyutils import PyUtils
