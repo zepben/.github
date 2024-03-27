@@ -38,14 +38,14 @@ jobs:
           pip install tox
 
       - name: Cache licence-check
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}
