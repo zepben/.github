@@ -28,8 +28,6 @@ jobs:
     container: python:3.9
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
-    env:
-      LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
       - uses: actions/checkout@v3
 

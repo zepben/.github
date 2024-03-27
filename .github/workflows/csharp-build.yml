@@ -49,7 +49,6 @@ jobs:
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
     env:
-      LICENCE_CHECK: ${{ inputs.licencecheck }}
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
