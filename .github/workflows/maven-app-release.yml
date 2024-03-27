@@ -46,7 +46,6 @@ jobs:
     container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
-      LICENCE_CHECK: ${{ inputs.licencecheck }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
@@ -69,14 +68,14 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}

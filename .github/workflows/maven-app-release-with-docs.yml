@@ -62,7 +62,6 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
-      LICENCE_CHECK: ${{ inputs.licencecheck }}
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
@@ -86,14 +85,14 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}
@@ -108,19 +107,6 @@ jobs:
           echo "::set-output name=version::$(echo $version)"
         shell: bash
 
-      - name: Cache licence-check
-        if: ${{ env.LICENCE_CHECK == true }}
-        uses: actions/cache@v3
-        with:
-          path: /lc
-          key: lcc
-
-      - name: Check licence
-        if: ${{ env.LICENCE_CHECK == true }}
-        uses: zepben/licence-check-action@main
-        with:
-          LC_URL: ${{ secrets.LC_URL }}
-          PATH: ${{ inputs.sourcepath }}
 
   build-docs:
     needs: release-checks
