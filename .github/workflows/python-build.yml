@@ -28,8 +28,6 @@ jobs:
     container: python:3.9
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
-    env:
-      LICENCE_CHECK: ${{ inputs.licencecheck }}
     steps:
       - uses: actions/checkout@v3
 
@@ -38,14 +36,14 @@ jobs:
           pip install tox
 
       - name: Cache licence-check
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}

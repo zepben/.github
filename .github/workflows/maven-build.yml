@@ -36,7 +36,6 @@ jobs:
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
     env:
-      LICENCE_CHECK: ${{ inputs.licencecheck }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
@@ -44,14 +43,14 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Cache licence-check
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
-        if: ${{ env.LICENCE_CHECK == true }}
+        if: ${{ inputs.licencecheck == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}
