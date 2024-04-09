@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
-    container: node:18-alpine
+    container: node:21-alpine
     steps:
 
       - uses: actions/checkout@v3
