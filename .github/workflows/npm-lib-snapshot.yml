@@ -51,7 +51,7 @@ jobs:
     steps:
     - name: Install Dependencies
       run: |
-        apk add jq tar alpine-conf git bash
+        apk add jq tar alpine-conf git curl bash
 
     - name: Cache nodejs deps
       uses: actions/cache@v3
