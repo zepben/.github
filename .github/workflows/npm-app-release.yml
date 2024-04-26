@@ -252,6 +252,19 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.build-artifact.outputs.artifact }}
+          path: built-artifacts/
+        continue-on-error: false
+
+      - name: Check artifact
+        run: | 
+          ls -la
+          ls -la built-artifacts
+        shell: sh
+
       - name: Merge and Tag
         id: merge
         run: | 
@@ -289,19 +302,6 @@ jobs:
           echo "2. Manually create the release"
           echo "3. Update to the next snapshot version."
           exit 1
-        shell: sh
-
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ needs.build-artifact.outputs.artifact }}
-          path: built-artifacts/
-        continue-on-error: true
-
-      - name: Check artifact
-        run: | 
-          ls -la
-          ls -la built-artifacts
         shell: sh
 
       - name: Create Release and upload assets
