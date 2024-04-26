@@ -140,6 +140,7 @@ jobs:
         with:
           name: ${{ steps.build.outputs.artifact }}
           path: ${{ steps.build.outputs.artifact }}
+          if-no-files-found: error
 
       - name: Fail build
         if: steps.build.outcome == 'failure'
