@@ -170,6 +170,7 @@ jobs:
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
           path: ${{ steps.upload_path.outputs.path }}
+          if-no-files-found: error
 
       - name: Delete release branch if deploy failed and fail
         if: steps.build.outcome == 'failure' || steps.upload.outcome == 'failure'
