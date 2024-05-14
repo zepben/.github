@@ -126,6 +126,7 @@ jobs:
         with:
           name: docs
           path: docs/build/
+          if-no-files-found: error
 
       - name: Fail build
         if: steps.build.outcome == 'failure'
