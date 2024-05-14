@@ -170,6 +170,29 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Get latest changelog
+        id: changelog
+        run: |
+          lines=$(egrep -n "## \[[0-9]+\.[0-9]+\.[0-9]+\]" changelog.md | head -2 | cut -f1 -d:)
+          line1=$(echo "$lines" | head -1)
+          line2=$(echo "$lines" | tail -1)
+          cat changelog.md | tail -n +$((line1+1)) | head -n $((line2-line1-1)) > latest_changelog.txt
+        shell: bash
+        continue-on-error: true
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.build-artifact.outputs.artifact }}
+          path: built-artifacts/
+        continue-on-error: false
+
+      - name: Check artifact
+        run: | 
+          ls -la
+          ls -la built-artifacts
+        shell: sh
+
       - name: Merge and Tag
         id: merge
         run: | 
@@ -192,29 +215,6 @@ jobs:
           echo "There was an error in merging the branch. release branch was deleted."
           exit 1
         shell: bash
-
-      - name: Get latest changelog
-        id: changelog
-        run: |
-          lines=$(egrep -n "## \[[0-9]+\.[0-9]+\.[0-9]+\]" changelog.md | head -2 | cut -f1 -d:)
-          line1=$(echo "$lines" | head -1)
-          line2=$(echo "$lines" | tail -1)
-          cat changelog.md | tail -n +$((line1+1)) | head -n $((line2-line1-1)) > latest_changelog.txt
-        shell: bash
-        continue-on-error: true
-
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ needs.build-artifact.outputs.artifact }}
-          path: built-artifacts/
-        continue-on-error: true
-
-      - name: Check artifact
-        run: | 
-          ls -la
-          ls -la built-artifacts
-        shell: sh
 
       - name: Create Release and upload assets
         if: success()
