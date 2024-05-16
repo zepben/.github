@@ -6,7 +6,8 @@ on:
     inputs:
       product-key:
         description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
-        required: true
+        required: false
+        default: "productkeynotprovided"
         type: string
       private:
         description: 'Calling workflow from a private repo'
@@ -78,6 +79,7 @@ jobs:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     outputs:
       version: ${{ steps.check.outputs.version }}
+      docs-present: ${{ steps.docs.outputs.present }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -112,11 +114,24 @@ jobs:
           echo "::set-output name=version::$(echo $version)"
         shell: bash
 
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
   build-docs:
     needs: release-checks
     runs-on: ubuntu-latest
+    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
     outputs:
       artifact: docs
+      product-key: ${{ steps.docs-component.outputs.name }}
+      product-repo: ${{ steps.docs-component.outputs.repo }}
     container: node:20-alpine
     steps:
       - name: Install Git
@@ -167,6 +182,29 @@ jobs:
           echo "There was an error in the docusaurus build above."
           exit 1
         shell: sh
+
+      - name: Fetch the document component name
+        id: docs-component
+        shell: sh {0}
+        run: |
+            # if product key is supplied
+            if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
+              echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"
+            else
+              # This is just so we know that we can parse the docs component properly
+              if [ -f docs/docusaurus.config.js ]; then
+                # Parse out the baseUrl from the docusaurus configuration.
+                baseurl=$(grep baseUrl docs/docusaurus.config.js | sed -e "s#/\",##g")
+                # Find the component name
+                doc_comp=${baseurl##*/}
+                echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
+              else
+                  echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
+                  echo " :boom: Docs folder exists, but there's no docusaurus.config.js; check your code!" >> "${GITHUB_STEP_SUMMARY}"
+                  exit 1
+              fi
+            fi
+
 
   deploy:
     needs: [release-checks, build-docs]
@@ -338,7 +376,7 @@ jobs:
           token: ${{ secrets.CI_GITHUB_TOKEN }}
           repository: ${{ secrets.DOCS_REPO }}
           event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
-          client-payload: '{"product_key": "${{ inputs.product-key }}", "download_url": "https://github.com/${{ github.repository }}/releases/download/${{ steps.merge.outputs.tag }}/docs-site.zip"}'
+          client-payload: '{"product_key": "${{needs.build-docs.outputs.product-key}}", "download_url": "${{needs.build-docs.outputs.product-repo}}"}'
         continue-on-error: true
 
   update-version:
