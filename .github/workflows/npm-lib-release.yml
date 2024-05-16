@@ -128,7 +128,10 @@ jobs:
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run build
-          artifact=$(npm pack)
+          # We run npm pack twice because the command may log extra stdout from the `prepare` script.
+          # We want all logs in CI, but we also want to capture just the artifact name.
+          npm pack
+          artifact="$(npm pack --foreground-scripts=false --json --dry-run | jq -r .[0].filename)"
           npm publish
           version=$(jq -r .version package.json)
           echo "::set-output name=version::$(echo $version)"
