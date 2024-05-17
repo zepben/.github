@@ -74,6 +74,7 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
       artifact_id: ${{ steps.check.outputs.artifact_id }}
+      docs-present: ${{ steps.docs.outputs.present }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -109,6 +110,38 @@ jobs:
           artifact_id=$(cat ${{ inputs.version_file }} | grep "AssemblyTitle" | egrep -o "\"[A-Za-z0-9\-]+\"" | tr -d '"')
           echo "artifact_id=$artifact_id" >> $GITHUB_OUTPUT
         shell: bash
+
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+            echo "present=yes" >> "${GITHUB_ENV}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
+      - name: Check doc build artifacts are ignored
+        if: ${{ env.present == 'yes' }}
+        shell: sh {0}
+        run: |
+          # Make sure directories are properly ignored
+          # docs/node_modules
+          git check-ignore -q docs/node_modules 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              exit 1
+          fi
+
+          # docs/build
+          git check-ignore -q docs/build 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
+              exit 1
+          fi
 
   deploy:
     needs: release-checks
@@ -183,6 +216,7 @@ jobs:
   build-docs:
     needs: release-checks
     runs-on: ubuntu-latest
+    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
     outputs:
       artifact: docs
     container: node:20-alpine

@@ -120,6 +120,27 @@ jobs:
             echo "Docs folder not found, will skip the build-docs"
           fi
 
+      - name: Check doc build artifacts are ignored
+        if: ${{ env.present == 'yes' }}
+        shell: sh {0}
+        run: |
+          # Make sure directories are properly ignored
+          # docs/node_modules
+          git check-ignore -q docs/node_modules 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              exit 1
+          fi
+
+          # docs/build
+          git check-ignore -q docs/build 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
+              exit 1
+          fi
+
 
   build-docs:
     needs: release-checks
