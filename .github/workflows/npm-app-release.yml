@@ -8,10 +8,6 @@ on:
         required: false
         type: boolean
         default: true
-      product-key:
-        description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
-        required: false
-        type: string
       licencecheck:
         description: 'Need to check licence headers/files'
         required: false
@@ -49,6 +45,7 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
       changelog: ${{ steps.changelog.outputs.changelog }}
+      docs-present: ${{ steps.docs.outputs.present }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -95,9 +92,41 @@ jobs:
           # Changelog has newlines which isn't well supported, so we base64 with line wrap disabled (-w0)
           echo "changelog=$(echo $changelog | base64 -w0)" >> $GITHUB_OUTPUT
 
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+            echo "present=yes" >> "${GITHUB_ENV}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
+      - name: Check doc build artifacts are ignored
+        if: ${{ env.present == 'yes' }}
+        shell: sh {0}
+        run: |
+          # Make sure directories are properly ignored
+          # docs/node_modules
+          git check-ignore -q docs/node_modules 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              exit 1
+          fi
+
+          # docs/build
+          git check-ignore -q docs/build 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
+              exit 1
+          fi
+
   build-docs:
     needs: release-checks
-    if: ${{ inputs.product-key != '' }}
+    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
     runs-on: ubuntu-latest
     outputs:
       artifact: docs
