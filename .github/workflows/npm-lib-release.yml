@@ -8,11 +8,6 @@ on:
         required: false
         type: boolean
         default: true
-      licencecheck:
-        description: 'Need to check licence headers/files'
-        required: false
-        type: boolean
-        default: true
       sourcepath:
         description: 'Path to source directory (used for licence check)'
         required: false
@@ -54,14 +49,12 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        if: ${{ inputs.licencecheck == true }}
         uses: actions/cache@v3
         with:
           path: /lc
           key: lcc
 
       - name: Check licence
-        if: ${{ inputs.licencecheck == true }}
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}
