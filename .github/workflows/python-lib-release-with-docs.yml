@@ -174,11 +174,17 @@ jobs:
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         continue-on-error: true
 
+      - name: Zip documentation
+        run: |
+          cd docs/build
+          zip -r ../../docs.zip .
+        shell: bash
+
       - uses: actions/upload-artifact@v3
         if: steps.build.outcome == 'success'
         with:
-          name: docs
-          path: docs/build/
+          name: docs.zip
+          path: docs.zip
           if-no-files-found: error
 
       - name: Fail build
