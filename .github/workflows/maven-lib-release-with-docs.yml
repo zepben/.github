@@ -158,7 +158,7 @@ jobs:
     steps:
       - name: Install Git
         run: |
-          apk add git
+          apk add git zip
 
       - name: Work around git permission issue
         run: |
@@ -194,7 +194,7 @@ jobs:
         run: |
           cd docs/build
           zip -r ../../docs.zip .
-        shell: bash
+        shell: sh
 
       - uses: actions/upload-artifact@v3
         if: steps.build.outcome == 'success'
