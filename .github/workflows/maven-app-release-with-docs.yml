@@ -346,20 +346,6 @@ jobs:
           path: built-artifacts
         continue-on-error: true
 
-      - name: Download docs
-        uses: actions/download-artifact@v3
-        with:
-          name: docs
-          path: docs-site
-        continue-on-error: true
-
-      - name: Zip documentation
-        run: |
-          cd docs-site
-          zip -r docs-site.zip .
-        shell: bash
-        continue-on-error: true
-
       - name: Get latest changelog
         id: changelog
         run: |
@@ -384,7 +370,6 @@ jobs:
           prerelease: false
           files: |
             built-artifacts/${{ needs.deploy.outputs.artifact }}
-            docs-site/docs-site.zip
         continue-on-error: true
 
       - name: Deploy documentation
