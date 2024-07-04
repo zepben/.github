@@ -7,11 +7,11 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-java
+    container: zepben/pipeline-java:4.4.0
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache licence-check
         uses: actions/cache@v3
@@ -87,7 +87,7 @@ jobs:
     container: node:20-alpine
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build docusaurus
         id: build

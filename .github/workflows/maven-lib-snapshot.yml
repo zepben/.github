@@ -65,7 +65,7 @@ jobs:
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
     steps: 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if docs present
         id: docs
@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache maven deps
         uses: actions/cache@v3
@@ -174,7 +174,7 @@ jobs:
       product-key: ${{ steps.docs-component.outputs.name }}
       product-repo: ${{ steps.docs-component.outputs.repo }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -262,7 +262,7 @@ jobs:
       NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
       NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
