@@ -87,7 +87,7 @@ jobs:
         id: lint_shared
         continue-on-error: true
         run: |
-          npx eslint --ext .ts,.js,.tsx,.jsx .
+          npx eslint .
 
       - name: 
         if: steps.lint_shared.outcome == 'failure'
