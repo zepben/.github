@@ -87,6 +87,27 @@ jobs:
         echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
         echo "\n" >> ~/.npmrc
 
+    - name: Install linting dependencies
+      run: |
+        npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest
+
+    - name: Default Linting
+      id: lint_shared
+      continue-on-error: true
+      run: |
+        npx eslint --ext .ts,.js,.tsx,.jsx .
+
+    - name: 
+      if: steps.lint_shared.outcome == 'failure'
+      run: |
+        if npm run | grep -q 'lint'; then
+          echo "Executing repository-specific lint script..."
+          npm run lint
+        else
+          echo "ERROR! No repository-specific lint script found, failing the build."
+          exit 1
+        fi
+
     - name: build
       id: build
       run: |
