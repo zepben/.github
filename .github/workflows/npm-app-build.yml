@@ -81,8 +81,11 @@ jobs:
 
       - name: Install linting dependencies
         run: |
-          npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest --legacy-peer-deps
-
+          npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest --save-dev --legacy-peer-deps
+          if [ ! -f ../artifact-templates/eslint.config.js ]; then
+            echo "module.exports = {};" > ../artifact-templates/eslint.config.js
+          fi
+          
       - name: Default Linting
         id: lint_shared
         continue-on-error: true
