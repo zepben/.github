@@ -79,9 +79,21 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
 
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: zepben/.github
+          ref: chore/DEV-998-linting-integrations-npm
+          path: .github
+
+      - name: Copy eslint.config.js
+        run: |
+          cp .github/artifact-templates/eslint.config.js ./eslint.config.js
+
       - name: Install linting dependencies
         run: |
           pwd
+          ls -a
           npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest --save-dev --legacy-peer-deps
           
       - name: Default Linting
