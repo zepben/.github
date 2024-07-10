@@ -83,7 +83,7 @@ jobs:
         run: |
           npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest --save-dev --legacy-peer-deps
           if [ ! -f ../../artifact-templates/eslint.config.js ]; then
-            echo "module.exports = {};" > ../artifact-templates/eslint.config.js
+            echo "module.exports = {};" > ../../artifact-templates/eslint.config.js
           fi
           
       - name: Default Linting
