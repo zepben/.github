@@ -81,6 +81,7 @@ jobs:
 
       - name: Install linting dependencies
         run: |
+          pwd
           npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest --save-dev --legacy-peer-deps
           
       - name: Default Linting
