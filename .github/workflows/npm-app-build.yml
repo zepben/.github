@@ -84,7 +84,8 @@ jobs:
           npm install --save-dev --legacy-peer-deps
 
       - name: Lint
-        id: lint_shared
+        id: ci_lint
+        continue-on-error: true
         run: |
           echo "Running default linting..."
           if ! npm run lint; then
@@ -98,6 +99,11 @@ jobs:
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run ci
+
+      - name: Lint and Build Status Check
+        if: steps.ci_lint.outcome == 'failure'
+        run: |
+          exit 1
 
       - name: Check if docs present
         id: docs
