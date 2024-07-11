@@ -34,7 +34,28 @@ on:
         required: false
 
 jobs:
-  lint-build-and-test:
+  lint:
+    runs-on: ubuntu-latest
+    container: node:20-alpine
+    continue-on-error: false
+    outputs:
+      docs-present: ${{ steps.docs.outputs.present }}
+    steps:   
+      - name: Install Dependencies
+        run: 
+          npm install --save-dev --legacy-peer-deps
+
+      - name: Lint
+        id: ci_lint
+        run: |
+          echo "Running default linting..."
+          if ! npm run lint; then
+            echo "eslint-plugin-import not found, installing and retrying..."
+            npm install eslint-plugin-import@latest --save-dev
+            npm run lint
+          fi
+
+  build-and-test:
     runs-on: ubuntu-latest
     container: node:20-alpine
     continue-on-error: false
@@ -79,36 +100,12 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
 
-      - name: Install Dependencies
-        run: 
-          npm install --save-dev --legacy-peer-deps
-
-      - name: Try Lint
-        id: ci_lint
-        continue-on-error: true
-        run: |
-          echo "Running default linting..."
-          if ! npm run lint; then
-            echo "eslint-plugin-import not found, installing and retrying..."
-            npm install eslint-plugin-import@latest --save-dev
-            npm run lint
-          fi
-
-      - name: Try Build
+      - name: Build and Test
         id: build_and_test
-        continue-on-error: true
         run: |
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run ci
-
-      - name: Check Lint Outcome
-        if: steps.ci_lint.outcome == 'failure'
-        run: echo "Linting step failed." && exit 1
-        
-      - name: Check Build and Test Outcome
-        if: steps.build_and_test.outcome == 'failure'
-        run: echo "Build and test step failed." && exit 1
 
       - name: Check if docs present
         id: docs
@@ -150,8 +147,8 @@ jobs:
 
   build-docs:
     runs-on: ubuntu-latest
-    needs: lint-build-and-test
-    if: ${{ needs.lint-build-and-test.outputs.docs-present == 'yes' }}
+    needs: build-and-test
+    if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
     container: node:20-alpine
     steps:
 
