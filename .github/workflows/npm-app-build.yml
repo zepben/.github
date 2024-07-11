@@ -34,7 +34,7 @@ on:
         required: false
 
 jobs:
-  build-and-test:
+  lint-build-and-test:
     runs-on: ubuntu-latest
     container: node:20-alpine
     continue-on-error: false
@@ -87,17 +87,19 @@ jobs:
         id: ci_lint
         continue-on-error: true
         run: |
-          echo "Running default linting..."
+          echo "Executing linter..."
           npm run lint
 
       - name: Build and test
+        id: build_and_test
+        continue-on-error: true
         run: |
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run ci
 
-      - name: Lint and Build Status Check
-        if: steps.ci_lint.outcome == 'failure'
+      - name: Lint and Build Status 
+        if: steps.ci_lint.outcome == 'failure' || steps.build_and_test.outcome == 'failure'
         run: |
           exit 1
 
