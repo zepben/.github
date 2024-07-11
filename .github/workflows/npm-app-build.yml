@@ -87,8 +87,12 @@ jobs:
         id: ci_lint
         continue-on-error: true
         run: |
-          echo "Executing linter..."
-          npm run lint
+          echo "Running default linting..."
+          if ! npm run lint; then
+            echo "eslint-plugin-import not found, installing and retrying..."
+            npm install eslint-plugin-import@latest --save-dev
+            npm run lint
+          fi
 
       - name: Try Build
         id: build_and_test
@@ -99,7 +103,7 @@ jobs:
           npm run ci
 
       - name: Check Lint Outcome
-        if: steps.lint_shared.outcome == 'failure'
+        if: steps.ci_lint.outcome == 'failure'
         run: echo "Linting step failed." && exit 1
         
       - name: Check Build and Test Outcome
