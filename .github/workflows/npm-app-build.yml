@@ -80,10 +80,8 @@ jobs:
           echo "\n" >> ~/.npmrc
 
       - name: Install Dependencies
-        run: |
-          pwd
-          ls -a
-          npm install --save-dev --legacy-peer-deps
+        run: 
+          npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest eslint-plugin-n@latest --save-dev --legacy-peer-deps
 
       - name: Lint
         id: lint_shared
