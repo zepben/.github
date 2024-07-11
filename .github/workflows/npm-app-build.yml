@@ -88,12 +88,11 @@ jobs:
       - name: Lint
         id: lint_shared
         run: |
-          if npm run | grep -q 'lint'; then
-            echo "Executing repository-specific lint script..."
-            npm run lint
-          else
-            echo "ERROR! No repository-specific lint script found, failing the build."
-            exit 1
+          echo "Running default linting..."
+          if ! npm run lint --ext ts,js,tsx,jsx src test webpack --color; then
+            echo "eslint-plugin-import not found, installing and retrying..."
+            npm install eslint-plugin-import@latest --save-dev
+            npx eslint -c .eslintrc.json --ext ts,js,tsx,jsx src test webpack --color
           fi
 
       - name: Build and test
