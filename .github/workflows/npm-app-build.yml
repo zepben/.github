@@ -81,13 +81,15 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest --save-dev --legacy-peer-deps
+          pwd
+          ls -a
+          npm install --save-dev --legacy-peer-deps
 
       - name: Lint
         id: lint_shared
         run: |
           echo "Running default linting..."
-          if ! npm run lint; then
+          if ! npm run lint --ext ts,js,tsx,jsx src test webpack --color; then
             echo "eslint-plugin-import not found, installing and retrying..."
             npm install eslint-plugin-import@latest --save-dev
             npm run lint
