@@ -83,14 +83,14 @@ jobs:
         run: 
           npm install --save-dev --legacy-peer-deps
 
-      - name: Lint
+      - name: Try Lint
         id: ci_lint
         continue-on-error: true
         run: |
           echo "Executing linter..."
           npm run lint
 
-      - name: Build and test
+      - name: Try Build
         id: build_and_test
         continue-on-error: true
         run: |
@@ -98,10 +98,13 @@ jobs:
           npm ci --unsafe-perm
           npm run ci
 
-      - name: Lint and Build Status 
-        if: steps.ci_lint.outcome == 'failure' || steps.build_and_test.outcome == 'failure'
-        run: |
-          exit 1
+      - name: Check Lint Outcome
+        if: steps.lint_shared.outcome == 'failure'
+        run: echo "Linting step failed." && exit 1
+        
+      - name: Check Build and Test Outcome
+        if: steps.build_and_test.outcome == 'failure'
+        run: echo "Build and test step failed." && exit 1
 
       - name: Check if docs present
         id: docs
