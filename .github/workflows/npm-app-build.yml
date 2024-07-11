@@ -91,7 +91,7 @@ jobs:
         run: |
           npx eslint -c .eslintrc.yml
 
-      - name: 
+      - name: Fallback Lint
         if: steps.lint_shared.outcome == 'failure'
         run: |
           if npm run | grep -q 'lint'; then
