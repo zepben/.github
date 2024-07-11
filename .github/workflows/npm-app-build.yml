@@ -88,11 +88,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "Running default linting..."
-          if ! npm run lint; then
-            echo "eslint-plugin-import not found, installing and retrying..."
-            npm install eslint-plugin-import@latest --save-dev
-            npm run lint
-          fi
+          npm run lint
 
       - name: Build and test
         run: |
