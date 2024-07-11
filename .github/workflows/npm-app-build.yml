@@ -81,7 +81,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest
+          npm install eslint@latest typescript@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest --save-dev --legacy-peer-deps
 
       - name: Lint
         id: lint_shared
