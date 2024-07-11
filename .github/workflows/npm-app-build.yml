@@ -92,7 +92,7 @@ jobs:
           if ! npm run lint --ext ts,js,tsx,jsx src test webpack --color; then
             echo "eslint-plugin-import not found, installing and retrying..."
             npm install eslint-plugin-import@latest --save-dev
-            npx eslint -c .eslintrc.json --ext ts,js,tsx,jsx src test webpack --color
+            npm run lint
           fi
 
       - name: Build and test
