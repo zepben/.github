@@ -79,28 +79,22 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
 
-      - name: Install linting dependencies
+      - name: Install Dependencies
         run: |
           pwd
           ls -a
           npm install --save-dev --legacy-peer-deps
           
-      - name: Default Linting
+      - name: Lint
         id: lint_shared
-        continue-on-error: true
         run: |
-          npx eslint -c .eslintrc.yml
-
-      - name: Fallback Lint
-        if: steps.lint_shared.outcome == 'failure'
-        run: |
-          if npm run | grep -q 'lint'; then
-            echo "Executing repository-specific lint script..."
-            npm run lint
-          else
-            echo "ERROR! No repository-specific lint script found, failing the build."
-            exit 1
-          fi
+        if npm run | grep -q 'lint'; then
+          echo "Executing repository-specific lint script..."
+          npm run lint
+        else
+          echo "ERROR! No repository-specific lint script found, failing the build."
+          exit 1
+        fi
 
       - name: Build and test
         run: |
