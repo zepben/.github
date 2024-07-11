@@ -143,8 +143,8 @@ jobs:
 
   build-docs:
     runs-on: ubuntu-latest
-    needs: build-and-test
-    if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
+    needs: lint-build-and-test
+    if: ${{ needs.lint-build-and-test.outputs.docs-present == 'yes' }}
     container: node:20-alpine
     steps:
 
