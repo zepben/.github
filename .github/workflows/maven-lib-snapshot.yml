@@ -108,7 +108,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-java
+    container: zepben/pipeline-java:4.4.0
     steps:
       - uses: actions/checkout@v4
 
