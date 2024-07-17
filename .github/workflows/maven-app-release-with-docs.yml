@@ -233,7 +233,7 @@ jobs:
   deploy:
     needs: [release-checks, build-docs]
     runs-on: ubuntu-latest
-    container: zepben/pipeline-java:4.4.0
+    container: zepben/pipeline-java:4.5.0
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
