@@ -136,11 +136,11 @@ jobs:
         id: profile
         run: |
           priv=${{ inputs.private }}
-          if [[ $priv == 'true' ]]
+          if [[ $priv == 'true' ]];
           then 
-            echo "PROFILE=zepben-maven" >> ${GITHUB_ENV} 
+            echo "PROFILE=zepben-maven" >> ${GITHUB_ENV};
           else 
-            echo "PROFILE=ossrh" >> ${GITHUB_ENV}
+            echo "PROFILE=ossrh" >> ${GITHUB_ENV};
           fi
 
       - name: Maven deploy to Central
