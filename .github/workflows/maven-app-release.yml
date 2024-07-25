@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
-    container: zepben/pipeline-java:4.5.1
+    container: zepben/pipeline-java:4.5.2
     steps:
       - name: Work around git permission issue
         run: |
