@@ -55,7 +55,7 @@ on:
 jobs:
   build-app:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-java:4.5.2
+    container: zepben/pipeline-java-ewb
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
 
