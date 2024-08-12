@@ -264,14 +264,10 @@ jobs:
 
       - name: Set profile
         id: profile
+        shell: bash
         run: |
           priv=${{ inputs.private }}
-          if [[ $priv == 'true' ]]
-          then 
-            echo "::set-output name=profile::zepben-maven"; 
-          else 
-            echo "::set-output name=profile::ossrh"
-          fi
+          if [[ $priv == 'true' ]]; then echo "PROFILE=zepben-maven" >> ${GITHUB_ENV}; else echo "PROFILE=ossrh" >> ${GITHUB_ENV}; fi
 
       - name: Maven deploy to Central
         id: build
