@@ -8,10 +8,6 @@ on:
         required: false
         type: boolean
         default: true
-      product-key:
-        description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
-        required: false
-        type: string
       sourcepath:
         description: 'Path to source directory (used for licence check)'
         required: false
