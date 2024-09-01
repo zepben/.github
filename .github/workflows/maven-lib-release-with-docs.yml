@@ -189,7 +189,7 @@ jobs:
           zip -r ../../docs.zip .
         shell: sh
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
           name: docs.zip
@@ -286,7 +286,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
           name: ${{ steps.build.outputs.artifact }}
