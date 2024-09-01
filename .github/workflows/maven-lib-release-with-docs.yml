@@ -276,7 +276,7 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
-          PROFILE: ${{ steps.profile.outputs.profile }}
+          PROFILE: ${{ env.PROFILE }}
         continue-on-error: true
 
       - name: Upload coverage to Codecov
