@@ -38,7 +38,7 @@ on:
 jobs:
   release-checks:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic
+    container: zepben/pipeline-basic:5.7.3
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -158,7 +158,7 @@ jobs:
   create-release:
     needs: [deploy, release-checks]
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic
+    container: zepben/pipeline-basic:5.7.3
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
@@ -230,7 +230,7 @@ jobs:
   update-version:
     needs: [create-release]
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic
+    container: zepben/pipeline-basic:5.7.3
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
