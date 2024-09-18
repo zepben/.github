@@ -223,7 +223,7 @@ jobs:
 
   update-snapshot-version:
     needs: [build-artifact]
-    container: zepben/pipeline-basic:5.7.3
+    container: zepben/pipeline-basic:5.7.4
     runs-on: ubuntu-latest
     env:
       DEBUG: ${{ secrets.DEBUG }}
