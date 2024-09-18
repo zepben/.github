@@ -1,7 +1,7 @@
 # Note: default release notes file is docs/release.md.
 name: Maven App Release
 
-on: 
+on:
   workflow_call:
     inputs:
       private:
@@ -21,7 +21,7 @@ on:
         required: true
       NEXUS_USERNAME:
         required: true
-      NEXUS_PASSWORD: 
+      NEXUS_PASSWORD:
         required: true
       NEXUS_MAVEN_SNAPSHOT:
         required: true
@@ -31,10 +31,14 @@ on:
         required: false
       SLACK_WEBHOOK:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
 
 
+    outputs:
+      version:
+        description: "The current released version."
+        value: ${{ jobs.release-checks.outputs.version }}
 jobs:
   release-checks:
     runs-on: ubuntu-latest
@@ -134,7 +138,7 @@ jobs:
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v3
-        with: 
+        with:
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
 
