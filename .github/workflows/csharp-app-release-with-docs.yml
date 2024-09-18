@@ -60,6 +60,7 @@ on:
       version:
         description: "The current released version."
         value: ${{ jobs.release-checks.outputs.version }}
+
 jobs:
   release-checks:
     runs-on: ubuntu-latest
