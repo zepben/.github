@@ -1,6 +1,6 @@
 name: NPM Static App Release
 
-on: 
+on:
   workflow_call:
     inputs:
       private:
@@ -24,9 +24,13 @@ on:
         required: false
       SLACK_WEBHOOK:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
 
+    outputs:
+      version:
+        description: "The current released version."
+        value: ${{ jobs.release-checks.outputs.version }}
 jobs:
   release-checks:
     runs-on: ubuntu-latest
@@ -102,7 +106,7 @@ jobs:
         run: |
           # Make sure directories are properly ignored
           # docs/node_modules
-          git check-ignore -q docs/node_modules 
+          git check-ignore -q docs/node_modules
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
@@ -110,7 +114,7 @@ jobs:
           fi
 
           # docs/build
-          git check-ignore -q docs/build 
+          git check-ignore -q docs/build
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/build' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
@@ -220,7 +224,7 @@ jobs:
         shell: sh
 
       - name: create .npmrc
-        run: | 
+        run: |
           rm -rf .npmrc
           echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
           echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
@@ -248,7 +252,7 @@ jobs:
 
       - name: Fail build
         if: steps.build.outcome == 'failure'
-        run: | 
+        run: |
           git push origin -d release
           echo "There was an error in the npm package command above."
           exit 1
@@ -283,19 +287,19 @@ jobs:
         continue-on-error: false
 
       - name: Check artifact
-        run: | 
+        run: |
           ls -la
           ls -la built-artifacts
         shell: sh
 
       - name: Merge and Tag
         id: merge
-        run: | 
+        run: |
           git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
           git fetch --all
           git merge origin/release
           git push origin ${GITHUB_REF/refs\/heads\//}
-          tag="v${{ needs.release-checks.outputs.version }}" 
+          tag="v${{ needs.release-checks.outputs.version }}"
           git tag $tag
           git push --tags
           echo "tag=$tag" >> $GITHUB_OUTPUT
@@ -304,7 +308,7 @@ jobs:
 
       - name: Fail
         if: steps.merge.outcome == 'failure'
-        run: | 
+        run: |
           git push origin -d release
           echo "There was an error in merging the branch. release branch was deleted."
           exit 1
@@ -319,7 +323,7 @@ jobs:
 
       - name: Tell user to release themselves
         if: steps.changelog.outcome == 'failure'
-        run: | 
+        run: |
           echo "There was an error generating a changelog to associate with the release (see previous step and step in release-checks). You'll need to:"
           echo "1. Fix the changelog"
           echo "2. Manually create the release"
@@ -344,7 +348,7 @@ jobs:
 
       - name: Fail Release
         if: steps.create_release.outcome == 'failure'
-        run: | 
+        run: |
           git push origin -d release
           echo "There was an error in the npm package release above."
           exit 1
