@@ -30,7 +30,7 @@ on:
         required: false
       NEXUS_USERNAME:
         required: false
-      NEXUS_PASSWORD: 
+      NEXUS_PASSWORD:
         required: false
       NEXUS_MAVEN_SNAPSHOT:
         required: false
@@ -44,16 +44,20 @@ on:
         required: false
       SLACK_WEBHOOK:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
 
+    outputs:
+      version:
+        description: "The current released version."
+        value: ${{ jobs.build-app.outputs.version }}
 jobs:
   build-app:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java-ewb
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
-
+      version: ${{ steps.build.outputs.version }}
     env:
       GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
       GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
@@ -126,7 +130,7 @@ jobs:
         run: |
           # Make sure directories are properly ignored
           # docs/node_modules
-          git check-ignore -q docs/node_modules 
+          git check-ignore -q docs/node_modules
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
@@ -134,7 +138,7 @@ jobs:
           fi
 
           # docs/build
-          git check-ignore -q docs/build 
+          git check-ignore -q docs/build
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/build' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"

@@ -34,14 +34,19 @@ on:
         required: false
       SLACK_WEBHOOK:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
 
+    outputs:
+      version:
+        description: "The current released version."
+        value: ${{ jobs.build-artifact.outputs.version }}
 jobs:
   build-artifact:
     runs-on: ubuntu-latest
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
+      version: ${{ steps.build.outputs.version }}
     container: node:20-alpine
     steps:
     - name: Install Dependencies
@@ -73,7 +78,7 @@ jobs:
         setup-timezone -z Australia/ACT
 
     - name: create .npmrc
-      run: | 
+      run: |
         rm -rf ~/.npmrc
         echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
         echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
@@ -86,11 +91,12 @@ jobs:
         echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
         npm ci --unsafe-perm
         npm run prod
-        # version=$(jq -r .version package.json)
+        version=$(jq -r .version package.json)
         artifactId=$(jq -r .name package.json)
         artifact="$artifactId-$version-SNAPSHOT.tar.bz2"
         tar jcvf "$artifact" -C dist .
         echo "artifact=$artifact" >> ${GITHUB_ENV}
+        echo "version=$version" >> ${GITHUB_ENV}
 
     - uses: actions/upload-artifact@v3
       if: steps.build.outcome == 'success'
@@ -122,7 +128,7 @@ jobs:
       run: |
         # Make sure directories are properly ignored
         # docs/node_modules
-        git check-ignore -q docs/node_modules 
+        git check-ignore -q docs/node_modules
         if [ $? != 0 ]; then
             echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
             echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
@@ -130,7 +136,7 @@ jobs:
         fi
 
         # docs/build
-        git check-ignore -q docs/build 
+        git check-ignore -q docs/build
         if [ $? != 0 ]; then
             echo "ERROR! Make sure to add 'docs/build' to .gitignore"
             echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"

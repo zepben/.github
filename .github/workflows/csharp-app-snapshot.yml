@@ -1,6 +1,6 @@
 name: CSharp App Snapshot
- 
-on: 
+
+on:
   workflow_call:
     inputs:
       test_files:
@@ -52,16 +52,22 @@ on:
         required: true
       NEXUS_USERNAME:
         required: false
-      NEXUS_PASSWORD: 
+      NEXUS_PASSWORD:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
+
+    outputs:
+      version:
+        description: "The current released version."
+        value: ${{ jobs.build.outputs.version }}
 
 jobs:
   build:
     runs-on: windows-2019
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
+      version: ${{ steps.update-info-version.outputs.info_version }}
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
@@ -77,10 +83,10 @@ jobs:
       with:
         LC_URL: ${{ secrets.LC_URL }}
         PATH: ${{ inputs.sourcepath }}
-  
+
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
-     
+
     - name: Setup MSBuild Path
       uses: microsoft/setup-msbuild@v1
 
@@ -102,9 +108,9 @@ jobs:
 
     - name: Add ZepBen Nuget Repo credentials
       run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
-     
+
     - name: Restore NuGet Packages
-      run:   
+      run:
         msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }} /t:restore
 
     - name: Build
@@ -156,7 +162,7 @@ jobs:
       run: |
         # Make sure directories are properly ignored
         # docs/node_modules
-        git check-ignore -q docs/node_modules 
+        git check-ignore -q docs/node_modules
         if [ $? != 0 ]; then
             echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
             echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
@@ -164,7 +170,7 @@ jobs:
         fi
 
         # docs/build
-        git check-ignore -q docs/build 
+        git check-ignore -q docs/build
         if [ $? != 0 ]; then
             echo "ERROR! Make sure to add 'docs/build' to .gitignore"
             echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
