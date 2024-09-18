@@ -1,6 +1,6 @@
 name: CSharp App Release With Docs
 
-on: 
+on:
   workflow_call:
     inputs:
       test_files:
@@ -47,16 +47,19 @@ on:
         required: true
       NEXUS_USERNAME:
         required: true
-      NEXUS_PASSWORD: 
+      NEXUS_PASSWORD:
         required: true
       SLACK_NOTIFICATION:
         required: false
       SLACK_WEBHOOK:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
 
-
+    outputs:
+      version:
+        description: "The current released version."
+        value: ${{ jobs.release-checks.outputs.version }}
 jobs:
   release-checks:
     runs-on: ubuntu-latest
@@ -121,7 +124,7 @@ jobs:
         run: |
           # Make sure directories are properly ignored
           # docs/node_modules
-          git check-ignore -q docs/node_modules 
+          git check-ignore -q docs/node_modules
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
@@ -129,7 +132,7 @@ jobs:
           fi
 
           # docs/build
-          git check-ignore -q docs/build 
+          git check-ignore -q docs/build
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/build' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
@@ -154,10 +157,10 @@ jobs:
           git fetch --all
           git checkout release
         shell: bash
-      
+
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.0.5
-      
+
       - name: Setup MSBuild Path
         uses: microsoft/setup-msbuild@v1
 
@@ -166,9 +169,9 @@ jobs:
 
       - name: Add ZepBen Nuget Repo credentials
         run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
-      
+
       - name: Restore NuGet Packages
-        run:   
+        run:
           msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }} /t:restore
 
       - name: Build

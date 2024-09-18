@@ -1,6 +1,6 @@
 name: CSharp App Release
 
-on: 
+on:
   workflow_call:
     inputs:
       test_files:
@@ -47,15 +47,19 @@ on:
         required: true
       NEXUS_USERNAME:
         required: true
-      NEXUS_PASSWORD: 
+      NEXUS_PASSWORD:
         required: true
       SLACK_NOTIFICATION:
         required: false
       SLACK_WEBHOOK:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
 
+    outputs:
+      version:
+        description: "The current released version."
+        value: ${{ jobs.release-checks.outputs.version }}
 
 jobs:
   release-checks:
@@ -121,10 +125,10 @@ jobs:
           git fetch --all
           git checkout release
         shell: bash
-      
+
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.0.5
-      
+
       - name: Setup MSBuild Path
         uses: microsoft/setup-msbuild@v1
 
@@ -133,9 +137,9 @@ jobs:
 
       - name: Add ZepBen Nuget Repo credentials
         run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
-      
+
       - name: Restore NuGet Packages
-        run:   
+        run:
           msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }} /t:restore
 
       - name: Build
