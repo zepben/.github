@@ -1,8 +1,8 @@
 name: NPM Lib Build
 
-on: 
+on:
   workflow_call:
-    inputs:  
+    inputs:
       private:
         description: 'Calling workflow from a private repo'
         required: false
@@ -20,7 +20,7 @@ on:
         required: true
       CI_GITHUB_TOKEN:
         required: true
-      LC_URL: 
+      LC_URL:
         required: false
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     container: node:20-alpine
     continue-on-error: false
-    outputs: 
+    outputs:
       docs-present: ${{ steps.docs.outputs.present }}
     steps:
       - name: Install Dependencies
@@ -60,10 +60,10 @@ jobs:
           setup-timezone -z Australia/ACT
 
       - name: create .npmrc
-        run: | 
+        run: |
           rm -rf .npmrc
           echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
-          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+          echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
           echo "\n" >> .npmrc
 
       - name: Build and test
@@ -95,7 +95,7 @@ jobs:
         run: |
           # Make sure directories are properly ignored
           # docs/node_modules
-          git check-ignore -q docs/node_modules 
+          git check-ignore -q docs/node_modules
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
@@ -103,7 +103,7 @@ jobs:
           fi
 
           # docs/build
-          git check-ignore -q docs/build 
+          git check-ignore -q docs/build
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/build' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
