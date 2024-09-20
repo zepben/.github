@@ -1,4 +1,4 @@
-name: Build NPM Docker Image
+name: Build Sealed Docker Image
 on:
   workflow_call:
     inputs:
@@ -19,9 +19,14 @@ on:
         type: boolean
         default: false
       dockerfile:
-        description: Override the dockerfile in use
+        description: Override the Dockerfile in use
         type: string
         default: 'Dockerfile'
+      build-args:
+        description: Build args for building the Dockerfile
+        required: false
+        type: string
+        default: ''
     secrets:
       CI_GITHUB_TOKEN:
         required: true
