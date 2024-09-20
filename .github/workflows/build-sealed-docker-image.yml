@@ -122,6 +122,7 @@ jobs:
           file: ${{ inputs.dockerfile }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: ${{ inputs.build-args }}
           secret-files: |
             npm=/home/runner/.npmrc
             maven=/home/runner/.m2/settings.xml
