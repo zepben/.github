@@ -109,6 +109,6 @@ class Git:
         self.commit(comment="Update version to next snapshot [skip ci]")
         self.push(branch)
 
-    def commit_finalise_version(self):
-        self.commit(comment="Update version to next snapshot [skip ci]")
+    def commit_finalise_version(self, old_version, new_version):
+        self.commit(comment=f"Update {old_version} to {new_version} [skip ci]")
         self.push("release")

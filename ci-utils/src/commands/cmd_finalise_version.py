@@ -77,4 +77,4 @@ def cli(ctx, lang, project_file, changelog_file, commit):
 
     if commit:
         if not git.tag_exists(version_utils.new_version):
-            git.commit_finalise_version()
+            git.commit_finalise_version(version_utils.sem_version, version_utils.new_version)
