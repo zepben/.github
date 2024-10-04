@@ -128,7 +128,7 @@ jobs:
 
   update-snapshot-version:
     needs: [deploy]
-    container: zepben/pipeline-basic:5.7.4
+    container: zepben/pipeline-basic:5.7.5
     runs-on: ubuntu-latest
     env:
       DEBUG: ${{ secrets.DEBUG }}
