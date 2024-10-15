@@ -87,7 +87,8 @@ jobs:
             exit 1
           fi
           # Changelog has newlines which isn't well supported, so we base64 with line wrap disabled (-w0)
-          echo "changelog=$(echo $changelog | base64 -w0)" >> $GITHUB_OUTPUT
+          new_changelog=$(echo "${changelog}" | base64 -w0)
+          echo "changelog=${new_changelog}" >> $GITHUB_OUTPUT
 
       - name: Check if docs present
         id: docs
