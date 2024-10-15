@@ -68,13 +68,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Cache maven deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /maven
           key: maven
 
       - name: Cache licence-check
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /lc
           key: lcc
@@ -98,11 +98,11 @@ jobs:
 
           #  - name: Upload coverage to Codecov
           #    if: steps.build.outcome == 'success'
-          #    uses: codecov/codecov-action@v3
+          #    uses: codecov/codecov-action@v4
           #    with:
           #      token: ${{ secrets.CODECOV_TOKEN }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.artifactId }}-${{ env.version }}
           path: ${{ env.artifact-path }}
@@ -194,7 +194,7 @@ jobs:
           zip -r ../../docs.zip .
         shell: bash
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: ${{ steps.build.outcome == 'success' && env.deployDocs == 'yes' }}
         id: upload
         with:
@@ -232,7 +232,7 @@ jobs:
 
   update-snapshot-version:
     needs: [build-app]
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     runs-on: ubuntu-latest
     env:
       DEBUG: ${{ secrets.DEBUG }}
