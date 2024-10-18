@@ -36,15 +36,15 @@ jobs:
           apk add jq tar alpine-conf git curl bash
 
       - name: Cache nodejs deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache licence-check
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /lc
           key: lcc
@@ -117,7 +117,7 @@ jobs:
     container: node:20-alpine
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build docusaurus
         id: build

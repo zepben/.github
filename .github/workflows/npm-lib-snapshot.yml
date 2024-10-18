@@ -49,15 +49,15 @@ jobs:
         apk add jq tar alpine-conf git curl bash
 
     - name: Cache nodejs deps
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.npm
         key: npm
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Cache licence-check
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: /lc
         key: lcc
@@ -93,7 +93,7 @@ jobs:
         # version=$(jq -r .version package.json)
         echo "artifact=$(echo $artifact)" >> ${GITHUB_ENV}
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: steps.build.outcome == 'success'
       with:
           name: ${{ env.artifact }}
@@ -146,7 +146,7 @@ jobs:
       product-key: ${{ steps.docs-component.outputs.name }}
       product-repo: ${{ steps.docs-component.outputs.repo }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -186,7 +186,7 @@ jobs:
           zip -r ../../docs.zip .
         shell: bash
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: ${{ steps.build.outcome == 'success' && env.deployDocs == 'yes' }}
         id: upload
         with:
@@ -223,7 +223,7 @@ jobs:
 
   update-snapshot-version:
     needs: [build-artifact]
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     runs-on: ubuntu-latest
     env:
       DEBUG: ${{ secrets.DEBUG }}
@@ -231,7 +231,7 @@ jobs:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

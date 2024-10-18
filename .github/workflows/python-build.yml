@@ -24,14 +24,14 @@ jobs:
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           pip install tox
 
       - name: Cache licence-check
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /lc
           key: lcc
@@ -48,7 +48,7 @@ jobs:
         shell: bash
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -99,7 +99,7 @@ jobs:
     container: node:20-alpine
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build docusaurus
         id: build

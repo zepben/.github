@@ -70,10 +70,10 @@ jobs:
       version: ${{ steps.update-info-version.outputs.info_version }}
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Cache licence-check
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: /lc
         key: lcc
@@ -134,7 +134,7 @@ jobs:
 
     - name: Upload Release
       id: upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.artifact_id }}-${{ env.info_version }}
         path: ${{ env.artifact_id }}/bin/Release/
@@ -186,7 +186,7 @@ jobs:
       product-key: ${{ steps.docs-component.outputs.name }}
       product-repo: ${{ steps.docs-component.outputs.repo }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -226,7 +226,7 @@ jobs:
           zip -r ../../docs.zip .
         shell: bash
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: ${{ steps.build.outcome == 'success' && env.deployDocs == 'yes' }}
         id: upload
         with:
