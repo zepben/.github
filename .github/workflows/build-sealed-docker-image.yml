@@ -92,6 +92,7 @@ jobs:
 
       - name: Login to Nuget
         run: |
+          dotnet nuget remove source "Zepben" || true
           dotnet nuget add source "${{ secrets.NEXUS_NUGET_FEED }}" --name "Zepben" --username "${{ secrets.NEXUS_USERNAME }}" --password "${{ secrets.NEXUS_PASSWORD }}" --store-password-in-clear-text
 
       - name: Set up Docker Buildx
