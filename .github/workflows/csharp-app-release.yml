@@ -64,7 +64,7 @@ on:
 jobs:
   release-checks:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -74,7 +74,7 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       artifact_id: ${{ steps.check.outputs.artifact_id }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -85,7 +85,7 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /lc
           key: lcc
@@ -117,7 +117,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout release branch
         run: |
@@ -163,7 +163,7 @@ jobs:
 
       - name: Upload Release
         id: upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
           path: ${{ steps.upload_path.outputs.path }}
@@ -180,11 +180,11 @@ jobs:
   create-release:
     needs: [deploy, release-checks]
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -217,7 +217,7 @@ jobs:
         shell: bash
 
       - name: Download binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}
           path: built-artifacts
@@ -265,14 +265,14 @@ jobs:
   update-version:
     needs: [create-release]
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

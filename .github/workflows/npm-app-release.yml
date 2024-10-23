@@ -34,7 +34,7 @@ on:
 jobs:
   release-checks:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     continue-on-error: false
     env:
       DEBUG: ${{ secrets.DEBUG }}
@@ -46,7 +46,7 @@ jobs:
       changelog: ${{ steps.changelog.outputs.changelog }}
       docs-present: ${{ steps.docs.outputs.present }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -57,7 +57,7 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /lc
           key: lcc
@@ -142,7 +142,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -154,7 +154,7 @@ jobs:
         shell: sh
 
       - name: Cache nodejs deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: npm
@@ -168,7 +168,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         continue-on-error: true
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
           name: docs
@@ -198,12 +198,12 @@ jobs:
           apk add jq tar alpine-conf git
 
       - name: Cache nodejs deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -245,7 +245,7 @@ jobs:
           echo "artifact=$artifact" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
           name: ${{ steps.build.outputs.artifact }}
@@ -263,14 +263,14 @@ jobs:
     if: ${{ !failure() }}
     needs: [build-artifact, release-checks]
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
       artifact: ${{ steps.merge.outputs.artifact }}
       tag: ${{ steps.merge.outputs.tag }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -281,7 +281,7 @@ jobs:
         shell: sh
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-artifact.outputs.artifact }}
           path: built-artifacts/
@@ -359,14 +359,14 @@ jobs:
     if: ${{ !failure() }}
     needs: create-release
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic:5.7.5
+    container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

@@ -47,13 +47,13 @@ jobs:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         token: ${{ env.GITHUB_TOKEN }}
 
     - name: Cache licence-check
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: /lc
         key: lcc
@@ -133,7 +133,7 @@ jobs:
     container: node:20-alpine
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build docusaurus
         id: build
