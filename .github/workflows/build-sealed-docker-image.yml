@@ -32,34 +32,41 @@ on:
         required: false
         type: string
         default: ''
+      skip_repo_login:
+        description: Skip repository logins
+        required: false
+        type: boolean
+        default: false
     secrets:
       CI_GITHUB_TOKEN:
         required: true
 
       # Nexus Login
       NEXUS_USERNAME:
-        required: true
+        required: false
       NEXUS_PASSWORD:
-        required: true
+        required: false
 
       # Maven
       NEXUS_MAVEN_REPO:
-        required: true
+        required: false
       NEXUS_MAVEN_SNAPSHOT:
-        required: true
+        required: false
       NEXUS_MAVEN_RELEASE:
-        required: true
+        required: false
 
       # NPM
       NEXUS_NPM_REPO:
-        required: true
+        required: false
 
       # Nuget
       NEXUS_NUGET_FEED:
-        required: true
+        required: false
 
 env:
   REGISTRY_URL: "ghcr.io/${{ github.repository }}"
+  RUN_REPO_LOGIN: ${{ ! inputs.skip_repo_login }}
+
 
 jobs:
   build:
@@ -74,6 +81,7 @@ jobs:
           ref: ${{ inputs.commit }}
 
       - name: Login to NPM
+        if: ${{ env.RUN_REPO_LOGIN == 'true' }}
         run: |
           rm -rf ~/.npmrc
           echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
@@ -83,6 +91,7 @@ jobs:
 
       - name: Login to Maven
         uses: zepben/maven-login@main
+        if: ${{ env.RUN_REPO_LOGIN == 'true' }}
         with:
           maven-repo-url: ${{ secrets.NEXUS_MAVEN_REPO }}
           maven-release-url: ${{ secrets.NEXUS_MAVEN_RELEASE }}
@@ -91,8 +100,16 @@ jobs:
           server-password: ${{ secrets.NEXUS_PASSWORD }}
 
       - name: Login to Nuget
+        if: ${{ env.RUN_REPO_LOGIN == 'true' }}
         run: |
           dotnet nuget add source "${{ secrets.NEXUS_NUGET_FEED }}" --name "Zepben" --username "${{ secrets.NEXUS_USERNAME }}" --password "${{ secrets.NEXUS_PASSWORD }}" --store-password-in-clear-text
+
+      - name: Fake secret files
+        if: ${{ env.RUN_REPO_LOGIN == 'false' }}
+        run: |
+          echo fake > /home/runner/.npmrc
+          echo fake > /home/runner/.m2/settings.xml
+          echo fake > /home/runner/.nuget/NuGet/NuGet.Config
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
