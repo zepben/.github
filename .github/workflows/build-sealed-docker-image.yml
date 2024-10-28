@@ -120,7 +120,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY_URL }}
           tags: |
-            type=sha,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
+            type=raw,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
             type=raw,value=sha-${{ inputs.commit }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
