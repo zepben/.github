@@ -73,6 +73,12 @@ jobs:
         with:
           ref: ${{ inputs.commit }}
 
+      - name: Get Short SHA
+        id: sha
+        run: |
+          SHORT_REF=git rev-parse --short HEAD
+          echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
+
       - name: Login to NPM
         run: |
           rm -rf ~/.npmrc
@@ -114,8 +120,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY_URL }}
           tags: |
-            type=sha,format=short,priority=200
-            type=sha,format=long,priority=220
+            type=sha,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
+            type=raw,value=sha-${{ inputs.commit }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
