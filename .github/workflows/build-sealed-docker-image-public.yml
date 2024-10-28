@@ -47,16 +47,17 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        id: checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.commit }}
 
-      - name: Get Short SHA
+      - name: Get SHAs
         id: sha
         run: |
           SHORT_REF=$(git rev-parse --short HEAD)
+          LONG_REF=$(git rev-parse HEAD)
           echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
+          echo "long_ref=$LONG_REF" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -78,7 +79,7 @@ jobs:
           images: ${{ env.REGISTRY_URL }}
           tags: |
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
-            type=raw,value=sha-${{ steps.checkout.outputs.ref }},priority=220
+            type=raw,value=sha-${{ steps.sha.outputs.long_ref }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
