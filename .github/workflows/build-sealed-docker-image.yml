@@ -69,6 +69,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
+        id: checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.commit }}
@@ -121,7 +122,7 @@ jobs:
           images: ${{ env.REGISTRY_URL }}
           tags: |
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
-            type=raw,value=sha-${{ inputs.commit }},priority=220
+            type=raw,value=sha-${{ steps.checkout.outputs.ref }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
