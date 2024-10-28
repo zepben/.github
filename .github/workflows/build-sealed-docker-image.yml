@@ -69,9 +69,16 @@ jobs:
       packages: write
     steps:
       - name: Checkout
+        id: checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.commit }}
+
+      - name: Get Short SHA
+        id: sha
+        run: |
+          SHORT_REF=$(git rev-parse --short HEAD)
+          echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
 
       - name: Login to NPM
         run: |
@@ -108,19 +115,14 @@ jobs:
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
       # We always push a commit based tag
-      #
-      # The context also must be git cause there is a potential for us to override the currently checked out commit
-      # using `inputs.commit`. Therefore we should tag the image with that commit instead of whatever random event
-      # that Github sends
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_URL }}
-          context: git
           tags: |
-            type=sha,format=short,priority=200
-            type=sha,format=long,priority=220
+            type=raw,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
+            type=raw,value=sha-${{ steps.checkout.outputs.ref }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
