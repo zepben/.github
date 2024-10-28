@@ -76,7 +76,7 @@ jobs:
       - name: Get Short SHA
         id: sha
         run: |
-          SHORT_REF=git rev-parse --short HEAD
+          SHORT_REF=$(git rev-parse --short HEAD)
           echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
 
       - name: Login to NPM
