@@ -32,6 +32,11 @@ on:
         required: false
         type: string
         default: ''
+      sha-tags:
+        description: Override if we should push SHA based tags. Should be false for bundled containers
+        required: false
+        type: boolean
+        default: true
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -124,8 +129,8 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${{ steps.sha.outputs.long_ref }}
           tags: |
-            type=raw,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
-            type=raw,value=sha-${{ steps.sha.outputs.long_ref }},priority=220
+            type=raw,value=sha-${{ steps.sha.outputs.short_ref }},enable=${{ inputs.sha-tags }},priority=200
+            type=raw,value=sha-${{ steps.sha.outputs.long_ref }},enable=${{ inputs.sha-tags }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
