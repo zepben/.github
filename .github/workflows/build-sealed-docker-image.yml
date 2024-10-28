@@ -32,6 +32,11 @@ on:
         required: false
         type: string
         default: ''
+      sha-tags:
+        description: Override if we should push SHA based tags. Should be false for bundled containers
+        required: false
+        type: boolean
+        default: true
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -69,16 +74,17 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        id: checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.commit }}
 
-      - name: Get Short SHA
+      - name: Get SHAs
         id: sha
         run: |
           SHORT_REF=$(git rev-parse --short HEAD)
+          LONG_REF=$(git rev-parse HEAD)
           echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
+          echo "long_ref=$LONG_REF" >> $GITHUB_OUTPUT
 
       - name: Login to NPM
         run: |
@@ -120,9 +126,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_URL }}
+          labels: |
+            org.opencontainers.image.vendor=Zepben
           tags: |
-            type=raw,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
-            type=raw,value=sha-${{ steps.checkout.outputs.ref }},priority=220
+            type=raw,value=sha-${{ steps.sha.outputs.short_ref }},enable=${{ inputs.sha-tags }},priority=200
+            type=raw,value=sha-${{ steps.sha.outputs.long_ref }},enable=${{ inputs.sha-tags }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
