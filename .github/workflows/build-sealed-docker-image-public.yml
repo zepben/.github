@@ -83,7 +83,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY_URL }}
           labels: |
-            org.opencontainers.image.revision=${{ steps.sha.outputs.long_ref }}
+            org.opencontainers.image.vendor=Zepben
           tags: |
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},enable=${{ inputs.sha-tags }},priority=200
             type=raw,value=sha-${{ steps.sha.outputs.long_ref }},enable=${{ inputs.sha-tags }},priority=220
