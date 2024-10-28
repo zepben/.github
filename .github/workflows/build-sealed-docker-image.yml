@@ -121,6 +121,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_URL }}
+          labels: |
+            org.opencontainers.image.revision=${{ steps.sha.outputs.long_ref }}
           tags: |
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},priority=200
             type=raw,value=sha-${{ steps.sha.outputs.long_ref }},priority=220
