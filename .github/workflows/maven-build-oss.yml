@@ -38,6 +38,8 @@ jobs:
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v4
+        with:
+          verbose: true
         env: 
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
