@@ -99,7 +99,8 @@ jobs:
           echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_ENV}
           mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE
           mkdir $artifact
-          cp target/* -t $artifact
+          cp target/* -t $artifact || :
+          rm $artifact/original*.jar
 
           #  - name: Upload coverage to Codecov
           #    if: steps.build.outcome == 'success'
