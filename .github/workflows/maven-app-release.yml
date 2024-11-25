@@ -210,8 +210,8 @@ jobs:
       - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.deploy.outputs.artifact }}
           path: built-artifacts
+          merge-multiple: true
         continue-on-error: true
 
       - name: Get latest changelog
@@ -236,7 +236,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            built-artifacts/${{ needs.deploy.outputs.artifact }}
+            built-artifacts/*
         continue-on-error: true
 
 
