@@ -90,7 +90,7 @@ jobs:
         run: |
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          artifact="${artifactId}-${version}.zip"
+          artifact="${artifactId}-${version}"
           echo "version=$(echo $version)" >> ${GITHUB_ENV}
           echo "artifactId=$(echo $artifactId)" >> ${GITHUB_ENV}
           echo "artifact-path=$(echo $artifact.zip)" >> ${GITHUB_ENV}
