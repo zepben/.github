@@ -90,11 +90,12 @@ jobs:
         run: |
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          artifact="${artifactId}-${version}.jar"
+          artifact="${artifactId}-${version}.zip"
           echo "version=$(echo $version)" >> ${GITHUB_ENV}
           echo "artifactId=$(echo $artifactId)" >> ${GITHUB_ENV}
-          echo "artifact-path=$(echo target/$artifact)" >> ${GITHUB_ENV}
+          echo "artifact-path=$(echo $artifact)" >> ${GITHUB_ENV}
           mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+          echo "zip ${artifact} target/* -D -Z deflate -x 'original*.jar'" >> ${GITHUB_ENV}
 
           #  - name: Upload coverage to Codecov
           #    if: steps.build.outcome == 'success'
