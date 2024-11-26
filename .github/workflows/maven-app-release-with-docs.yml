@@ -263,14 +263,17 @@ jobs:
       - name: Maven package
         id: build
         run: |
-          mvn clean package -B -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE  
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          artifact="${artifactId}-${version}.jar"
-          echo "version=$(echo $version)" >> "${GITHUB_OUTPUT}"
-          echo "artifact=$(echo $artifact)" >> "${GITHUB_OUTPUT}"
-          echo "artifact-id=$(echo $artifactId)" >> "${GITHUB_OUTPUT}"
-          echo "artifact-path=$(echo target/$artifact)" >> "${GITHUB_OUTPUT}"
+          artifact="${artifactId}-${version}"
+          mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE
+          mkdir .artifact-$artifact
+          cp target/* -t .artifact-$artifact || :
+          rm .artifact-$artifact/original*.jar || :
+          echo "version=$(echo $version)" >> ${GITHUB_OUTPUT}
+          echo "artifact=$(echo $artifact)" >> ${GITHUB_OUTPUT}
+          echo "artifactId=$(echo $artifactId)" >> ${GITHUB_OUTPUT}
+          echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_OUTPUT}
         shell: bash
         continue-on-error: true
 
@@ -287,6 +290,8 @@ jobs:
         with:
           name: ${{ steps.build.outputs.artifact }}
           path: ${{ steps.build.outputs.artifact-path }}
+          include-hidden-files: true
+          if-no-files-found: error
 
       - name: Delete release branch if deploy failed and fail
         if: steps.build.outcome == 'failure' || steps.upload.outcome == 'failure'
