@@ -111,8 +111,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.artifactId }}-${{ env.version }}
-          path: ${{ env.artifact-path }}
+          name: ${{ steps.build.outputs.artifact }}
+          path: ${{ steps.build.outputs.artifact-path }}
           include-hidden-files: true
           if-no-files-found: error
 
