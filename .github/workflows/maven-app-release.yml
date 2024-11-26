@@ -125,13 +125,14 @@ jobs:
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           artifact="${artifactId}-${version}"
-          echo "version=$(echo $version)" >> ${GITHUB_ENV}
-          echo "artifactId=$(echo $artifactId)" >> ${GITHUB_ENV}
-          echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_ENV}
           mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
           mkdir .artifact-$artifact
           cp target/* -t .artifact-$artifact || :
           rm .artifact-$artifact/original*.jar || :
+          echo "version=$(echo $version)" >> ${GITHUB_OUTPUT}
+          echo "artifact=$(echo $artifact)" >> ${GITHUB_OUTPUT}
+          echo "artifactId=$(echo $artifactId)" >> ${GITHUB_OUTPUT}
+          echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_OUTPUT}
 
         shell: bash
         env:
