@@ -272,7 +272,7 @@ jobs:
           rm .artifact-$artifact/original*.jar || :
           echo "version=$(echo $version)" >> ${GITHUB_OUTPUT}
           echo "artifact=$(echo $artifact)" >> ${GITHUB_OUTPUT}
-          echo "artifactId=$(echo $artifactId)" >> ${GITHUB_OUTPUT}
+          echo "artifact-id=$(echo $artifactId)" >> ${GITHUB_OUTPUT}
           echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_OUTPUT}
         shell: bash
         continue-on-error: true
