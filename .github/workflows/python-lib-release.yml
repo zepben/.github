@@ -67,7 +67,7 @@ jobs:
           /scripts/release-checks.sh --python setup.py
           /scripts/finalize-version.sh --python setup.py changelog.md
           version=$(grep version= setup.py | cut -d= -f2 | tr -d '",')
-          echo "::set-output name=version::$(echo $version)"
+          echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
 
       - name: Cache licence-check
@@ -82,8 +82,21 @@ jobs:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
 
+  python-deps-check:
+    needs: release-checks
+    runs-on: ubuntu-latest
+    container: python:3.9
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test install the local package with deps
+        run: |
+          # finalize-version above removes all snapshot/test versions
+          # from zepben packages. Now let's try to install to see if deps exist or fail quick
+          pip install --pre '.'
+
   deploy:
-    needs: [release-checks]
+    needs: [release-checks, python-deps-check]
     runs-on: ubuntu-latest
     container: python:3.9
     outputs:
