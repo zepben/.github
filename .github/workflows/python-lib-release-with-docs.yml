@@ -76,7 +76,7 @@ jobs:
           /scripts/release-checks.sh --python setup.py
           /scripts/finalize-version.sh --python setup.py
           version=$(grep version= setup.py | cut -d= -f2 | tr -d '",')
-          echo "version=$(echo $version)" >> "${GITHUB_OUTPUT}"
+          echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
 
       - name: Cache licence-check
