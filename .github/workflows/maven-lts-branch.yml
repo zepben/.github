@@ -16,6 +16,8 @@ on:
         required: true
       NEXUS_PASSWORD: 
         required: true
+      NEXUS_SIGNATURE:
+        required: true
       NEXUS_MAVEN_SNAPSHOT:
         required: true
       NEXUS_MAVEN_RELEASE:
@@ -35,6 +37,7 @@ jobs:
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_SIGNATURE: ${{ secrets.NEXUS_SIGNATURE }}
       NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
       NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
       SLACK_NOTIFICATION: YES

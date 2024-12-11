@@ -32,6 +32,8 @@ on:
         required: false
       NEXUS_PASSWORD:
         required: false
+      NEXUS_SIGNATURE:
+        required: true
       NEXUS_MAVEN_SNAPSHOT:
         required: false
       NEXUS_MAVEN_RELEASE:
@@ -64,6 +66,7 @@ jobs:
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_SIGNATURE: ${{ secrets.NEXUS_SIGNATURE }}
     steps:
       - uses: actions/checkout@v4
 
@@ -94,7 +97,7 @@ jobs:
           echo "version=$(echo $version)" >> ${GITHUB_ENV}
           echo "artifactId=$(echo $artifactId)" >> ${GITHUB_ENV}
           echo "artifact-path=$(echo target/$artifact)" >> ${GITHUB_ENV}
-          mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+          mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE 
 
           #  - name: Upload coverage to Codecov
           #    if: steps.build.outcome == 'success'

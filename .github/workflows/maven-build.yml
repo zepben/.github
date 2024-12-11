@@ -20,6 +20,8 @@ on:
         required: true
       NEXUS_PASSWORD:
         required: true
+      NEXUS_SIGNATURE:
+        required: true
       LC_URL: 
         required: false
 
@@ -34,6 +36,7 @@ jobs:
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_SIGNATURE: ${{ secrets.NEXUS_SIGNATURE }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +61,7 @@ jobs:
       - name: Maven build and test
         id: build
         run: |
-          mvn clean test -B -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+          mvn clean test -B -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE 
         shell: bash
 
       - name: Upload coverage to Codecov
