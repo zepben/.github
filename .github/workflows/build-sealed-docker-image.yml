@@ -46,6 +46,8 @@ on:
         required: true
       NEXUS_PASSWORD:
         required: true
+      NEXUS_SIGNATURE:
+        required: true
 
       # Maven
       NEXUS_MAVEN_REPO:
@@ -102,6 +104,7 @@ jobs:
           maven-snapshot-url: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
           server-username: ${{ secrets.NEXUS_USERNAME }}
           server-password: ${{ secrets.NEXUS_PASSWORD }}
+          nexus-signature: ${{ secrets.NEXUS_SIGNATURE }}
 
       - name: Login to Nuget
         run: |
