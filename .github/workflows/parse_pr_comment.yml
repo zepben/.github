@@ -1,0 +1,29 @@
+name: Parse PR Comment
+
+on: 
+  workflow_call:
+    inputs:
+      number:
+        description: 'PR number for the comment'
+        required: true
+        type: number
+      comment:
+        description: 'Body of the comment'
+        required: true
+        type: string
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+
+jobs:
+  check_pr_comment:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+
+    - name: Check PR comment
+      id: check
+      if: ${{ contains(inputs.comment, 'run ci') }}
+      run: |
+          gh pr edit -R ${{ github.repository }} ${{ inputs.number }} --add-label "run checks"

@@ -1,0 +1,38 @@
+name: Validate Label
+
+on: 
+  workflow_call:
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+
+jobs:
+  validate_label:
+    runs-on: ubuntu-latest
+    outputs:
+      normal_run: ${{ steps.check.outputs.normal_run }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+
+    - name: Check label
+      id: check
+      if: ${{ github.event.action == 'labeled' }}
+      run: |
+        # Then, first thing is don't allow the build to run
+        echo "normal_run=no" >> $GITHUB_OUTPUT
+        if [ "${{ github.event.label.name }}" == "run checks" ]; then
+          # Remove the label
+          gh pr edit -R ${{ github.repository }} ${{ github.event.number }} --remove-label "run checks"
+
+          if [ "${{ github.event.pull_request.draft }}" == "true" ]; then
+            # No checks in draft PRs!
+            gh pr comment -R ${{ github.repository }} ${{ github.event.number }} --body "No check runs allowed in draft. Run the actions manually if you want to do that. Removing label"
+          else
+            # So it's a legitimate request; this job only runs if was triggered by label "run checks"
+            # while PR is NOT in draft! 
+            gh pr comment -R ${{ github.repository }} ${{ github.event.number }} --body ":heavy_check_mark: Running checks "
+            # Allow the action to run
+            echo "normal_run=yes" >> $GITHUB_OUTPUT
+          fi
+        fi
