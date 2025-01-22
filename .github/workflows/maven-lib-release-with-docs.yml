@@ -141,6 +141,7 @@ jobs:
 
       - name: Test changelog format
         id: changelog
+        shell: bash
         run: |
           changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
           if [[ -z "$changelog" ]]; then
