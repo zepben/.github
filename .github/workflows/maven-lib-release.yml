@@ -82,8 +82,24 @@ jobs:
           /scripts/release-checks.sh --java --maven pom.xml
           /scripts/finalize-version.sh --java --maven pom.xml changelog.md
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          echo "::set-output name=version::$(echo $version)"
+          echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
+
+      - name: Test changelog format
+        id: changelog
+        shell: bash
+        run: |
+          changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
+          if [[ -z "$changelog" ]]; then
+            echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
+            git push origin -d release
+            # We can safely fail here because we haven't done anything yet. Changelog.md file should be in correct format.
+            exit 1
+          fi
+          # Changelog has newlines which isn't well supported, so we base64 with line wrap disabled (-w0)
+          new_changelog=$(echo "${changelog}" | base64 -w0)
+          echo "changelog=${new_changelog}" >> $GITHUB_OUTPUT
+
 
   deploy:
     needs: release-checks
@@ -208,10 +224,7 @@ jobs:
       - name: Get latest changelog
         id: changelog
         run: |
-          lines=$(egrep -n "## \[[0-9]+\.[0-9]+\.[0-9]+\]" changelog.md | head -2 | cut -f1 -d:)
-          line1=$(echo "$lines" | head -1)
-          line2=$(echo "$lines" | tail -1)
-          cat changelog.md | tail -n +$((line1+1)) | head -n $((line2-line1-1)) > latest_changelog.txt
+          echo "${{ needs.release-checks.outputs.changelog }}" | base64 -d > latest_changelog.txt
         shell: bash
         continue-on-error: true
 
