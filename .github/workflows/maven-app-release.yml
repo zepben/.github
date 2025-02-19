@@ -121,11 +121,10 @@ jobs:
       - name: Maven package
         id: build
         run: |
-          mvn clean package -B -f pom.xml -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dnexus.signature=$NEXUS_SIGNATURE -Dserver.release.url=$NEXUS_RELEASE_URL -Dserver.snapshot.url=$NEXUS_SNAPSHOT_URL
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
           artifact="${artifactId}-${version}"
-          mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO
+          mvn clean package -B -f pom.xml -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dnexus.signature=$NEXUS_SIGNATURE -Dserver.release.url=$NEXUS_RELEASE_URL -Dserver.snapshot.url=$NEXUS_SNAPSHOT_URL
           mkdir .artifact-$artifact
           cp target/* -t .artifact-$artifact || :
           rm .artifact-$artifact/original*.jar || :
