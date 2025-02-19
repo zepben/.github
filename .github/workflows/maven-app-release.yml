@@ -121,14 +121,18 @@ jobs:
       - name: Maven package
         id: build
         run: |
-          mvn clean package -B -f pom.xml -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dnexus.signature=$NEXUS_SIGNATURE -Dserver.release.url=$NEXUS_RELEASE_URL -Dserver.snapshot.url=$NEXUS_SNAPSHOT_URL
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
           version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          artifact="${artifactId}-${version}.jar"
-          echo "::set-output name=version::$(echo $version)"
-          echo "::set-output name=artifact::$(echo $artifact)"
-          echo "::set-output name=artifact-id::$(echo $artifactId)"
-          echo "::set-output name=artifact-path::$(echo target/$artifact)"
+          artifact="${artifactId}-${version}"
+          mvn clean package -B -f pom.xml -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dnexus.signature=$NEXUS_SIGNATURE -Dserver.release.url=$NEXUS_RELEASE_URL -Dserver.snapshot.url=$NEXUS_SNAPSHOT_URL
+          mkdir .artifact-$artifact
+          cp target/* -t .artifact-$artifact || :
+          rm .artifact-$artifact/original*.jar || :
+          echo "version=$(echo $version)" >> ${GITHUB_OUTPUT}
+          echo "artifact=$(echo $artifact)" >> ${GITHUB_OUTPUT}
+          echo "artifact-id=$(echo $artifactId)" >> ${GITHUB_OUTPUT}
+          echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_OUTPUT}
+
         shell: bash
         env:
           NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
@@ -153,6 +157,7 @@ jobs:
           name: ${{ steps.build.outputs.artifact }}
           path: ${{ steps.build.outputs.artifact-path }}
           if-no-files-found: error
+          include-hidden-files: true
         continue-on-error: true
 
       - name: Delete release branch if deploy failed and fail
@@ -205,8 +210,8 @@ jobs:
       - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.deploy.outputs.artifact }}
           path: built-artifacts
+          merge-multiple: true
         continue-on-error: true
 
       - name: Get latest changelog
@@ -231,7 +236,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            built-artifacts/${{ needs.deploy.outputs.artifact }}
+            built-artifacts/*
         continue-on-error: true
 
 
