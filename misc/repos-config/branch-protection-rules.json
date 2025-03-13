@@ -23,7 +23,7 @@
     "ref_name": {
       "exclude": [],
       "include": [
-        "~DEFAULT_BRANCH"
+        "main"
       ]
     }
   },
