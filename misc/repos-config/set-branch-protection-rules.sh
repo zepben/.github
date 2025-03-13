@@ -65,9 +65,7 @@ repos=(
     zepben/sincal-model-refiner
     zepben/ednar-app-server
     zepben/ms-fault-location
-    zepben/web-client-ci-test
     zepben/ednar-customer-scripts
-    zepben/python-lib-ci-test
     zepben/hv-network-tracing
     zepben/edith-sdk
     zepben/lasarus-nrbu-archive-read-only
@@ -90,7 +88,6 @@ repos=(
     zepben/noose
     zepben/pof-historian-service
     zepben/company-website
-    zepben/npm-lib-ci-test
     zepben/eslint-config-ts
     zepben/ednar-dms-agent
     zepben/feeder-load-aggregator
