@@ -28,9 +28,9 @@ If any of these are not applicable, strikethrough the line `~like this~`. **Do n
 - [ ] I have updated any documentation required for these changes.
 
 # Breaking Changes
-- [ ] I have considered if this is a breaking change and will communicate it with other team members if so.
+- [ ] I have considered if this is a breaking change and will communicate it with other team members by posting it on the Slack **breaking-changes** channel.
 
-Please leave a summary of the breaking changes here. This is useful for the reviewer, but also is useful for communication to the team when merged (e.g. you could copy and paste the summary into slack).
+Please leave a summary of the breaking changes here and then post it on the Slack **breaking-changes** channel to notify the team about it.
 
 # Screenshots
 
