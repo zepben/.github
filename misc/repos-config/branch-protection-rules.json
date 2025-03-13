@@ -23,13 +23,16 @@
     "ref_name": {
       "exclude": [],
       "include": [
-        "main"
+        "refs/heads/main"
       ]
     }
   },
   "rules": [
     {
       "type": "deletion"
+    },
+    {
+      "type": "update"
     },
     {
       "type": "non_fast_forward"
