@@ -385,7 +385,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            built-artifacts/${{ needs.deploy.outputs.artifact }}
+            built-artifacts/*
         continue-on-error: true
 
       - name: Deploy documentation
