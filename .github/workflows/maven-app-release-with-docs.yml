@@ -362,6 +362,10 @@ jobs:
           path: built-artifacts
         continue-on-error: true
 
+      - name: Test artifact
+        run: |
+          ls -laR built-artifacts
+
       - name: Get latest changelog
         id: changelog
         run: |
