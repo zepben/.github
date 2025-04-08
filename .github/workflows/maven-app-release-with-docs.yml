@@ -72,6 +72,7 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
       docs-present: ${{ steps.docs.outputs.present }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - uses: actions/checkout@v4
         with:

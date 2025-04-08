@@ -74,6 +74,7 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       artifact_id: ${{ steps.check.outputs.artifact_id }}
       docs-present: ${{ steps.docs.outputs.present }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - uses: actions/checkout@v4
         with:
