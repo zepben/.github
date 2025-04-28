@@ -51,7 +51,6 @@ jobs:
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
-          PRIVATE: ${{ inputs.private }}
 
       - name: Cache maven deps
         uses: actions/cache@v4

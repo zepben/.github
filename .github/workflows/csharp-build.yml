@@ -63,7 +63,6 @@ jobs:
       with:
         LC_URL: ${{ secrets.LC_URL }}
         PATH: ${{ inputs.sourcepath }}
-        PRIVATE: ${{ inputs.private }}
     
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5

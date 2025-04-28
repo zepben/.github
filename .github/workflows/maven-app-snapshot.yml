@@ -87,7 +87,6 @@ jobs:
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
-          PRIVATE: ${{ inputs.private }}
 
       - name: Maven package
         id: build
