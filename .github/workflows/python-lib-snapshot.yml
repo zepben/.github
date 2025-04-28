@@ -55,6 +55,7 @@ jobs:
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: src
+          PRIVATE: ${{ inputs.private }}
 
       - name: Create .pypirc
         env:

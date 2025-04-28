@@ -91,6 +91,7 @@ jobs:
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
+          PRIVATE: ${{ inputs.private }}
 
       - name: Check if docs present
         id: docs

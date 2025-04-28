@@ -95,6 +95,7 @@ jobs:
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
+          PRIVATE: ${{ inputs.private }}
 
       - name: Release checks and update version for release
         id: check
