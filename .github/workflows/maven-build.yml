@@ -33,6 +33,7 @@ jobs:
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
     env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}

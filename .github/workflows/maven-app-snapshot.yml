@@ -61,6 +61,7 @@ jobs:
       docs-present: ${{ steps.docs.outputs.present }}
       version: ${{ steps.build.outputs.version }}
     env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
       GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}

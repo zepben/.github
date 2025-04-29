@@ -8,6 +8,8 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java-ewb
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
     steps:
