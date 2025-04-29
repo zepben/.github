@@ -45,6 +45,12 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
       - name: Cache licence-check
         uses: actions/cache@v4
         with:
