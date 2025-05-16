@@ -135,7 +135,7 @@ jobs:
         shell: bash
         run: |
           priv=${{ inputs.private }}
-          if [[ $priv == 'true' ]]; then echo "PROFILE=zepben-maven" >> ${GITHUB_ENV}; else echo "PROFILE=ossrh" >> ${GITHUB_ENV}; fi
+          if [[ $priv == 'true' ]]; then echo "PROFILE=zepben-maven" >> ${GITHUB_ENV}; else echo "PROFILE=maven-central" >> ${GITHUB_ENV}; fi
 
       - name: Maven deploy to Central
         id: build
