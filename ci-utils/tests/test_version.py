@@ -1,5 +1,5 @@
-from src.cli import Environment
-from src.utils.version import VersionUtils
+from ci_utils import Environment
+from ci_utils.utils.version import VersionUtils
 
 from tests.test_utils.configs import configs
 
@@ -61,7 +61,7 @@ def test_update_csproj_snapshot_version():
     # Update the pre$ version and write the file
     utils.update_snapshot_version()
     # now fetch it and check the version was updated
-    version, sem_version = utils.lang_utils.parseProjectVersion(test_file)
+    version, sem_version = utils.lang_utils.parse_project_version(test_file)
     assert version == cs_config.next_snapshot
     assert sem_version == cs_config.current_version.split("-")[0]
 
@@ -73,7 +73,7 @@ def test_update_js_snapshot_version():
     # Update the next$ version and write the file
     utils.update_snapshot_version()
     # now fetch it and check the version was updated
-    version, sem_version = utils.lang_utils.parseProjectVersion(test_file)
+    version, sem_version = utils.lang_utils.parse_project_version(test_file)
     assert version == js_config.next_snapshot
     assert sem_version == js_config.current_version.split("-")[0]
 
@@ -85,7 +85,7 @@ def test_update_jvm_snapshot_version():
     # Update the SNAPSHOT$ version and write the file
     utils.update_snapshot_version()
     # now fetch it and check the version was updated
-    version, sem_version = utils.lang_utils.parseProjectVersion(test_file)
+    version, sem_version = utils.lang_utils.parse_project_version(test_file)
     assert version == jvm_config.next_snapshot
     assert sem_version == jvm_config.current_version.split("-")[0]
 
@@ -97,6 +97,6 @@ def test_update_python_snapshot_version():
     # Update the b$ version and write the file
     utils.update_snapshot_version()
     # now fetch it and check the version was updated
-    version, sem_version = utils.lang_utils.parseProjectVersion(test_file)
+    version, sem_version = utils.lang_utils.parse_project_version(test_file)
     assert version == python_config.next_snapshot
     assert sem_version == python_config.current_version.split("b")[0]

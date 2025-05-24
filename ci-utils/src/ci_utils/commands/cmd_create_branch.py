@@ -1,11 +1,11 @@
-from src.cli import pass_environment
-from src.utils.git import Git
-from src.utils.version import VersionUtils
-from src.utils.slack import Slack
-
 import click
 import re
 import os
+
+from ci_utils import pass_environment
+from ci_utils.utils.git import Git
+from ci_utils.utils.version import VersionUtils
+from ci_utils.utils.slack import Slack
 
 
 @click.command(name="create-branch",
@@ -69,8 +69,7 @@ def cli(ctx, btype, version):
 
         case "hotfix":
             # figure out the next version
-            next_version = f"{version_array[0]}.{
-                version_array[1]}.{int(version_array[2]) + 1}"
+            next_version = f"{version_array[0]}.{version_array[1]}.{int(version_array[2]) + 1}"
             if f"v{next_version}" in git.remote_refs["tags"]:
                 ctx.fail(
                     f"{version} is not the latest tag for {version_array[0]}.{version_array[1]}.")

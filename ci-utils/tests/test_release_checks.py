@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 from git import Repo
 
-from src.commands.cmd_release_checks import cli
+from ci_utils.commands.cmd_release_checks import cli
 from click.testing import CliRunner
 from tests.test_utils.repo import create_repos_with_tags_branches
 from tests.test_utils.configs import configs

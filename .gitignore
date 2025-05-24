@@ -1,0 +1,5 @@
+.idea/
+
+ci-utils/src/ci_utils.egg-info/
+
+*.pyc

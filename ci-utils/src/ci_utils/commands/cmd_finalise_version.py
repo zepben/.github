@@ -1,9 +1,9 @@
-from src.cli import pass_environment
-from src.utils.git import Git
-from src.utils.version import VersionUtils
-
 import click
 import datetime
+
+from ci_utils import pass_environment
+from ci_utils.utils.git import Git
+from ci_utils.utils.version import VersionUtils
 
 # finalise-version --lang (csharp, js, kotlin, python) [--no-commit] --project-file <package.json, pom.xml, setup.py> --changelog <changelog.md>
 
@@ -63,9 +63,8 @@ def cli(ctx, lang, project_file, changelog_file, commit):
         new_changelog: list[str] = []
         with open(changelog_file, "r") as f:
             text = f.read()
-            new_changelog = text.replace(
-                "UNRELEASED",
-                datetime.datetime.now().strftime("%Y-%m-%d"))
+            new_changelog = text.replace("UNRELEASED", datetime.datetime.now().strftime("%Y-%m-%d"))
+
         if len(new_changelog) > 0:
             with open(changelog_file, "w") as f:
                 f.write("\n".join(new_changelog))

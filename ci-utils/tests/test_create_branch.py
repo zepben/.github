@@ -3,7 +3,7 @@ import pytest
 
 from pathlib import Path
 
-from src.commands.cmd_create_branch import cli
+from ci_utils.commands.cmd_create_branch import cli
 from click.testing import CliRunner
 from tests.test_utils.repo import create_repos_with_tags_branches
 

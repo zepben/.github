@@ -1,12 +1,15 @@
-from src.cli import Environment
-from src.utils.git import Git
+import os
+import pytest
+
+from typing import Generator
+
+from ci_utils.cli import Environment
+from ci_utils.utils.git import Git
 from tests.test_utils.repo import create_repos_with_tags_branches
 from tests.test_utils.configs import goodbranch
 
 from pathlib import Path
 
-import os
-import pytest
 
 
 ctx = Environment()
@@ -14,7 +17,7 @@ branch = "test-branch"
 
 
 @pytest.fixture
-def local_repo_name(name: str = "local") -> str:
+def local_repo_name(name: str = "local") -> Generator[str, None, None]:
     yield name
 
 

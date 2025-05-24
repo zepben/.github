@@ -1,27 +1,24 @@
 import re
-from typing import Any
 import xml.etree.ElementTree as ET
 
+from typing import Any
+from ci_utils.utils.lang.base import BaseUtils
 
-class CsUtils():
 
-    def __init__(self, ctx):
-        self.ctx = ctx
+class CsUtils(BaseUtils):
+    version_regex = r"(?P<base>.*)-pre(?P<beta>\d+)"
 
-    def updateSnapshotVersion(self, version: str, project_file: str):
+    @staticmethod
+    def _version_string(base: str, beta: int):
+        return f'{base}-pre{beta}'
+
+    def update_snapshot_version(self, version: str, project_file: str):
         if not project_file.endswith(".csproj"):
             self.ctx.fail("Project file must be a csproj file! Cannot update the snapshot version")
 
-        v = re.search(r"(?P<base>.*)-pre(?P<beta>\d+)", version)
-        if not v:
-            self.ctx.fail(
-                f"Couldn't parse the version {version} in {project_file}")
+        super().update_snapshot_version(version, project_file)
 
-        base = v.group("base")
-        beta = (int(v.group("beta")) + 1)
-        self.writeNewVersion(project_file, version, f"{base}-pre{beta}")
-
-    def writeNewVersion(self, project_file: str, old: str, new: str):
+    def write_new_version(self, project_file: str, old: str, new: str):
 
         if old != new:
             self.ctx.info(f"Writing new version {new}")
@@ -74,7 +71,7 @@ class CsUtils():
                 with open(project_file, "w") as f:
                     f.write(new_text)
 
-    def parseProjectVersion(self, project_file: str) -> tuple[str, str]:
+    def parse_project_version(self, project_file: str) -> tuple[str, str]:
         version: Any = None
         sem_version: Any = None
 
@@ -117,4 +114,4 @@ class CsUtils():
                         sem_version = version
                         break
 
-        return (version, sem_version)
+        return version, sem_version

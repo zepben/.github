@@ -1,8 +1,8 @@
-from src.cli import Environment
+from ci_utils.cli import Environment
 import os
 import pytest
 
-from src.utils.lang.pyutils import PyUtils
+from ci_utils.utils.lang.pyutils import PyUtils
 from tests.test_utils.configs import configs
 from jinja2 import Environment as JEnv, FileSystemLoader
 
@@ -24,14 +24,14 @@ def test_path():
 
 
 def test_py_parse_version(test_path):
-    version, sem_version = PyUtils(ctx).parseProjectVersion(test_path)
+    version, sem_version = PyUtils(ctx).parse_project_version(test_path)
     assert version == config.current_version
     assert sem_version == config.current_version.split("b")[0]
 
 
 def test_py_update_snapshot_version(test_path):
-    PyUtils(ctx).updateSnapshotVersion(config.current_version, test_path)
+    PyUtils(ctx).update_snapshot_version(config.current_version, test_path)
     # now fetch it and check the version was updated
-    version, sem_version = PyUtils(ctx).parseProjectVersion(test_path)
+    version, sem_version = PyUtils(ctx).parse_project_version(test_path)
     assert version == config.next_snapshot
     assert sem_version == config.current_version.split("b")[0]

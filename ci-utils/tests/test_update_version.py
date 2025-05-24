@@ -1,16 +1,18 @@
 import os
+from typing import Generator
+
 import pytest
 
 from pathlib import Path
 
-from src.commands.cmd_update_version import cli
-from src.utils.version import VersionUtils
+from ci_utils.commands.cmd_update_version import cli
+from ci_utils.utils.version import VersionUtils
 from click.testing import CliRunner
 from tests.test_utils.repo import create_repos_with_tags_branches
 from tests.test_utils.configs import configs, goodbranch
 
-from src.cli import Environment
-from src.utils.git import Git
+from ci_utils import Environment
+from ci_utils.utils.git import Git
 
 # Create a couple of repos without any specific branches
 runner = CliRunner()
@@ -18,12 +20,12 @@ ctx = Environment()
 
 
 @pytest.fixture
-def local_path():
+def local_path() -> Generator[Path, None, None]:
     yield Path().absolute()
 
 
 @pytest.fixture
-def local_repo_name(name: str = "local") -> str:
+def local_repo_name(name: str = "local") -> Generator[str, None, None]:
     yield name
 
 
@@ -50,7 +52,7 @@ def test_update_snapshot_version(repo_path):
 
         # now fetch it and check the version was updated
         utils = VersionUtils(ctx, config.lang, config.project_file)
-        version, sem_version = utils.lang_utils.parseProjectVersion(config.project_file)
+        version, sem_version = utils.lang_utils.parse_project_version(config.project_file)
         assert version == f"{config.next_snapshot}"
 
         # now check it's been pushed to the origin
@@ -77,7 +79,7 @@ def test_update_version(repo_path):
 
         # now fetch it and check the version was updated
         utils = VersionUtils(ctx, config.lang, config.project_file)
-        version, sem_version = utils.lang_utils.parseProjectVersion(os.path.join(repo_path, config.project_file))
+        version, sem_version = utils.lang_utils.parse_project_version(str(os.path.join(repo_path, config.project_file)))
 
         # so we've upgraded the whole version, it means it needs to be minor update
         new_version = config.released_tag.split(".")

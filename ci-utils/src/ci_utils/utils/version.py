@@ -4,10 +4,10 @@ import datetime
 
 from typing import Union
 
-from src.utils.lang.jsutils import JsUtils
-from src.utils.lang.jvmutils import JvmUtils
-from src.utils.lang.pyutils import PyUtils
-from src.utils.lang.csutils import CsUtils
+from ci_utils.utils.lang.jsutils import JsUtils
+from ci_utils.utils.lang.jvmutils import JvmUtils
+from ci_utils.utils.lang.pyutils import PyUtils
+from ci_utils.utils.lang.csutils import CsUtils
 
 
 class VersionUtils:
@@ -80,12 +80,12 @@ class VersionUtils:
     def update_version(self, vtype):
         self.increment_version(vtype)
         self._update_new_version(self.new_version)
-        self.lang_utils.writeNewVersion(self.project_file,
-                                        old=self.version,
-                                        new=self.new_version)
+        self.lang_utils.write_new_version(self.project_file,
+                                          old=self.version,
+                                          new=self.new_version)
 
     def update_snapshot_version(self):
-        self.lang_utils.updateSnapshotVersion(self.version, self.project_file)
+        self.lang_utils.update_snapshot_version(self.version, self.project_file)
 
     def get_versions(self):
         # Check that file exists
@@ -94,9 +94,9 @@ class VersionUtils:
                 f"The provided file {self.project_file} doesn't exist!")
 
         if self.version or self.sem_version:
-            return (self.version, self.sem_version)
+            return self.version, self.sem_version
 
-        (self.version, self.sem_version) = self.lang_utils.parseProjectVersion(
+        (self.version, self.sem_version) = self.lang_utils.parse_project_version(
             self.project_file)
 
         if not self.version:
@@ -105,7 +105,7 @@ class VersionUtils:
                 f"Error parsing {self.project_file}. Check that {self.lang} is matching and the format of the file is correct."
             )
 
-        return (self.version, self.sem_version)
+        return self.version, self.sem_version
 
     def update_changelog(self, grow_changelog: bool, changelog_file: str):
         print(f"Update changelog requested for {changelog_file}")

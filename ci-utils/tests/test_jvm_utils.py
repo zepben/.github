@@ -2,8 +2,8 @@ import os
 import shutil
 import pytest
 
-from src.cli import Environment
-from src.utils.lang.jvmutils import JvmUtils
+from ci_utils import Environment
+from ci_utils.utils.lang.jvmutils import JvmUtils
 from tests.test_utils.configs import configs
 from jinja2 import Environment as JEnv, FileSystemLoader
 
@@ -25,14 +25,14 @@ def test_path():
 
 
 def test_jvm_parse_version(test_path):
-    version, sem_version = JvmUtils(ctx).parseProjectVersion(test_path)
+    version, sem_version = JvmUtils(ctx).parse_project_version(test_path)
     assert version == config.current_version
     assert sem_version == config.current_version.split("-")[0]
 
 
 def test_jvm_update_snapshot_version(test_path):
-    JvmUtils(ctx).updateSnapshotVersion(config.current_version, test_path)
+    JvmUtils(ctx).update_snapshot_version(config.current_version, test_path)
     # now fetch it and check the version was updated
-    version, sem_version = JvmUtils(ctx).parseProjectVersion(test_path)
+    version, sem_version = JvmUtils(ctx).parse_project_version(test_path)
     assert version == config.next_snapshot
     assert sem_version == config.current_version.split("-")[0]

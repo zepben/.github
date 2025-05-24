@@ -1,10 +1,10 @@
-from src.cli import pass_environment
-from src.utils.git import Git
-from src.utils.version import VersionUtils
-
 import click
 import os
 import re
+
+from ci_utils import pass_environment
+from ci_utils.utils.git import Git
+from ci_utils.utils.version import VersionUtils
 
 
 @click.command("update-version",

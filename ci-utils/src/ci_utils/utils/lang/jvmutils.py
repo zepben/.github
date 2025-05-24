@@ -1,23 +1,17 @@
+import re
 import xml.etree.ElementTree as ET
 
-import re
+from ci_utils.utils.lang.base import BaseUtils
 
 
-class JvmUtils():
+class JvmUtils(BaseUtils):
+    version_regex = r"(?P<base>.*)-SNAPSHOT(?P<beta>\d+)"
 
-    def __init__(self, ctx):
-        self.ctx = ctx
+    @staticmethod
+    def _version_string(base: str, beta: int):
+        return f'{base}-SNAPSHOT{beta}'
 
-    def updateSnapshotVersion(self, version: str, project_file: str):
-        v = re.search(r"(?P<base>.*)-SNAPSHOT(?P<beta>\d+)", version)
-        if v is None:
-            self.ctx.fail(f"Couldn't parse the version {version} in {project_file}")
-
-        base = v.group("base")
-        beta = (int(v.group("beta")) + 1)
-        self.writeNewVersion(project_file, version, f"{base}-SNAPSHOT{beta}")
-
-    def writeNewVersion(self, project_file: str, old: str, new: str):
+    def write_new_version(self, project_file: str, old: str, new: str):
         if old != new:
             self.ctx.info(f"Updating old version '{old}' to new version '{new}'")
             parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True)) 
@@ -35,7 +29,7 @@ class JvmUtils():
                 version_elem.text = new
                 tree.write(project_file, short_empty_elements=False, encoding="utf-8", xml_declaration=True)
 
-    def parseProjectVersion(self, project_file: str) -> tuple[str, str]:
+    def parse_project_version(self, project_file: str) -> tuple[str, str]:
         if not project_file.endswith(".xml"):
             self.ctx.fail("Project file for java projects should be in POM XML format")
 
@@ -63,4 +57,4 @@ class JvmUtils():
             self.ctx.fail(
                 f"Couldn't find project in {project_file}. Project is XML namespace, and for POM it's expected to be something like 'http://maven.apache.org/POM/4.0.0'")
 
-        return (version, sem_version)
+        return version, sem_version

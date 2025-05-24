@@ -18,6 +18,7 @@ The package includes:
 
 Used to make sure commit has not been released, last build was successful and notify team via Slack that release pipeline has been triggered.
 
+
 > ci release-checks --lang (csharp, js, kotlin, python) --project-file <package.json, pom.xml, setup.py>
 
 ### Create Branch
@@ -32,10 +33,10 @@ Create the LTS/hotfix branch
  Arguments:
    --version <version> (optional)
 
+
 > ci create-branch --type (hotfix, lts, release) --version <version>
 
 ### Update Version
-
  Update the project version to the next one (patch version for LTS, minor version for all others).
  Options:
    --no-commit       - Only update the file without committing.
