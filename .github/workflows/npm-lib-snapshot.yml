@@ -38,6 +38,64 @@ on:
         required: false
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: node:20-alpine
+    continue-on-error: false
+    outputs:
+      docs-present: ${{ steps.docs.outputs.present }}
+    steps:
+      - name: Install Dependencies
+        run: |
+          apk add jq tar alpine-conf git openssh curl bash
+
+      - name: Cache nodejs deps
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm
+
+      - uses: actions/checkout@v3
+
+      - name: Cache licence-check
+        if: ${{ inputs.licencecheck == true }}
+        uses: actions/cache@v3
+        with:
+          path: /lc
+          key: lcc
+
+      - name: Check licence
+        if: ${{ inputs.licencecheck == true }}
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
+
+      - name: Set timezone to Australia/ACT
+        run: |
+          setup-timezone -z Australia/ACT
+
+      - name: create .npmrc
+        run: | 
+          rm -rf ~/.npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
+          echo "//mavenrepo.zepben.com/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
+          echo "\n" >> ~/.npmrc
+
+      - name: Install Dependencies
+        run: 
+          npm install --save-dev --legacy-peer-deps
+
+      - name: Lint
+        id: ci_lint
+        run: |
+          echo "Running default linting..."
+          if ! npm run lint; then
+            echo "eslint-plugin-import not found, installing and retrying..."
+            npm install eslint-plugin-import@latest --save-dev
+            npm run lint
+          fi
   build-artifact:
     runs-on: ubuntu-latest
     container: node:20-alpine
