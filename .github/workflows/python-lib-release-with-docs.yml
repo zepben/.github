@@ -304,11 +304,11 @@ jobs:
           name: ${{ steps.build.outputs.artifact }}
           path: ${{ steps.build.outputs.artifact-path }}
 
-      - name: Delete release branch if deploy failed and fail
-        if: steps.build.outcome == 'failure'
+      - name: If deploy above failed, delete release branch and fail
+        if: steps.build.outcome == 'failure' 
         run: |
           git push origin -d release
-          echo "There was an error in the python build and publish commands above."
+          echo "There was an error in the python build and publish commands **above**. We've deleted the `release` branch to make it easier to run again when ready."
           exit 1
         shell: bash
 
