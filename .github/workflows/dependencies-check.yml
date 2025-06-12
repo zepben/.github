@@ -44,7 +44,7 @@ jobs:
         fi
 
         if [ ${updates_found} == true ]; then
-          echo -e "${mgs}" | gh pr comment ${{ github.event.pull_request.number }} -body -
+          echo -e "${mgs}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
         fi
       shell: bash
 
