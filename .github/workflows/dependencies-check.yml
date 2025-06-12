@@ -44,7 +44,7 @@ jobs:
         fi
 
         if [ ${updates_found} == true ]; then
-          gh pr comment ${{ github.event.pull_request.number }} --body "The following updates are available for this repository: \r${msg}"
+          echo -e "${mgs}" | gh pr comment ${{ github.event.pull_request.number }} -body -
         fi
       shell: bash
 
