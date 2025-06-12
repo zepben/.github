@@ -44,8 +44,7 @@ jobs:
         fi
 
         if [ ${updates_found} == true ]; then
-          echo "We'll PR comment here"
-          # gh pr comment ${{ github.event.pull_request.number }} --body ${msg}
+          gh pr comment ${{ github.event.pull_request.number }} --body ${msg}
         fi
       shell: bash
 
