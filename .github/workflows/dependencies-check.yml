@@ -1,0 +1,50 @@
+name: Internal Dependecy Check
+
+on: 
+  workflow_dispatch:
+  pull_request:
+    types: [opened, ready_for_review]
+
+
+jobs:
+
+  check_deps:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-java-ewb
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+    steps:
+
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ env.GITHUB_TOKEN }}
+
+    - name: Work around git permission issue
+      run: |
+        dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+        git config --global --add safe.directory /__w/$dname/$dname
+      shell: sh
+
+    - run: |
+        updates_found=false
+        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD  versions:display-parent-updates | grep ":evolve-super-pom")
+        if [ z"${superpom}" != "z" ]; then
+          msg="${msg}\nA superpom update available: ${superpom}" 
+          updates_found=true
+        fi
+
+        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "com.zepben:")
+        if [ z"${versions}" != "z" ]; then
+          msg="${msg}\nVersion(s) updates are available: ${versions}" 
+          updates_found=true
+        fi
+
+        if [ ${updates_found} && ${{ github.ref_name }} != "main" ]; then
+          echo "We'll PR comment here"
+          # gh pr comment ${{ github.event.pull_request.number }} --body ${msg}
+        fi
+      shell: bash
+
