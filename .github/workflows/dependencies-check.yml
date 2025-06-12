@@ -43,7 +43,7 @@ jobs:
           updates_found=true
         fi
 
-        if [ ${updates_found} && ${{ github.ref_name }} != "main" ]; then
+        if [ ${updates_found} == true ]; then
           echo "We'll PR comment here"
           # gh pr comment ${{ github.event.pull_request.number }} --body ${msg}
         fi
