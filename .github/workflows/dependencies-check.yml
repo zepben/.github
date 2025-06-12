@@ -31,20 +31,21 @@ jobs:
 
     - run: |
         updates_found=false
+        msg="The following updates are available for this repository:"
         superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD  versions:display-parent-updates | grep ":evolve-super-pom" | sed -e "s/^.*INFO.*c/c/g")
         if [ z"${superpom}" != "z" ]; then
-          msg="${msg}\rA superpom update available: ${superpom}\r" 
+          msg="${msg}\nA superpom update available: ${superpom}\n" 
           updates_found=true
         fi
 
         versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "com.zepben:" | sed -e "s/^.*INFO.*c/c/g")
         if [ z"${versions}" != "z" ]; then
-          msg="${msg}\rVersion(s) updates are available: ${versions}\r" 
+          msg="${msg}\nVersion(s) updates are available: ${versions}\n" 
           updates_found=true
         fi
 
         if [ ${updates_found} == true ]; then
-          echo -e "${mgs}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+          echo -e "${msg}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
         fi
       shell: bash
 
