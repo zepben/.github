@@ -29,16 +29,16 @@ jobs:
       run: |
         updates_found=false
         msg="The following updates are available for this repository:"
-        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD  versions:display-parent-updates | grep ":evolve-super-pom" | sed -e "s/^.*INFO.\s*//g")
+        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dversions.outputLineWidth=120 versions:display-parent-updates | grep ":evolve-super-pom" | sed -e "s/^.*INFO.\s*//g")
         if [ z"${superpom}" != "z" ]; then
-          msg="${msg}\n\nA superpom update available: \n${superpom}\n" 
+          msg="${msg}\n\nA superpom update available: \n```\n${superpom}\n```\n" 
           updates_found=true
         fi
 
         # two spaces in regex needed to filter out header line
-        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "  com.zepben:" | sed -e "s/^.*INFO.\s*//g")
+        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dversions.outputLineWidth=120 versions:display-dependency-updates | grep "  com.zepben" | sed -e "s/^.*INFO.\s*//g")
         if [ z"${versions}" != "z" ]; then
-          msg="${msg}\nVersion(s) updates are available: \n${versions}\n" 
+          msg="${msg}\nVersion(s) updates are available: \n```\n${versions}\n```\n" 
           updates_found=true
         fi
 
