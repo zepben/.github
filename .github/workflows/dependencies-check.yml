@@ -34,7 +34,8 @@ jobs:
           updates_found=true
         fi
 
-        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "com.zepben:" | sed -e "s/^.*INFO.*(com.zepben)/c/g")
+        # two spaces in regex needed to filter out header line
+        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "  com.zepben:" | sed -e "s/^.*INFO.*(com.zepben)/c/g")
         if [ z"${versions}" != "z" ]; then
           msg="${msg}\nVersion(s) updates are available: \n${versions}\n" 
           updates_found=true
