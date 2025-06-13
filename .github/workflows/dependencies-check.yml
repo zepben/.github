@@ -28,13 +28,13 @@ jobs:
     - run: |
         updates_found=false
         msg="The following updates are available for this repository:"
-        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD  versions:display-parent-updates | grep ":evolve-super-pom" | sed -e "s/^.*INFO.*c/c/g")
+        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD  versions:display-parent-updates | grep ":evolve-super-pom" | sed -e "s/^.*INFO.*(com.zepben)/c/g")
         if [ z"${superpom}" != "z" ]; then
           msg="${msg}\n\nA superpom update available: \n${superpom}\n" 
           updates_found=true
         fi
 
-        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "com.zepben:" | sed -e "s/^.*INFO.*c/c/g")
+        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "com.zepben:" | sed -e "s/^.*INFO.*(com.zepben)/c/g")
         if [ z"${versions}" != "z" ]; then
           msg="${msg}\nVersion(s) updates are available: \n${versions}\n" 
           updates_found=true
