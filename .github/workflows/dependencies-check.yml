@@ -29,20 +29,21 @@ jobs:
       run: |
         updates_found=false
         msg="The following updates are available for this repository:"
-        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dversions.outputLineWidth=120 versions:display-parent-updates | tr -dc '\0-\177\n' | grep ":evolve-super-pom" | sed -e "s/^.*INFO.\s*//g")
+        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dversions.outputLineWidth=120 versions:display-parent-updates | sed -e 's/\x1b\[[0-9;]*m//g' | grep ":evolve-super-pom" | sed -e 's/^.*INFO.\s*//g')
         if [ z"${superpom}" != "z" ]; then
           msg="${msg}\n\nA superpom update available: \n\`\`\`\n${superpom}\n\`\`\`\n" 
           updates_found=true
         fi
 
         # two spaces in regex needed to filter out header line
-        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dversions.outputLineWidth=120 versions:display-dependency-updates | tr -dc '\0-\177\n' | grep "  com.zepben" | sed -e "s/^.*INFO.\s*//g")
+        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dversions.outputLineWidth=120 versions:display-dependency-updates | sed -e 's/\x1b\[[0-9;]*m//g' | grep "  com.zepben" | sed -e 's/^.*INFO.\s*//g')
         if [ z"${versions}" != "z" ]; then
           msg="${msg}\nVersion(s) updates are available: \n\`\`\`\n${versions}\n\`\`\`\n" 
           updates_found=true
         fi
 
         if [ ${updates_found} == true ]; then
+          echo -e "${msg}" # debug
           echo -e "${msg}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
         fi
       shell: bash
