@@ -1,4 +1,4 @@
-name: Internal Dependecy Check
+name: Internal Dependency Check
 
 on: 
   workflow_call:
@@ -25,18 +25,22 @@ jobs:
         git config --global --add safe.directory /__w/$dname/$dname
       shell: sh
 
-    - run: |
+    - name: Check for updates to superpom and dependencies
+      run: |
+        mvn_version_args=("-Dserver.repo.url=$NEXUS_MAVEN_REPO" "-Dserver.username=$NEXUS_USERNAME" "-Dserver.password=$NEXUS_PASSWORD" "-Dversions.outputLineWidth=120")
+        isolate_version_text="sed -e 's/\x1b\[[0-9;]*m//g' -e 's/^.*INFO.\s*//'"  # first substitution removes ANSI escape sequences
         updates_found=false
         msg="The following updates are available for this repository:"
-        superpom=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD  versions:display-parent-updates | grep ":evolve-super-pom" | sed -e "s/^.*INFO.*c/c/g")
+        superpom=$(mvn "${mvn_version_args[@]}" versions:display-parent-updates | grep ":evolve-super-pom" | eval "$isolate_version_text")
         if [ z"${superpom}" != "z" ]; then
-          msg="${msg}\n\nA superpom update available: \n${superpom}\n" 
+          msg="${msg}\n\nA superpom update available: \n\`\`\`\n${superpom}\n\`\`\`\n" 
           updates_found=true
         fi
 
-        versions=$(mvn -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD versions:display-dependency-updates | grep "com.zepben:" | sed -e "s/^.*INFO.*c/c/g")
+        # two spaces in regex needed to filter out header line
+        versions=$(mvn "${mvn_version_args[@]}" versions:display-dependency-updates | grep "  com.zepben" | eval "$isolate_version_text")
         if [ z"${versions}" != "z" ]; then
-          msg="${msg}\nVersion(s) updates are available: \n${versions}\n" 
+          msg="${msg}\nVersion(s) updates are available: \n\`\`\`\n${versions}\n\`\`\`\n" 
           updates_found=true
         fi
 
