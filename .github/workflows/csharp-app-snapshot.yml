@@ -127,7 +127,7 @@ jobs:
           fi
 
   build:
-    runs-on: windows-2019
+    runs-on: windows-2025
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
