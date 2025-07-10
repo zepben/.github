@@ -120,14 +120,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
-    container: node:20-alpine
+    container: zepben/pipeline-docusaurus
     steps:
 
       - uses: actions/checkout@v4
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@main
+        uses: zepben/docusaurus-action@docusaurus3
         with:
           TAG: false
           NPM_REPO: ${{ secrets.NPM_REPO }}
