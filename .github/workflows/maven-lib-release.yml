@@ -165,7 +165,7 @@ jobs:
       artifact: docs
       product-key: ${{ steps.docs-component.outputs.name }}
       product-repo: ${{ steps.docs-component.outputs.repo }}
-    container: node:20-alpine
+    container: zepben/pipeline-docusaurus
     steps:
       - name: Install Git
         run: |
@@ -226,6 +226,7 @@ jobs:
         id: docs-component
         shell: sh {0}
         run: |
+            echo "repo=${GITHUB_REPOSITORY}" >> "${GITHUB_OUTPUT}"
             # if product key is supplied
             if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
               echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"

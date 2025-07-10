@@ -233,7 +233,7 @@ jobs:
     if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
     outputs:
       artifact: docs
-    container: node:20-alpine
+    container: zepben/pipeline-docusaurus
     steps:
       - name: Install Git
         run: |
