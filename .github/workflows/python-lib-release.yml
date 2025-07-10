@@ -136,7 +136,7 @@ jobs:
           tox
           twine upload --non-interactive --config-file ~/.pypirc dist/*
           artifact_id=$(grep name= setup.py | cut -d= -f2 | tr -d '",' | sed 's-\.-_-g')
-          artifact="${artifact_id}-${{ needs.release-checks.outputs.version }}-py3-none-any.whl"
+          artifact="${artifact_id}_${{ needs.release-checks.outputs.version }}-py3-none-any.whl"
           echo "::set-output name=artifact::$(echo $artifact)"
           echo "::set-output name=artifact-path::$(echo dist/$artifact)"
         shell: bash
