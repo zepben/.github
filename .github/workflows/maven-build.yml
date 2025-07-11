@@ -60,9 +60,9 @@ jobs:
           PATH: ${{ inputs.sourcepath }}
 
       - name: Check the snapshot version
-        shell: bash
+        shell: bash {0}
         run: |
-          xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version" | grep SNAPSHOT
+          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version" | grep SNAPSHOT)
           if [ $? = 0 ]; then
             echo "This project has a '-SNAPSHOT' in its version number. Replace it with 'b'" 
             exit 1
