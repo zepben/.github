@@ -60,7 +60,7 @@ jobs:
           PATH: ${{ inputs.sourcepath }}
 
       - name: Check the snapshot version
-        shell: bash
+        shell: bash {0}
         run: |
           xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version" | grep SNAPSHOT
           if [ $? = 0 ]; then
