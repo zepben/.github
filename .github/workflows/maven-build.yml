@@ -59,6 +59,15 @@ jobs:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
 
+      - name: Check the snapshot version
+        shell: bash
+        run: |
+          xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version" | grep SNAPSHOT
+          if [ $? = 0 ]; then
+            echo "This project has a '-SNAPSHOT' in its version number. Replace it with 'b'" 
+            exit 1
+          fi
+
       - name: Cache maven deps
         uses: actions/cache@v4
         with:
