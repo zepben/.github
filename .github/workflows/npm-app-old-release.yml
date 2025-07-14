@@ -3,11 +3,6 @@ name: NPM Static App Release
 on:
   workflow_call:
     inputs:
-      product-key:
-        description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
-        required: false
-        default: "productkeynotprovided"
-        type: string
       private:
         description: 'Calling workflow from a private repo'
         required: false
@@ -35,20 +30,21 @@ on:
     outputs:
       version:
         description: "The current released version."
-        value: ${{ jobs.build-artifact.outputs.version }}
+        value: ${{ jobs.release-checks.outputs.version }}
 jobs:
   release-checks:
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     continue-on-error: false
     env:
+      DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     outputs:
       version: ${{ steps.check.outputs.version }}
-      docs-present: ${{ steps.docs.outputs.present }}
       changelog: ${{ steps.changelog.outputs.changelog }}
+      docs-present: ${{ steps.docs.outputs.present }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,9 +77,21 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: Test changelog format
+        id: changelog
+        run: |
+          changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
+          if [[ -z "$changelog" ]]; then
+            echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
+            git push origin -d release
+            exit 1
+          fi
+          # Changelog has newlines which isn't well supported, so we base64 with line wrap disabled (-w0)
+          new_changelog=$(echo "${changelog}" | base64 -w0)
+          echo "changelog=${new_changelog}" >> $GITHUB_OUTPUT
+
       - name: Check if docs present
         id: docs
-        shell: bash
         run: |
           if [ -d docs ]; then
             echo "Docs folder found, will run the build-docs job"
@@ -114,35 +122,19 @@ jobs:
               exit 1
           fi
 
-      - name: Test changelog format
-        id: changelog
-        run: |
-          changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
-          if [[ -z "$changelog" ]]; then
-            echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
-            git push origin -d release
-            # We can safely fail here because we haven't done anything yet. Changelog.md file should be in correct format.
-            exit 1
-          fi
-          # Changelog has newlines which isn't well supported, so we base64 with line wrap disabled (-w0)
-          new_changelog=$(echo "${changelog}" | base64 -w0)
-          echo "changelog=${new_changelog}" >> $GITHUB_OUTPUT
-
   build-docs:
     needs: release-checks
-    runs-on: ubuntu-latest
     if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
+    runs-on: ubuntu-latest
     outputs:
       artifact: docs
-      product-key: ${{ steps.docs-component.outputs.name }}
-      product-repo: ${{ steps.docs-component.outputs.repo }}
     container: node:20-alpine
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - name: Install Git
         run: |
-          apk add git zip
+          apk add git tar
 
       - name: Work around git permission issue
         run: |
@@ -176,17 +168,11 @@ jobs:
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         continue-on-error: true
 
-      - name: Zip documentation
-        run: |
-          cd docs/build
-          zip -r ../../docs.zip .
-        shell: sh
-
       - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
-          name: docs.zip
-          path: docs.zip
+          name: docs
+          path: docs/build/
           if-no-files-found: error
 
       - name: Fail build
@@ -197,38 +183,13 @@ jobs:
           exit 1
         shell: sh
 
-      - name: Fetch the document component name
-        id: docs-component
-        shell: sh {0}
-        run: |
-            echo "repo=${GITHUB_REPOSITORY}" >> "${GITHUB_OUTPUT}"
-            # if product key is supplied
-            if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
-              echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"
-            else
-              # This is just so we know that we can parse the docs component properly
-              if [ -f docs/docusaurus.config.js ]; then
-                # Parse out the baseUrl from the docusaurus configuration.
-                baseurl=$(grep baseUrl docs/docusaurus.config.js | sed -e "s#/\",##g")
-                # Find the component name
-                doc_comp=${baseurl##*/}
-                echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
-              else
-                  echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
-                  echo " :boom: Docs folder exists, but there's no docusaurus.config.js; check your code!" >> "${GITHUB_STEP_SUMMARY}"
-                  exit 1
-              fi
-            fi
-
-
   build-artifact:
+    if: ${{ !failure() }}
     needs: [build-docs, release-checks]
     runs-on: ubuntu-latest
     container: node:20-alpine
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
-      artifact-id: ${{ steps.build.outputs.artifact-id }}
-      version: ${{ steps.build.outputs.version }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
@@ -272,15 +233,16 @@ jobs:
 
       - name: build
         id: build
+        env:
+          HUSKY: 0
         run: |
+          echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run prod
-          version=$(jq -r .version package.json)
           artifactId=$(jq -r .name package.json)
-          artifact="$artifactId-$version.tar.bz2"
+          artifact="$artifactId-$${{ needs.release-checks.outputs.version }}.tar.bz2"
           tar jcvf "$artifact" -C dist .
-          echo "version=$version" >> "${GITHUB_OUTPUT}"
-          echo "artifact=$artifact" >> "${GITHUB_OUTPUT}"
+          echo "artifact=$artifact" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - uses: actions/upload-artifact@v4
@@ -298,13 +260,15 @@ jobs:
         shell: sh
 
   create-release:
-    needs: [build-artifact]
+    if: ${{ !failure() }}
+    needs: [build-artifact, release-checks]
     runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
       artifact: ${{ steps.merge.outputs.artifact }}
       tag: ${{ steps.merge.outputs.tag }}
-    env:
-      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -316,12 +280,18 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - name: Get latest changelog
-        id: changelog
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-artifact.outputs.artifact }}
+          path: built-artifacts/
+        continue-on-error: false
+
+      - name: Check artifact
         run: |
-          echo "${{ needs.release-checks.outputs.changelog }}" | base64 -d > latest_changelog.txt
-        shell: bash
-        continue-on-error: true
+          ls -la
+          ls -la built-artifacts
+        shell: sh
 
       - name: Merge and Tag
         id: merge
@@ -330,11 +300,10 @@ jobs:
           git fetch --all
           git merge origin/release
           git push origin ${GITHUB_REF/refs\/heads\//}
-          version=$(jq -r .version package.json)
-          git tag "v$version"
+          tag="v${{ needs.release-checks.outputs.version }}"
+          git tag $tag
           git push --tags
-          echo "::set-output name=tag::$(echo v$version)"
-          echo "::set-output name=artifact::$(echo ${{ needs.build-artifact.outputs.artifact }})"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
         shell: bash
         continue-on-error: true
 
@@ -345,6 +314,23 @@ jobs:
           echo "There was an error in merging the branch. release branch was deleted."
           exit 1
         shell: bash
+
+      - name: Get latest changelog
+        id: changelog
+        run: |
+          echo "${{ needs.release-checks.outputs.changelog }}" | base64 -d > latest_changelog.txt
+        shell: bash
+        continue-on-error: true
+
+      - name: Tell user to release themselves
+        if: steps.changelog.outcome == 'failure'
+        run: |
+          echo "There was an error generating a changelog to associate with the release (see previous step and step in release-checks). You'll need to:"
+          echo "1. Fix the changelog"
+          echo "2. Manually create the release"
+          echo "3. Update to the next snapshot version."
+          exit 1
+        shell: sh
 
       - name: Create Release and upload assets
         if: success()
@@ -361,16 +347,16 @@ jobs:
             built-artifacts/${{ needs.build-artifact.outputs.artifact }}
         continue-on-error: true
 
-      - name: Deploy documentation
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.CI_GITHUB_TOKEN }}
-          repository: ${{ secrets.DOCS_REPO }}
-          event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
-          client-payload: '{"product_key": "${{needs.build-docs.outputs.product-key}}", "download_url": "${{needs.build-docs.outputs.product-repo}}"}'
-        continue-on-error: true
+      - name: Fail Release
+        if: steps.create_release.outcome == 'failure'
+        run: |
+          git push origin -d release
+          echo "There was an error in the npm package release above."
+          exit 1
+        shell: sh
 
   update-version:
+    if: ${{ !failure() }}
     needs: create-release
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
@@ -392,5 +378,5 @@ jobs:
 
       - name: Update to next minor version
         run: |
-          /scripts/update-version.sh --js --release package.json changelog.md
+          /scripts/update-version.sh --js --release --grow-changelog package.json changelog.md
         shell: bash
