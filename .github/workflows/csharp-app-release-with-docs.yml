@@ -147,7 +147,7 @@ jobs:
         run: |
           changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
           if [[ -z "$changelog" ]]; then
-            echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
+            echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch and failing."
             git push origin -d release
             # We can safely fail here because we haven't done anything yet. Changelog.md file should be in correct format.
             exit 1
@@ -219,11 +219,11 @@ jobs:
           path: ${{ steps.upload_path.outputs.path }}
           if-no-files-found: error
 
-      - name: Delete release branch if deploy failed and fail
+      - name: If deploy above failed, delete release branch and fail
         if: steps.build.outcome == 'failure' || steps.upload.outcome == 'failure'
         run: |
           git push origin -d release
-          echo "There was an error in one of the steps above."
+          echo "The deployment step has failed; check the step **above**. We've deleted the `release` branch to make it easier to run again when ready."
           exit 1
         shell: bash
 
@@ -325,7 +325,7 @@ jobs:
         if: steps.merge.outcome == 'failure'
         run: |
           git push origin -d release
-          echo "There was an error in merging the branch. release branch was deleted."
+          echo "There was an error in merging the branch. Release branch was deleted."
           exit 1
         shell: bash
 
