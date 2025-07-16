@@ -2,12 +2,7 @@
 # https://cli.github.com/manual/gh_api
 
 repos=(
-    zepben/web-client-ci-test
-    zepben/python-lib-ci-test
-    zepben/npm-lib-ci-test
-    zepben/load-schema-migrator
-    zepben/temporal-platform-definitions
-    zepben/temporal-platform-worker
+    zepben/mvn-lib-ci-test
 )
 
 for repo in ${repos[@]}; do
