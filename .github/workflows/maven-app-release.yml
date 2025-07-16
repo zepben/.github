@@ -20,11 +20,6 @@ on:
         type: string
         default: "src"
 
-    outputs:
-      version:
-        description: "The current released version."
-        value: ${{ jobs.release-checks.outputs.version }}
-
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -52,7 +47,6 @@ on:
         required: true
       LC_URL: 
         required: false
-
 
     outputs:
       version:
