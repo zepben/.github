@@ -1,7 +1,7 @@
 # Note: default release notes file is docs/release.md.
 name: Maven App Release + Docs
 
-on:
+on: 
   workflow_call:
     inputs:
       product-key:
