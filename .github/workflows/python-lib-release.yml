@@ -233,6 +233,7 @@ jobs:
                 baseurl=$(grep baseUrl docs/docusaurus.config.js | sed -e "s#/\",##g")
                 # Find the component name
                 doc_comp=${baseurl##*/}
+                echo "Found component: ${doc_comp}"
                 echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
               else
                   echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
@@ -324,6 +325,10 @@ jobs:
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
+      - name: Testing release
+        run: |
+          echo "Product: ${{ needs.build-docs.outputs.product-key }}"
+
       - name: Work around git permission issue
         run: |
           dname=$(echo ${{github.repository}} | cut -d'/' -f2)
@@ -383,6 +388,7 @@ jobs:
 
       - name: Deploy documentation
         uses: peter-evans/repository-dispatch@v1
+        if: ${{ needs.build-docs.outputs.product-key != "" }}
         with:
           token: ${{ secrets.CI_GITHUB_TOKEN }}
           repository: ${{ secrets.DOCS_REPO }}
