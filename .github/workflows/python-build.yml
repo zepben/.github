@@ -18,6 +18,39 @@ on:
         required: false
 
 jobs:
+  check-for-leaks:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: fetch gitleaks config
+          run: |
+            if [ ! -f gitleaks.toml ]; then
+              cp /configs/gitleaks.toml .
+            fi
+          shell: bash
+
+        - uses: gitleaks/gitleaks-action@v2
+          id: leaks
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITLEAKS_CONFIG: gitleaks.toml
+            GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
+          continue-on-error: true
+
+        - name: Comment on pr
+          if: steps.leaks.outcome == 'failure'
+          run: |
+            if [ "x${{ github.event.pull_request.number }}" != "x" ]; then
+              message="Some secret leaks were potentially detected in this PR.\nCheck https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} for more info"
+              echo -e "${message}" | gh pr comment ${{ github.event.pull_request.number }} --body-file - 
+            fi
+
   build-and-test:
     runs-on: ubuntu-latest
     container: python:3.9
