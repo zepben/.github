@@ -25,9 +25,9 @@ If any of these are not applicable, strikethrough the line `~like this~`. **Do n
 
 ### Security
 When developing applications, use following guidelines for information security considerations:
-* Access to applications is protected with security keys/tokens or usernames and passwords
-* All sessions are encrypted if possible
-* All application input is sanitised before being acted on (ie SQL statements)
+* Access to applications should be protected with security keys/tokens or usernames and passwords;
+* All sessions are encrypted if possible;
+* All application input is sanitised before being acted on (ie SQL statements, etc);
 * Log messages, and especially client-facing ones, must be handled securely and must not leak credentials information (internal URLs, passwords, tokens).
 
 - [ ] I have considered if this change impacts information security and made sure those impacts are handled.
