@@ -7,6 +7,7 @@ on:
       product-key:
         description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
         required: false
+        default: "productkeynotprovided"
         type: string
       private:
         description: 'Calling workflow from a private repo'
