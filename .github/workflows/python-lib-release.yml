@@ -234,7 +234,6 @@ jobs:
                 baseurl=$(grep baseUrl docs/docusaurus.config.js | sed -e "s#/\",##g")
                 # Find the component name
                 doc_comp=${baseurl##*/}
-                echo "name=${doc_comp}" >> "${GITHUB_ENV}"
                 echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
               else
                   echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
@@ -242,11 +241,6 @@ jobs:
                   exit 1
               fi
             fi
-
-      - name: Test docs-component
-        run: |
-          echo "Component: ${name}"
-          exit 1
 
   deploy:
     needs: [release-checks, build-docs]
