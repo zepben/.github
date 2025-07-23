@@ -28,12 +28,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
-
       - name: fetch gitleaks config
         run: |
           if [ ! -f gitleaks.toml ]; then
@@ -49,6 +43,12 @@ jobs:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
           GITLEAKS_VERSION: latest
         continue-on-error: true
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
 
       - name: Comment on pr
         if: steps.leaks.outcome == 'failure'
