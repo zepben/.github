@@ -1,8 +1,14 @@
-name: Python Library Release
+# Note: default release notes file is docs/release.md.
+name: Python Library Release + Docs
 
 on: 
   workflow_call:
     inputs:
+      product-key:
+        description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
+        required: false
+        default: "productkeynotprovided"
+        type: string
       private:
         description: 'Calling workflow from a private repo'
         required: false
@@ -31,12 +37,15 @@ on:
         required: false
       COVERALLS_REPO_TOKEN:
         required: false
-      PYPI_USERNAME:
-        required: false
-      PYPI_PASSWORD:
+      PYPI_API_TOKEN:
         required: false
       NPM_REPO:
         required: true
+      DOCS_REPO:
+        required: true
+      DOCS_REPO_EVOLVE_WORKFLOW:
+        required: true
+
 
 
 jobs:
@@ -50,6 +59,8 @@ jobs:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     outputs:
       version: ${{ steps.check.outputs.version }}
+      docs-present: ${{ steps.docs.outputs.present }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,7 +76,7 @@ jobs:
         id: check
         run: |
           /scripts/release-checks.sh --python setup.py
-          /scripts/finalize-version.sh --python setup.py changelog.md
+          /scripts/finalize-version.sh --python setup.py
           version=$(grep version= setup.py | cut -d= -f2 | tr -d '",')
           echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
@@ -82,6 +93,53 @@ jobs:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
 
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+            echo "present=yes" >> "${GITHUB_ENV}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
+      - name: Check doc build artifacts are ignored
+        if: ${{ env.present == 'yes' }}
+        shell: sh {0}
+        run: |
+          # Make sure directories are properly ignored
+          # docs/node_modules
+          git check-ignore -q docs/node_modules 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              exit 1
+          fi
+
+          # docs/build
+          git check-ignore -q docs/build 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
+              exit 1
+          fi
+
+      - name: Test changelog format
+        id: changelog
+        shell: bash
+        run: |
+          changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
+          if [[ -z "$changelog" ]]; then
+            echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
+            git push origin -d release
+            # We can safely fail here because we haven't done anything yet. Changelog.md file should be in correct format.
+            exit 1
+          fi
+          # Changelog has newlines which isn't well supported, so we base64 with line wrap disabled (-w0)
+          new_changelog=$(echo "${changelog}" | base64 -w0)
+          echo "changelog=${new_changelog}" >> $GITHUB_OUTPUT
+
   python-deps-check:
     needs: release-checks
     runs-on: ubuntu-latest
@@ -95,8 +153,97 @@ jobs:
           # from zepben packages. Now let's try to install to see if deps exist or fail quick
           pip install --pre '.'
 
-  deploy:
+
+  build-docs:
     needs: [release-checks, python-deps-check]
+    runs-on: ubuntu-latest
+    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
+    outputs:
+      artifact: docs
+      product-key: ${{ steps.docs-component.outputs.name }}
+      product-repo: ${{ steps.docs-component.outputs.repo }}
+    container: node:20-alpine
+    steps:
+      - name: Install Git
+        run: |
+          apk add git zip
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - uses: actions/checkout@v4
+
+      - name: Checkout release branch
+        run: |
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git checkout release
+        shell: sh
+
+      - name: Cache nodejs deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm
+
+      - name: Build docusaurus
+        id: build
+        uses: zepben/docusaurus-action@main
+        with:
+          VERSION: ${{ needs.release-checks.outputs.version }}
+          NPM_REPO: ${{ secrets.NPM_REPO }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Zip documentation
+        run: |
+          cd docs/build
+          zip -r ../../docs.zip .
+        shell: sh
+
+      - uses: actions/upload-artifact@v4
+        if: steps.build.outcome == 'success'
+        with:
+          name: docs.zip
+          path: docs.zip
+          if-no-files-found: error
+
+      - name: Fail build
+        if: steps.build.outcome == 'failure'
+        run: |
+          git push origin -d release
+          echo "There was an error in the docusaurus build above."
+          exit 1
+        shell: sh
+
+      - name: Fetch the document component name
+        id: docs-component
+        shell: sh {0}
+        run: |
+            echo "repo=${GITHUB_REPOSITORY}" >> "${GITHUB_OUTPUT}"
+            # if product key is supplied
+            if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
+              echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"
+            else
+              # This is just so we know that we can parse the docs component properly
+              if [ -f docs/docusaurus.config.js ]; then
+                # Parse out the baseUrl from the docusaurus configuration.
+                baseurl=$(grep baseUrl docs/docusaurus.config.js | sed -e "s#/\",##g")
+                # Find the component name
+                doc_comp=${baseurl##*/}
+                echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
+              else
+                  echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
+                  echo " :boom: Docs folder exists, but there's no docusaurus.config.js; check your code!" >> "${GITHUB_STEP_SUMMARY}"
+                  exit 1
+              fi
+            fi
+
+  deploy:
+    needs: [release-checks, build-docs]
     runs-on: ubuntu-latest
     container: python:3.9
     outputs:
@@ -148,6 +295,7 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
+          
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
@@ -165,7 +313,7 @@ jobs:
         shell: bash
 
   create-release:
-    needs: [deploy, release-checks]
+    needs: [deploy, build-docs, release-checks]
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
@@ -174,6 +322,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Testing release
+        run: |
+          echo "Product: ${{ needs.build-docs.outputs.product-key }}"
 
       - name: Work around git permission issue
         run: |
@@ -210,6 +362,13 @@ jobs:
           path: built-artifacts
         continue-on-error: true
 
+      - name: Get latest changelog
+        id: changelog
+        run: |
+          echo "${{ needs.release-checks.outputs.changelog }}" | base64 -d > latest_changelog.txt
+        shell: bash
+        continue-on-error: true
+
       - name: Create Release and upload assets
         if: success()
         id: create_release
@@ -218,11 +377,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.merge.outputs.tag }}
-          body_path: changelog.md
+          body_path: latest_changelog.txt
           draft: false
           prerelease: false
           files: |
             built-artifacts/${{ needs.deploy.outputs.artifact }}
+        continue-on-error: true
+
+      - name: Deploy documentation
+        uses: peter-evans/repository-dispatch@v1
+        if: ${{ needs.build-docs.outputs.product-key != '' }}
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+          repository: ${{ secrets.DOCS_REPO }}
+          event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
+          client-payload: '{"product_key": "${{needs.build-docs.outputs.product-key}}", "download_url": "${{needs.build-docs.outputs.product-repo}}"}'
         continue-on-error: true
 
   update-version:
