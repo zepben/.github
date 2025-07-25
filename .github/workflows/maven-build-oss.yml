@@ -35,6 +35,7 @@ jobs:
           GITLEAKS_CONFIG: gitleaks.toml
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
           GITLEAKS_VERSION: latest
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
         continue-on-error: true
 
       - name: Comment on pr
