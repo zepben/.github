@@ -292,6 +292,7 @@ jobs:
 
   create-release:
     needs: [deploy, release-checks, build-docs]
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
