@@ -403,6 +403,7 @@ jobs:
 
   update-version:
     needs: create-release
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
