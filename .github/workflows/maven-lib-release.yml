@@ -401,6 +401,7 @@ jobs:
   update-version:
     needs: [create-release]
     runs-on: ubuntu-latest
+    if: always() && !failure() && !cancelled()
     container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
