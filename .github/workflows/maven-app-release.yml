@@ -240,6 +240,7 @@ jobs:
 
   deploy:
     needs: [release-checks, build-docs]
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: zepben/pipeline-java-ewb
     outputs:
@@ -316,6 +317,7 @@ jobs:
 
   create-release:
     needs: [deploy, build-docs, release-checks]
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
