@@ -28,18 +28,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: fetch gitleaks config
-        run: |
-          if [ ! -f gitleaks.toml ]; then
-            cp /configs/gitleaks.toml .
-          fi
-        shell: bash
+      # - name: fetch gitleaks config
+      #   run: |
+      #     if [ ! -f gitleaks.toml ]; then
+      #       cp /configs/gitleaks.toml .
+      #     fi
+      #   shell: bash
 
       - uses: gitleaks/gitleaks-action@v2
         id: leaks
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: gitleaks.toml
+          # GITLEAKS_CONFIG: gitleaks.toml
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
           GITLEAKS_VERSION: latest
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
