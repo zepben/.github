@@ -169,7 +169,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
-    container: zepben/pipeline-docusaurus:test-docusaurus3-build-update
+    container: zepben/pipeline-docusaurus
     steps:
 
       - uses: actions/checkout@v4
