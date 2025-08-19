@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
-    container: node:20-alpine
+    container: zepben/pipeline-docusaurus
     steps:
 
       - uses: actions/checkout@v4
