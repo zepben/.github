@@ -142,7 +142,7 @@ jobs:
   python-deps-check:
     needs: release-checks
     runs-on: ubuntu-latest
-    container: python:3.9
+    container: python:3.10
     steps:
       - uses: actions/checkout@v4
 
@@ -246,7 +246,7 @@ jobs:
   deploy:
     needs: [release-checks, build-docs]
     runs-on: ubuntu-latest
-    container: python:3.9
+    container: python:3.10
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
     steps:
