@@ -154,8 +154,7 @@ jobs:
 
       - name: Update snapshot version
         run: |
-          /scripts/update-version.sh --python --snapshot setup.py
-        shell: bash
+          /scripts/update-version.sh --python --snapshot pyproject.toml         shell: bash
 
   build-docs:
     runs-on: ubuntu-latest
