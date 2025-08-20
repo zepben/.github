@@ -75,9 +75,9 @@ jobs:
       - name: Release checks and update version for release
         id: check
         run: |
-          /scripts/release-checks.sh --python setup.py
-          /scripts/finalize-version.sh --python setup.py
-          version=$(grep version= setup.py | cut -d= -f2 | tr -d '",')
+          /scripts/release-checks.sh --python pyproject.toml
+          /scripts/finalize-version.sh --python pyproject.toml
+          version="$(cat pyproject.toml | grep 'version[[:space:]]*=[[:space:]]*"\?[0-9]\+\.[0-9]\+\.[0-9]\+\(b[0-9]\+\)\?"\?' | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\+\(b[0-9]\+\)\?")"
           echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
 
@@ -143,7 +143,7 @@ jobs:
   python-deps-check:
     needs: release-checks
     runs-on: ubuntu-latest
-    container: python:3.9
+    container: python:3.10
     steps:
       - uses: actions/checkout@v4
 
@@ -246,7 +246,7 @@ jobs:
     needs: [release-checks, build-docs]
     if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
-    container: python:3.9
+    container: python:3.10
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
     steps:
@@ -283,10 +283,11 @@ jobs:
         run: |
           tox
           twine upload --non-interactive --config-file ~/.pypirc dist/*
-          artifact_id=$(grep name= setup.py | cut -d= -f2 | tr -d '",' | sed 's-\.-_-g')
+          artifact_id=$(cat pyproject.toml | grep 'name[[:space:]]*=[[:space:]]*".*"' | cut -d\" -f2 | tr -d '"' | sed 's-\.-_-g')
           artifact="${artifact_id}-${{ needs.release-checks.outputs.version }}-py3-none-any.whl"
-          echo "::set-output name=artifact::$(echo $artifact)"
-          echo "::set-output name=artifact-path::$(echo dist/$artifact)"
+          echo "artifact=$artifact" >> "${GITHUB_OUTPUT}"
+          echo "artifact-path=dist/$artifact" >> "${GITHUB_OUTPUT}"
+
         shell: bash
         continue-on-error: true
 
@@ -422,5 +423,5 @@ jobs:
 
       - name: Update to next minor version
         run: |
-          /scripts/update-version.sh --python --grow-changelog --release setup.py changelog.md
+          /scripts/update-version.sh --python --grow-changelog --release pyproject.toml changelog.md
         shell: bash
