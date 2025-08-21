@@ -165,6 +165,7 @@ jobs:
 
   build-docs:
     runs-on: ubuntu-latest
+    container: zepben/pipeline-docusaurus
     needs: [check-docs]
     if: ${{ needs.check-docs.outputs.docs-present == 'yes' }}
     outputs:

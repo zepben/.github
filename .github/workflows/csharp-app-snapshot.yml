@@ -199,6 +199,7 @@ jobs:
 
   build-docs:
     runs-on: ubuntu-latest
+    container: zepben/pipeline-docusaurus
     needs: [build-app]
     if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
     outputs:
@@ -207,12 +208,6 @@ jobs:
       product-repo: ${{ steps.docs-component.outputs.repo }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache-dependency-path: docs/package-lock.json
-          cache: npm
 
       - name: Build docusaurus
         id: build
