@@ -78,7 +78,7 @@ jobs:
           /scripts/release-checks.sh --js package.json
           /scripts/finalize-version.sh --js package.json changelog.md
           version=$(jq -r .version package.json)
-          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
 
       - name: Check if docs present
@@ -299,7 +299,7 @@ jobs:
         shell: sh
 
   create-release:
-    needs: [build-artifact]
+    needs: [release-checks, build-artifact]
     runs-on: ubuntu-latest
     outputs:
       artifact: ${{ steps.merge.outputs.artifact }}
