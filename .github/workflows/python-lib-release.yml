@@ -283,7 +283,7 @@ jobs:
         run: |
           tox
           twine upload --non-interactive --config-file ~/.pypirc dist/*
-          artifact_id=$(cat pyproject.toml | grep 'name[[:space:]]*=[[:space:]]*".*"' | cut -d\" -f2 | tr -d '"' | sed 's-\.-_-g')
+          artifact_id=$(cat pyproject.toml | grep '[[:space:]]name[[:space:]]*=[[:space:]]*".*"$' | cut -d\" -f2 | tr -d '"' | sed 's-\.-_-g')
           artifact="${artifact_id}-${{ needs.release-checks.outputs.version }}-py3-none-any.whl"
           echo "artifact=$artifact" >> "${GITHUB_OUTPUT}"
           echo "artifact-path=dist/$artifact" >> "${GITHUB_OUTPUT}"
