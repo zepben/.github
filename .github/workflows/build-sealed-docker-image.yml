@@ -49,6 +49,10 @@ on:
       NEXUS_SIGNATURE:
         required: true
 
+      # Nexus docker CR
+      NEXUS_DOCKER_REPO:
+        required: true
+
       # Maven
       NEXUS_MAVEN_REPO:
         required: true
@@ -67,6 +71,7 @@ on:
 
 env:
   REGISTRY_URL: "ghcr.io/${{ github.repository }}"
+  NEXUS_REGISTRY_URL: "${{ secrets.NEXUS_DOCKER_REPO }}/${{ github.repository }}"
 
 jobs:
   build:
@@ -121,6 +126,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.CI_GITHUB_TOKEN }}
 
+      - name: Login to Nexus Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.NEXUS_DOCKER_REPO }} 
+          username: ${{ secrets.NEXUS_USERNAME }}
+          password: ${{ secrets.NEXUS_PASSWORD }}
+
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
       # We always push a commit based tag
@@ -128,7 +140,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY_URL }}
+          images: |
+            ${{ env.REGISTRY_URL }}
+            ${{ env.NEXUS_REGISTRY_URL }}
           labels: |
             org.opencontainers.image.vendor=Zepben
           tags: |
