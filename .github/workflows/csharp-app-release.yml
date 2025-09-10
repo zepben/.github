@@ -233,7 +233,7 @@ jobs:
     if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
     outputs:
       artifact: docs
-    container: zepben/pipeline-docusaurus
+    container: zepben/pipeline-docusaurus:test-better_d3
     steps:
       - name: Install Git
         run: |
@@ -262,11 +262,12 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@main
+        uses: zepben/docusaurus-action@OPS-439-doc3
         with:
           VERSION: ${{ needs.release-checks.outputs.version }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         continue-on-error: true
 
       - name: Zip documentation

@@ -163,7 +163,7 @@ jobs:
       artifact: docs
       product-key: ${{ steps.docs-component.outputs.name }}
       product-repo: ${{ steps.docs-component.outputs.repo }}
-    container: zepben/pipeline-docusaurus
+    container: zepben/pipeline-docusaurus:test-better_d3
     steps:
       - name: Install Git
         run: |
@@ -192,11 +192,12 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@main
+        uses: zepben/docusaurus-action@OPS-439-doc3
         with:
           VERSION: ${{ needs.release-checks.outputs.version }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         continue-on-error: true
 
       - name: Zip documentation
@@ -228,18 +229,8 @@ jobs:
             if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
               echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"
             else
-              # This is just so we know that we can parse the docs component properly
-              if [ -f docs/docusaurus.config.js ]; then
-                # Parse out the baseUrl from the docusaurus configuration.
-                baseurl=$(grep baseUrl docs/docusaurus.config.js | sed -e "s#/\",##g")
-                # Find the component name
-                doc_comp=${baseurl##*/}
-                echo "name=${doc_comp}" >> "${GITHUB_OUTPUT}"
-              else
-                  echo "Docs folder exists, but there's no docusaurus.config.js; check your code!"
-                  echo " :boom: Docs folder exists, but there's no docusaurus.config.js; check your code!" >> "${GITHUB_STEP_SUMMARY}"
-                  exit 1
-              fi
+              # parse out the product key from the repository name
+              echo "name=$(echo ${GITHUB_REPOSITORY} | cut -f2 -d\/)" >> "${GITHUB_OUTPUT}"
             fi
 
 
