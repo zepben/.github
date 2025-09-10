@@ -177,7 +177,7 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@main
+        uses: zepben/docusaurus-action@OPS-439-doc3
         with:
           TAG: false
           NPM_REPO: ${{ secrets.NPM_REPO }}
