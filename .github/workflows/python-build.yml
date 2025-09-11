@@ -157,4 +157,4 @@ jobs:
           TAG: false
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-          REPO_DOCS_TITLE: ${{ vars.REPO_DOCS_TITLE }}
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}

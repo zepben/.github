@@ -154,7 +154,7 @@ jobs:
   build-docs:
     runs-on: ubuntu-latest
     needs: [build-artifact]
-    container: zepben/pipeline-docusaurus
+    container: zepben/pipeline-docusaurus:test-better_d3
     if: ${{ needs.build-artifact.outputs.docs-present == 'yes' }}
     outputs:
       artifact-uploaded: ${{ steps.artifact.outputs.uploaded }}
@@ -165,11 +165,12 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@main
+        uses: zepben/docusaurus-action@OPS-439-doc3
         with:
           TAG: false
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         continue-on-error: true
 
       - name: Failed build
