@@ -160,9 +160,6 @@ jobs:
       product-repo: ${{ steps.docs-component.outputs.repo }}
     container: zepben/pipeline-docusaurus:test-better_d3
     steps:
-      - name: Install Git
-        run: |
-          apk add git zip
 
       - name: Work around git permission issue
         run: |
