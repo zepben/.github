@@ -209,6 +209,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check that title is defined in the repo
+        run: |
+          if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
+            echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
+            exit 1
+          fi
+        with:
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+        shell: bash
+
       - name: Build docusaurus
         id: build
         uses: zepben/docusaurus-action@OPS-439-doc3

@@ -151,6 +151,16 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Check that title is defined in the repo
+        run: |
+          if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
+            echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
+            exit 1
+          fi
+        with:
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+        shell: bash
+
       - name: Checkout release branch
         run: |
           git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
