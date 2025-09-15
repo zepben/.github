@@ -215,7 +215,7 @@ jobs:
             echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
             exit 1
           fi
-        with:
+        env:
           DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         shell: bash
 

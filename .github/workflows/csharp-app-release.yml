@@ -252,7 +252,7 @@ jobs:
           if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
             echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
           fi
-        with:
+        env:
           DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         shell: bash
 
