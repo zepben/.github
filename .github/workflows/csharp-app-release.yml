@@ -271,7 +271,7 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action
+        uses: zepben/docusaurus-action@main
         with:
           VERSION: ${{ needs.release-checks.outputs.version }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
