@@ -199,7 +199,7 @@ jobs:
 
   build-docs:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-docusaurus:test-better_d3
+    container: zepben/pipeline-docusaurus
     needs: [build-app]
     if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
     outputs:
@@ -221,7 +221,7 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@OPS-439-doc3
+        uses: zepben/docusaurus-action
         with:
           TAG: false
           NPM_REPO: ${{ secrets.NPM_REPO }}
