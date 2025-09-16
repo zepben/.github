@@ -235,6 +235,7 @@ jobs:
       artifact: docs
     container: zepben/pipeline-docusaurus
     steps:
+
       - name: Install Git
         run: |
           apk add git zip
@@ -246,6 +247,17 @@ jobs:
         shell: sh
 
       - uses: actions/checkout@v4
+
+      - name: Check that title is defined in the repo
+        run: |
+          if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
+            echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
+            exit 1
+          fi
+        env:
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+        shell: bash
+
 
       - name: Checkout release branch
         run: |
@@ -267,6 +279,7 @@ jobs:
           VERSION: ${{ needs.release-checks.outputs.version }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         continue-on-error: true
 
       - name: Zip documentation
