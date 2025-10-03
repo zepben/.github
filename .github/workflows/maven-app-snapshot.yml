@@ -190,6 +190,7 @@ jobs:
           TAG: false
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         continue-on-error: true
 
       - name: Failed build
