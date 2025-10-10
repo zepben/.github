@@ -31,6 +31,8 @@ jobs:
         isolate_version_text="sed -e 's/\x1b\[[0-9;]*m//g' -e 's/^.*INFO.\s*//'"  # first substitution removes ANSI escape sequences
         updates_found=false
         msg="The following updates are available for this repository:"
+
+        echo "Test superpom dependencies"
         superpom=$(mvn "${mvn_version_args[@]}" versions:display-parent-updates | grep ":evolve-super-pom" | eval "$isolate_version_text")
         if [ z"${superpom}" != "z" ]; then
           msg="${msg}\n\nA superpom update available: \n\`\`\`\n${superpom}\n\`\`\`\n" 
@@ -38,6 +40,7 @@ jobs:
         fi
 
         # two spaces in regex needed to filter out header line
+        echo "Test other zepben dependencies"
         versions=$(mvn "${mvn_version_args[@]}" versions:display-dependency-updates | grep "  com.zepben" | eval "$isolate_version_text")
         if [ z"${versions}" != "z" ]; then
           msg="${msg}\nVersion(s) updates are available: \n\`\`\`\n${versions}\n\`\`\`\n" 
@@ -47,5 +50,5 @@ jobs:
         if [ ${updates_found} == true ]; then
           echo -e "${msg}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
         fi
-      shell: bash
+      shell: bash {0}
 
