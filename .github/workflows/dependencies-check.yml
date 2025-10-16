@@ -33,10 +33,19 @@ jobs:
         msg="The following updates are available for this repository:"
 
         echo "Test superpom dependencies"
-        superpom=$(mvn "${mvn_version_args[@]}" versions:display-parent-updates | grep ":evolve-super-pom" | eval "$isolate_version_text")
-        if [ z"${superpom}" != "z" ]; then
-          msg="${msg}\n\nA superpom update available: \n\`\`\`\n${superpom}\n\`\`\`\n" 
-          updates_found=true
+        mvn "${mvn_version_args[@]}" versions:display-parent-updates > tmp
+
+        echo -n "Check if superpom is at latest version....."
+        cat tmp | grep "The parent project is the latest version" > /dev/null
+        if [ $? = 0 ]; then
+           echo "it is. Nothing to do further for superpom check."
+        else
+           echo "no. Fetching the latest info."
+          superpom=$(cat tmp | grep ":evolve-super-pom" | eval "$isolate_version_text")
+          if [ z"${superpom}" != "z" ]; then
+            msg="${msg}\n\nA superpom update available: \n\`\`\`\n${superpom}\n\`\`\`\n" 
+            updates_found=true
+          fi
         fi
 
         # two spaces in regex needed to filter out header line
@@ -51,4 +60,3 @@ jobs:
           echo -e "${msg}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
         fi
       shell: bash {0}
-
