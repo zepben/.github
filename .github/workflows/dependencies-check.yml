@@ -58,5 +58,7 @@ jobs:
 
         if [ ${updates_found} == true ]; then
           echo -e "${msg}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+          echo "PR comment left"
         fi
+        echo "All checks finished"
       shell: bash {0}
