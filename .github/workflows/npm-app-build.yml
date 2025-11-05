@@ -180,19 +180,16 @@ jobs:
             echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
             exit 1
           fi
-          if [[ ! -z ${{ inputs.repo-name }} ]]; then
-            echo "REPO_NAME=${{ inputs.repo-name }}" >> $GITHUB_ENV
-          fi
         env:
           DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         shell: bash
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@main
+        uses: zepben/docusaurus-action@test-repo-name
         with:
           TAG: false
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           DOCS_TITLE: ${{ vars.DOCS_TITLE }}
-          REPO_NAME: ${{ env.REPO_NAME }}
+          REPO_NAME: ${{ inputs.REPO_NAME }}
