@@ -8,11 +8,11 @@ on:
         required: false
         type: boolean
         default: true
-      build-docs:
-        description: 'Repo has docusaurus docs'
+      repo-name:
+        description: 'Alternative slug for docs'
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: ""
       sourcepath:
         description: 'Path to source directory (used for licence check)'
         required: false
@@ -180,6 +180,9 @@ jobs:
             echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
             exit 1
           fi
+          if [[ ! -z ${{ inputs.repo-name }} ]]; then
+            echo "REPO_NAME=${{ inputs.repo-name }}" >> $GITHUB_ENV
+          fi
         env:
           DOCS_TITLE: ${{ vars.DOCS_TITLE }}
         shell: bash
@@ -192,3 +195,4 @@ jobs:
           NPM_REPO: ${{ secrets.NPM_REPO }}
           NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+          REPO_NAME: ${{ env.REPO_NAME }}
