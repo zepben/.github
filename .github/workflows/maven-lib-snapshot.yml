@@ -144,6 +144,7 @@ jobs:
             # public repository
             echo "PROFILE=maven-central" >> ${GITHUB_ENV}; 
           fi
+          echo "Set profile to $PROFILE"
 
       - name: Maven deploy to Central
         uses: zepben/maven-deploy-central-action@main
