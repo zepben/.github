@@ -283,11 +283,12 @@ jobs:
           if [ "$(gh repo view --json isPrivate | jq .isPrivate)" == "true" ]; then
             # private repository
             echo "PROFILE=zepben-maven" >> ${GITHUB_ENV};
+            echo "Private repository detected, set profile to zepben-maven"
           else 
             # public repository
             echo "PROFILE=maven-central" >> ${GITHUB_ENV}; 
+            echo "Public repository detected, set profile to maven-central"
           fi
-          echo "Set profile to ${{ env.PROFILE }}"
 
       - name: Maven deploy to Central
         id: build
