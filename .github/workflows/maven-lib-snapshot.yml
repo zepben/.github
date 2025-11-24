@@ -137,9 +137,13 @@ jobs:
         id: profile
         shell: bash
         run: |
-          priv=${{ inputs.private }}
-          if [[ $priv == 'true' ]]; then echo "PROFILE=zepben-maven" >> ${GITHUB_ENV}; else echo "PROFILE=maven-central" >> ${GITHUB_ENV}; fi
-
+          if [ "$(gh repo view --json isPrivate | jq .isPrivate)" == "true" ]; then
+            # private repository
+            echo "PROFILE=zepben-maven" >> ${GITHUB_ENV};
+          else 
+            # public repository
+            echo "PROFILE=maven-central" >> ${GITHUB_ENV}; 
+          fi
 
       - name: Maven deploy to Central
         uses: zepben/maven-deploy-central-action@main
