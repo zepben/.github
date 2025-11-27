@@ -1,0 +1,120 @@
+name: Build Docs
+
+on:
+  workflow_call:
+    inputs:
+      DEPLOY:
+        description: 'Flag to deploy the docs'
+        required: false
+        type: boolean
+        default: false
+      VERSION:
+        description: 'Version to tag the release with'
+        required: false
+        type: string
+        default: "0"
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+
+    outputs:
+      artifact-uploaded: 
+        value: ${{ jobs.build-docs.outputs.artifact-uploaded }}
+      product:
+        value: ${{ jobs.build-docs.outputs.product }}
+      component:
+        value: ${{ jobs.build-docs.outputs.component }}
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-docusaurus
+    outputs:
+      artifact-uploaded: ${{ steps.artifact.outputs.uploaded }}
+      product: ${{ steps.docs-component.outputs.product }}
+      component: ${{ steps.docs-component.outputs.component }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+      PRODUCT: ${{ vars.PRODUCT }}
+    steps:
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Check that DOCS_TITLE and PRODUCT are properly defined in the repo
+        run: |
+          if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
+            echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
+            exit 1
+          fi
+          if [[ ! -z $PRODUCT && $PRODUCT != "evolve" && $PRODUCT != "ednar" ]]; then
+            echo "The only supported values for \$PRODUCT environment variable are 'evolve' and 'ednar'! It's currently set to '$PRODUCT'"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Fetch the document component name
+        id: docs-component
+        shell: sh {0}
+        run: |
+            # Figure out the product type
+            product=${PRODUCT:-"evolve"}
+            echo "product=$product" >> "${GITHUB_OUTPUT}"
+
+            # This is a project/component name, both for the docs slug and for the proper directory under zepben.github.io {product}/docs/{component}
+            echo "component=$(echo ${GITHUB_REPOSITORY} | cut -f2 -d\/)" >> "${GITHUB_OUTPUT}"
+
+      - name: Build docusaurus
+        id: build
+        uses: zepben/docusaurus-action@OPS-512-support-product
+        with:
+          VERSION: ${{ inputs.VERSION }}
+          NPM_REPO: ${{ secrets.NPM_REPO }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          DOCS_TITLE: ${{ env.DOCS_TITLE }}
+          PRODUCT: ${{ env.PRODUCT }}
+        continue-on-error: true
+
+      - name: Failed build
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "There was an error in the docusaurus build above. Docs are not pushed"
+          echo " :boom: There was an error in the docusaurus build step. Current docs are not published" >> ${GITHUB_STEP_SUMMARY}
+        shell: sh
+
+      - name: Check if we need to skip deployment for hotfix or LTS branch
+        if: ${{ inputs.DEPLOY }}
+        run: |
+          if [[ ${GITHUB_REF_NAME} =~ "hotfix" || ${GITHUB_REF_NAME} =~ "LTS" ]]; then
+            echo "deployDocs=no" >> ${GITHUB_ENV}
+            echo "Running on LTS or hotfix branch, skip deploying docs"
+          else
+            echo "deployDocs=yes" >> ${GITHUB_ENV}
+          fi
+
+      - name: Zip documentation
+        if: ${{ env.deployDocs == 'yes' }}
+        run: |
+          cd docs/build
+          zip -r ../../docs.zip .
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ steps.build.outcome == 'success' && env.deployDocs == 'yes' }}
+        id: upload
+        with:
+          name: docs.zip
+          path: docs.zip
+
+      - if: ${{ steps.upload.outcome == 'success' }}
+        id: artifact
+        run:
+          echo "uploaded=yes" >> "${GITHUB_OUTPUT}"

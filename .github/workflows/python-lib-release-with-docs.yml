@@ -1,5 +1,5 @@
 # Note: default release notes file is docs/release.md.
-name: Maven Library Release + Docs
+name: Python Library Release + Docs
 
 on: 
   workflow_call:
@@ -7,7 +7,6 @@ on:
       product-key:
         description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
         required: false
-        default: "productkeynotprovided"
         type: string
       private:
         description: 'Calling workflow from a private repo'
@@ -23,33 +22,21 @@ on:
     secrets:
       CI_GITHUB_TOKEN:
         required: true
-      NEXUS_MAVEN_REPO:
-        required: true
+      ZEPBEN_PYPI_REPO:
+        required: false
       NEXUS_USERNAME:
-        required: true
+        required: false
       NEXUS_PASSWORD: 
-        required: true
-      NEXUS_SIGNATURE:
-        required: true
-      NEXUS_MAVEN_SNAPSHOT:
-        required: true
-      NEXUS_MAVEN_RELEASE:
-        required: true
+        required: false
       SLACK_NOTIFICATION:
         required: false
       SLACK_WEBHOOK:
         required: false
-      LC_URL: 
+      LC_URL:
         required: false
-      ZEPBEN_GPG_KEY:
+      COVERALLS_REPO_TOKEN:
         required: false
-      MAVEN_CENTRAL_USERNAME:
-        required: false
-      MAVEN_CENTRAL_PASSWORD:
-        required: false
-      GPG_KEY_ID:
-        required: false
-      GPG_KEY_PASSWORD:
+      PYPI_API_TOKEN:
         required: false
       NPM_REPO:
         required: true
@@ -67,12 +54,7 @@ jobs:
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
-      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
-      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-      SLACK_NOTIFICATION: YES
+      SLACK_NOTIFICATION: ${{ secrets.SLACK_NOTIFICATION }}
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     outputs:
       version: ${{ steps.check.outputs.version }}
@@ -89,6 +71,15 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Release checks and update version for release
+        id: check
+        run: |
+          /scripts/release-checks.sh --python pyproject.toml
+          /scripts/finalize-version.sh --python pyproject.toml
+          version="$(cat pyproject.toml | grep 'version[[:space:]]*=[[:space:]]*"\?[0-9]\+\.[0-9]\+\.[0-9]\+\(b[0-9]\+\)\?"\?' | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\+\(b[0-9]\+\)\?")"
+          echo "version=$version" >> "${GITHUB_OUTPUT}"
+        shell: bash
+
       - name: Cache licence-check
         uses: actions/cache@v4
         with:
@@ -100,15 +91,6 @@ jobs:
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
-
-      - name: Release checks and update version for release
-        id: check
-        run: |
-          /scripts/release-checks.sh --java --maven pom.xml
-          /scripts/finalize-version.sh --java --maven pom.xml changelog.md
-          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          echo "version=$version" >> "${GITHUB_OUTPUT}"
-        shell: bash
 
       - name: Check if docs present
         id: docs
@@ -157,25 +139,34 @@ jobs:
           new_changelog=$(echo "${changelog}" | base64 -w0)
           echo "changelog=${new_changelog}" >> $GITHUB_OUTPUT
 
-  build-docs:
-    needs: [release-checks]
-    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
-    uses: ./.github/workflows/build-docs.yaml
-    with:
-      DEPLOY: true
-      VERSION: ${{ needs.release-checks.outputs.version }}
-    secrets: inherit
-
-  deploy:
-    needs: [release-checks, build-docs]
-    if: always() && !failure() && !cancelled()
+  python-deps-check:
+    needs: release-checks
     runs-on: ubuntu-latest
-    outputs:
-      artifact: ${{ steps.build.outputs.artifact }}
-    env:
-      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-    container: zepben/pipeline-java-ewb
+    container: python:3.10
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Test install the local package with deps
+        run: |
+          # finalize-version above removes all snapshot/test versions
+          # from zepben packages. Now let's try to install to see if deps exist or fail quick
+          pip install --pre '.'
+
+
+  build-docs:
+    needs: [release-checks, python-deps-check]
+    runs-on: ubuntu-latest
+    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
+    outputs:
+      artifact: docs
+      product-key: ${{ steps.docs-component.outputs.name }}
+      product-repo: ${{ steps.docs-component.outputs.repo }}
+    container: zepben/pipeline-docusaurus
+    steps:
+      - name: Install Git
+        run: |
+          apk add git zip
+
       - name: Work around git permission issue
         run: |
           dname=$(echo ${{github.repository}} | cut -d'/' -f2)
@@ -184,75 +175,146 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Cache maven deps
-        uses: actions/cache@v4
-        with:
-          path: /maven
-          key: maven
+      - name: Check that title is defined in the repo
+        run: |
+          if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
+            echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
+            exit 1
+          fi
+        env:
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+        shell: bash
 
       - name: Checkout release branch
         run: |
           git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
           git fetch --all
           git checkout release
-        shell: bash
+        shell: sh
 
-      - name: Set profile
-        id: profile
-        shell: bash
-        run: |
-          if [ "$(gh repo view --json isPrivate | jq .isPrivate)" == "true" ]; then
-            # private repository
-            echo "PROFILE=zepben-maven" >> ${GITHUB_ENV};
-            echo "Private repository detected, set profile to zepben-maven"
-          else 
-            # public repository
-            echo "PROFILE=maven-central" >> ${GITHUB_ENV}; 
-            echo "Public repository detected, set profile to maven-central"
-          fi
-
-      - name: Maven deploy to Central
-        id: build
-        uses: zepben/maven-deploy-central-action@main
+      - name: Cache nodejs deps
+        uses: actions/cache@v4
         with:
-          NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-          NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
-          NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-          ZEPBEN_GPG_KEY: ${{ secrets.ZEPBEN_GPG_KEY_B64 }}
-          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-          GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
-          PROFILE: ${{ env.PROFILE }}
+          path: ~/.npm
+          key: npm
+
+      - name: Build docusaurus
+        id: build
+        uses: zepben/docusaurus-action@main
+        with:
+          VERSION: ${{ needs.release-checks.outputs.version }}
+          NPM_REPO: ${{ secrets.NPM_REPO }}
+          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+        continue-on-error: true
+
+      - name: Zip documentation
+        run: |
+          cd docs/build
+          zip -r ../../docs.zip .
+        shell: sh
+
+      - uses: actions/upload-artifact@v4
+        if: steps.build.outcome == 'success'
+        with:
+          name: docs.zip
+          path: docs.zip
+          if-no-files-found: error
+
+      - name: Fail build
+        if: steps.build.outcome == 'failure'
+        run: |
+          git push origin -d release
+          echo "There was an error in the docusaurus build above."
+          exit 1
+        shell: sh
+
+      - name: Fetch the document component name
+        id: docs-component
+        shell: sh {0}
+        run: |
+            echo "repo=${GITHUB_REPOSITORY}" >> "${GITHUB_OUTPUT}"
+            # if product key is supplied
+            if [ "${{ inputs.product-key }}" != "productkeynotprovided" ]; then
+              echo "name=${{ inputs.product-key }}" >> "${GITHUB_OUTPUT}"
+            else
+              # parse out the product key from the repository name
+              echo "name=$(echo ${GITHUB_REPOSITORY} | cut -f2 -d\/)" >> "${GITHUB_OUTPUT}"
+            fi
+
+
+
+  deploy:
+    needs: [release-checks, build-docs]
+    runs-on: ubuntu-latest
+    container: python:3.10
+    outputs:
+      artifact: ${{ steps.build.outputs.artifact }}
+    steps:
+      - name: Install dependencies
+        run: |
+          pip install tox twine
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - uses: actions/checkout@v4
+
+      - name: Checkout release branch
+        run: |
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git checkout release
+        shell: sh
+
+      - name: Create .pypirc
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          echo "[pypi]" > ~/.pypirc
+          echo "username = __token__" >> ~/.pypirc
+          echo "password = $PYPI_API_TOKEN" >> ~/.pypirc
+          echo "\n" >> ~/.pypirc
+
+      - name: Build and publish
+        id: build
+        run: |
+          tox
+          twine upload --non-interactive --config-file ~/.pypirc dist/*
+          artifact_id=$(grep name= pyproject.toml | cut -d= -f2 | tr -d '",' | sed 's-\.-_-g')
+          artifact="${artifact_id}-${{ needs.release-checks.outputs.version }}-py3-none-any.whl"
+          echo "::set-output name=artifact::$(echo $artifact)"
+          echo "::set-output name=artifact-path::$(echo dist/$artifact)"
+        shell: bash
         continue-on-error: true
 
       - name: Upload coverage to Codecov
-        if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v4
-        with: 
+        with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
+          
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
         with:
           name: ${{ steps.build.outputs.artifact }}
           path: ${{ steps.build.outputs.artifact-path }}
-          if-no-files-found: error
 
       - name: Delete release branch if deploy failed and fail
         if: steps.build.outcome == 'failure'
         run: |
           git push origin -d release
-          echo "There was an error in the mvn deploy command above."
+          echo "There was an error in the python build and publish commands above."
           exit 1
         shell: bash
 
   create-release:
     needs: [deploy, build-docs, release-checks]
-    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
@@ -278,7 +340,7 @@ jobs:
           git push origin ${GITHUB_REF/refs\/heads\//}
           git tag "v${{ needs.release-checks.outputs.version }}"
           git push --tags
-          echo "tag=v${{ needs.release-checks.outputs.version }}" >> "${GITHUB_OUTPUT}"
+          echo "::set-output name=tag::$(echo v${{ needs.release-checks.outputs.version }})"
         shell: bash
         continue-on-error: true
 
@@ -325,23 +387,20 @@ jobs:
           token: ${{ secrets.CI_GITHUB_TOKEN }}
           repository: ${{ secrets.DOCS_REPO }}
           event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
-          client-payload: '{"product": "${{needs.build-docs.outputs.product}}", "product_key": "${{needs.build-docs.outputs.component}}", "download_url": "${{github.repository}}" }'
+          client-payload: '{"product": "${{needs.build-docs.outputs.product}}", "product_key": "${{needs.build-docs.outputs.product-key}}", "download_url": "${{needs.build-docs.outputs.product-repo}}"}'
         continue-on-error: true
 
   update-version:
     needs: [create-release]
-    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
-      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
-      SLACK_NOTIFICATION: YES
+      ZEPBEN_PYPI_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      ZEPBEN_PYPI_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      ZEPBEN_PYPI_REPO: ${{ secrets.ZEPBEN_PYPI_REPO }}
+      SLACK_NOTIFICATION: ${{ secrets.SLACK_NOTIFICATION }}
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
       - uses: actions/checkout@v4
@@ -356,5 +415,5 @@ jobs:
 
       - name: Update to next minor version
         run: |
-          /scripts/update-version.sh --java --grow-changelog --maven --release pom.xml changelog.md
+          /scripts/update-version.sh --python --release pyproject.toml changelog.md
         shell: bash
