@@ -74,7 +74,7 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@OPS-512-support-product
+        uses: zepben/docusaurus-action@main
         with:
           VERSION: ${{ inputs.VERSION }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
