@@ -61,6 +61,7 @@ jobs:
 
   run-checks:
     runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs: 
