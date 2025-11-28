@@ -95,6 +95,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     container: python:3.10
+    needs: [check-for-leaks, run-checks]
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
