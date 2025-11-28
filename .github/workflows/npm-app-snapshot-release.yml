@@ -157,7 +157,6 @@ jobs:
     uses: ./.github/workflows/build-docs.yaml
     with:
       DEPLOY: true
-      VERSION: ${{ needs.build-artifact.outputs.version }}
     secrets: inherit
 
   update-snapshot-version:
