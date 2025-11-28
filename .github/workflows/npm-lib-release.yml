@@ -184,7 +184,7 @@ jobs:
         run: |
           # Make sure directories are properly ignored
           # docs/node_modules
-          git check-ignore -q docs/site-config
+          git check-ignore -q docs/site-config/project.json
           if [ $? != 0 ]; then
               echo "ERROR! Make sure to add 'docs/site-config' to .gitignore"
               echo "::error line=1::ERROR! Make sure to add 'docs/site-config' to .gitignore"
