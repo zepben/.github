@@ -42,6 +42,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          apt install gh jq
+
       - name: Install dependencies
         run: |
           pip install tox twine
@@ -119,20 +123,13 @@ jobs:
         run: |
           # Make sure directories are properly ignored
           # docs/node_modules
-          git check-ignore -q docs/node_modules 
+          git check-ignore -q docs/site-config/project.json
           if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              echo "ERROR! Make sure to add 'docs/site-config' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/site-config' to .gitignore"
               exit 1
           fi
 
-          # docs/build
-          git check-ignore -q docs/build 
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
-              exit 1
-          fi
 
   update-snapshot-version:
     needs: [deploy]
