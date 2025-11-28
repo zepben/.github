@@ -34,7 +34,6 @@ jobs:
   run-checks:
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
-    needs: check-for-leaks
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs: 
@@ -95,7 +94,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     container: python:3.10
-    needs: [check-for-leaks, run-checks]
+    needs: [run-checks]
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
