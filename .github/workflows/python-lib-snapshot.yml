@@ -30,25 +30,17 @@ on:
         required: false
 
 jobs:
-  deploy:
+
+  run-checks:
     runs-on: ubuntu-latest
-    container: python:3.10
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-    outputs:
+    outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
-        #    permissions:  # Uncomment these when trusted publishing supports reusable workflows OPS-185
-        #      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+
     steps:
+
       - uses: actions/checkout@v4
-
-      - name: Install system dependencies
-        run: |
-          apt install gh jq
-
-      - name: Install dependencies
-        run: |
-          pip install tox twine
 
       - name: Work around git permission issue
         run: |
@@ -66,7 +58,59 @@ jobs:
         uses: zepben/licence-check-action@main
         with:
           LC_URL: ${{ secrets.LC_URL }}
-          PATH: src
+          PATH: ${{ inputs.sourcepath }}
+
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+            echo "present=yes" >> "${GITHUB_ENV}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Check doc build artifacts are ignored
+        if: ${{ env.present == 'yes' }}
+        shell: sh {0}
+        run: |
+          # Make sure directories are properly ignored
+          # docs/node_modules
+          git check-ignore -q docs/site-config/project.json
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/site-config' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/site-config' to .gitignore"
+              exit 1
+          fi
+
+  deploy:
+    runs-on: ubuntu-latest
+    container: python:3.10
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    outputs:
+      docs-present: ${{ steps.docs.outputs.present }}
+        #    permissions:  # Uncomment these when trusted publishing supports reusable workflows OPS-185
+        #      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pip install tox twine
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
 
       - name: Create .pypirc
         env:
@@ -100,37 +144,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
 
-      - name: Check if docs present
-        id: docs
-        run: |
-          if [ -d docs ]; then
-            echo "Docs folder found, will run the build-docs job"
-            echo "present=yes" >> "${GITHUB_OUTPUT}"
-            echo "present=yes" >> "${GITHUB_ENV}"
-          else
-            echo "Docs folder not found, will skip the build-docs"
-          fi
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
-
-      - name: Check doc build artifacts are ignored
-        if: ${{ env.present == 'yes' }}
-        shell: sh {0}
-        run: |
-          # Make sure directories are properly ignored
-          # docs/node_modules
-          git check-ignore -q docs/site-config/project.json
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/site-config' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/site-config' to .gitignore"
-              exit 1
-          fi
-
-
   update-snapshot-version:
     needs: [deploy]
     container: zepben/pipeline-basic
@@ -155,8 +168,8 @@ jobs:
         shell: bash
 
   build-docs:
-    needs: [deploy]
-    if: ${{ needs.deploy.outputs.docs-present == 'yes' }}
+    needs: [run-checks]
+    if: ${{ needs.run-checks.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yaml
     with:
       DEPLOY: true

@@ -59,23 +59,16 @@ jobs:
             echo -e "${message}" | gh pr comment ${{ github.event.pull_request.number }} --body-file - 
           fi
 
-  build-and-test:
+  run-checks:
     runs-on: ubuntu-latest
-    container: python:3.10
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
+
     steps:
+
       - uses: actions/checkout@v4
-
-      - name: Install system dependencies
-        run: |
-          apt install gh jq
-
-      - name: Install dependencies
-        run: |
-          pip install tox
 
       - name: Work around git permission issue
         run: |
@@ -94,18 +87,6 @@ jobs:
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
-
-      - name: Build and test
-        run: |
-          tox
-        shell: bash
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-        continue-on-error: true
 
       - name: Check if docs present
         id: docs
@@ -130,23 +111,46 @@ jobs:
         run: |
           # Make sure directories are properly ignored
           # docs/node_modules
-          git check-ignore -q docs/node_modules 
+          git check-ignore -q docs/site-config/project.json
           if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              echo "ERROR! Make sure to add 'docs/site-config' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/site-config' to .gitignore"
               exit 1
           fi
 
-          # docs/build
-          git check-ignore -q docs/build
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
-              exit 1
-          fi
+  build-and-test:
+    runs-on: ubuntu-latest
+    container: python:3.10
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pip install tox
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Build and test
+        run: |
+          tox
+        shell: bash
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
 
   build-docs:
-    needs: [build-and-test]
-    if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
+    needs: [run-checks]
+    if: ${{ needs.run-checks.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yaml
     secrets: inherit
