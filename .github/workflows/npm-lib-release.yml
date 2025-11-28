@@ -94,6 +94,7 @@ jobs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
       version: ${{ steps.build.outputs.version }}
+      docs-present: ${{ steps.docs.outputs.present }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
@@ -165,6 +166,30 @@ jobs:
           echo "There was an error in the npm package command above."
           exit 1
         shell: sh
+
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+            echo "present=yes" >> "${GITHUB_ENV}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
+      - name: Check doc build artifacts are ignored
+        if: ${{ env.present == 'yes' }}
+        shell: sh {0}
+        run: |
+          # Make sure directories are properly ignored
+          # docs/node_modules
+          git check-ignore -q docs/site-config
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/site-config' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/site-config' to .gitignore"
+              exit 1
+          fi
 
   build-docs:
     needs: [build-artifact]
