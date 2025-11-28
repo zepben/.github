@@ -174,7 +174,7 @@ jobs:
     if: ${{ needs.check-docs.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yaml
     with:
-      deploy: true
+      DEPLOY: true
     secrets: inherit
 
   update-snapshot-version:

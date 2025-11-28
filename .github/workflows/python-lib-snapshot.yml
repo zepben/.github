@@ -162,7 +162,7 @@ jobs:
     if: ${{ needs.deploy.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yaml
     with:
-      deploy: true
+      DEPLOY: true
     secrets: inherit
 
   deploy-docs:
