@@ -13,7 +13,7 @@ on:
         required: false
         type: string
         default: "src"
-      component:
+      product-key:
         description: 'Product key used for deploying docs. Should be repo specific. E.g: "python-sdk"'
         required: false
         default: "productkeynotprovided"

@@ -207,4 +207,4 @@ jobs:
           token: ${{ secrets.CI_GITHUB_TOKEN }}
           repository: ${{ secrets.DOCS_REPO }}
           event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
-          client-payload: '{"product": "${{needs.build-docs.outputs.product}}", "product_key": "${{needs.build-docs.outputs.product-key}}", "download_url": "${{needs.build-docs.outputs.product-repo}}"}'
+          client-payload: '{"product": "${{needs.build-docs.outputs.product}}", "product_key": "${{needs.build-docs.outputs.component}}", "download_url": "${{needs.build-docs.outputs.product-repo}}"}'
