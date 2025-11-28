@@ -69,6 +69,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          apt install gh jq
+
       - name: Install dependencies
         run: |
           pip install tox
