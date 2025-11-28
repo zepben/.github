@@ -219,7 +219,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       artifact: ${{ steps.merge.outputs.artifact }}
-      tag: ${{ steps.merge.outputs.tag }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
@@ -253,10 +252,9 @@ jobs:
           git fetch --all
           git merge origin/release
           git push origin ${GITHUB_REF/refs\/heads\//}
-          tag="v${{ needs.release-checks.outputs.version }}"
-          git tag $tag
+          git tag "v${{ needs.release-checks.outputs.version }}" 
           git push --tags
-          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "tag=v${{ needs.release-checks.outputs.version }}" >> $GITHUB_OUTPUT
         shell: bash
         continue-on-error: true
 
