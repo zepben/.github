@@ -215,7 +215,7 @@ jobs:
         shell: sh
 
   create-release:
-    needs: [release-checks, build-artifact]
+    needs: [release-checks, build-docs, build-artifact]
     runs-on: ubuntu-latest
     outputs:
       artifact: ${{ steps.merge.outputs.artifact }}
