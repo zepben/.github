@@ -130,29 +130,7 @@ jobs:
           fi
 
   build-docs:
-    runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: [build-and-test]
     if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
-    container: zepben/pipeline-docusaurus
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - name: Check that title is defined in the repo
-        run: |
-          if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
-            echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
-            exit 1
-          fi
-        env:
-          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
-        shell: bash
-
-      - name: Build docusaurus
-        id: build
-        uses: zepben/docusaurus-action@main
-        with:
-          TAG: false
-          NPM_REPO: ${{ secrets.NPM_REPO }}
-          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+    uses: ./.github/workflows/build-docs.yaml
+    secrets: inherit
