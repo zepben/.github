@@ -156,7 +156,7 @@ jobs:
   build-docs:
     needs: [release-checks, python-deps-check]
     if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
-    uses: ./.github/workflows/build-docs.yaml
+    uses: ./.github/workflows/build-docs.yml
     with:
       DEPLOY: true
       VERSION: ${{ needs.release-checks.outputs.version }}
@@ -307,16 +307,6 @@ jobs:
             built-artifacts/${{ needs.deploy.outputs.artifact }}
         continue-on-error: true
 
-      - name: Deploy documentation
-        uses: peter-evans/repository-dispatch@v1
-        if: ${{ needs.build-docs.outputs.artifact-uploaded == 'yes' }}
-        with:
-          token: ${{ secrets.CI_GITHUB_TOKEN }}
-          repository: ${{ secrets.DOCS_REPO }}
-          event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
-          client-payload: '{"product": "${{needs.build-docs.outputs.product}}", "product_key": "${{needs.build-docs.outputs.component}}", "download_url": "${{github.repository}}"}'
-        continue-on-error: true
-
   update-version:
     needs: [create-release]
     if: always() && !failure() && !cancelled()
@@ -345,3 +335,12 @@ jobs:
         run: |
           /scripts/update-version.sh --python --grow-changelog --release pyproject.toml changelog.md
         shell: bash
+
+  deploy-docs:
+    needs: [create-release, build-docs]
+    if: always() && !failure() && !cancelled() && ${{ needs.build-docs.outputs.artifact != '' }}
+    uses: ./.github/workflows/deploy-docs.yml
+    with:
+      PRODUCT: ${{ needs.build-docs.outputs.product }}
+      ARTIFACT: ${{ needs.build-docs.outputs.artifact }}
+    secrets: inherit

@@ -155,5 +155,5 @@ jobs:
   build-docs:
     needs: [run-checks]
     if: ${{ needs.run-checks.outputs.docs-present == 'yes' }}
-    uses: ./.github/workflows/build-docs.yaml
+    uses: ./.github/workflows/build-docs.yml
     secrets: inherit
