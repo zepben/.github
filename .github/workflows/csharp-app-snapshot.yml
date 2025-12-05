@@ -198,7 +198,7 @@ jobs:
         path: ${{ env.artifact_id }}/bin/Release/
 
   build-docs:
-    needs: [build-app]
+    needs: [build]
     if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yml
     with:

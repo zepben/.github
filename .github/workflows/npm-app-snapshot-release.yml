@@ -184,7 +184,7 @@ jobs:
           /scripts/update-version.sh --js --snapshot package.json
 
   deploy-docs:
-    needs: [create-release, build-docs]
+    needs: [build-docs]
     if: always() && !failure() && !cancelled() && ${{ needs.build-docs.outputs.artifact != '' }}
     uses: ./.github/workflows/deploy-docs.yml
     with:
