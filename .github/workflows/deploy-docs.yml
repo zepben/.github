@@ -1,0 +1,41 @@
+name: Deploy Docs
+
+on:
+  workflow_call:
+    inputs:
+      PRODUCT:
+        description: 'PRODUCT to deploy the documentation into, ednar or evolve'
+        required: false
+        type: string
+        default: evolve
+      ARTIFACT:
+        description: 'Artifact ID to deploy the docs from (usually output from build-docs)'
+        required: true
+        type: string
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+      - name: Deploy documentation
+        id: deploy
+        if: ${{ inputs.ARTIFACT != '' }}
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+          repository: ${{ secrets.DOCS_REPO }}
+          event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
+          client-payload: '{"product": "${{inputs.PRODUCT}}", "repository": "${{github.repository}}", "artifact": "${{inputs.ARTIFACT}}", "run-id": "${{ github.run_id}}"}'
+
+      - name: Annotate run
+        run: |
+          if [ "${{ steps.deploy.conclusion }}" == "skipped" ]; then
+            echo ":boom: Documentation deployment skipped as no artifact ID was provided. Something must be wrong!" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "✅ Documentation deployment dispatched successfully" >> "${GITHUB_STEP_SUMMARY}"
+          fi
