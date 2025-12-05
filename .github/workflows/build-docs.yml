@@ -19,7 +19,7 @@ on:
 
     outputs:
       artifact:
-        value: ${{ jobs.build-docs.outputs.artifact-uploaded }}
+        value: ${{ jobs.build-docs.outputs.artifact }}
       product:
         value: ${{ jobs.build-docs.outputs.product }}
 
