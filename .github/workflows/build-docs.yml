@@ -18,21 +18,18 @@ on:
         required: true
 
     outputs:
-      artifact-uploaded: 
-        value: ${{ jobs.build-docs.outputs.artifact-uploaded }}
+      artifact:
+        value: ${{ jobs.build-docs.outputs.artifact }}
       product:
         value: ${{ jobs.build-docs.outputs.product }}
-      component:
-        value: ${{ jobs.build-docs.outputs.component }}
 
 jobs:
   build-docs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-docusaurus
     outputs:
-      artifact-uploaded: ${{ steps.artifact.outputs.uploaded }}
-      product: ${{ steps.docs-component.outputs.product }}
-      component: ${{ steps.docs-component.outputs.component }}
+      artifact: ${{ steps.upload.outputs.artifact-id }}
+      product: ${{ steps.validate.outputs.product }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       DOCS_TITLE: ${{ vars.DOCS_TITLE }}
@@ -50,6 +47,7 @@ jobs:
         shell: sh
 
       - name: Check that DOCS_TITLE and PRODUCT are properly defined in the repo
+        id: validate
         run: |
           if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
             echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
@@ -59,18 +57,19 @@ jobs:
             echo "The only supported values for \$PRODUCT environment variable are 'evolve' and 'ednar'! It's currently set to '$PRODUCT'"
             exit 1
           fi
+
+          # Detect the actual product value
+          product=${PRODUCT:-"evolve"}
+          echo "product=$product" >> "${GITHUB_OUTPUT}"
         shell: bash
 
-      - name: Fetch the document component name
-        id: docs-component
-        shell: sh {0}
+      - name: Checkout release branch if release-deploying
+        if: ${{ vars.VERSION != '0' }}
         run: |
-            # Figure out the product type
-            product=${PRODUCT:-"evolve"}
-            echo "product=$product" >> "${GITHUB_OUTPUT}"
-
-            # This is a project/component name, both for the docs slug and for the proper directory under zepben.github.io {product}/docs/{component}
-            echo "component=$(echo ${GITHUB_REPOSITORY} | cut -f2 -d\/)" >> "${GITHUB_OUTPUT}"
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git fetch --all
+          git checkout release
+        shell: sh
 
       - name: Build docusaurus
         id: build
@@ -113,8 +112,3 @@ jobs:
         with:
           name: docs.zip
           path: docs.zip
-
-      - if: ${{ steps.upload.outcome == 'success' }}
-        id: artifact
-        run:
-          echo "uploaded=yes" >> "${GITHUB_OUTPUT}"

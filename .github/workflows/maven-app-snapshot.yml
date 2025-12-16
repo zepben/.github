@@ -164,7 +164,7 @@ jobs:
   build-docs:
     needs: [build-app]
     if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
-    uses: ./.github/workflows/build-docs.yaml
+    uses: ./.github/workflows/build-docs.yml
     with:
       DEPLOY: true
     secrets: inherit
@@ -197,14 +197,10 @@ jobs:
           /scripts/update-version.sh --java --snapshot --maven pom.xml
 
   deploy-docs:
-    runs-on: ubuntu-latest
     needs: [build-docs]
-    if: ${{ needs.build-docs.outputs.artifact-uploaded == 'yes' }}
-    steps:
-      - name: Deploy documentation
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.CI_GITHUB_TOKEN }}
-          repository: ${{ secrets.DOCS_REPO }}
-          event-type: ${{ secrets.DOCS_REPO_EVOLVE_WORKFLOW }}
-          client-payload: '{"product": "${{needs.build-docs.outputs.product}}", "product_key": "${{needs.build-docs.outputs.component}}", "download_url": "${{github.repository}}"}'
+    if: ${{ needs.build-docs.outputs.artifact != '' }}
+    uses: ./.github/workflows/deploy-docs.yml
+    with:
+      PRODUCT: ${{ needs.build-docs.outputs.product }}
+      ARTIFACT: ${{ needs.build-docs.outputs.artifact }}
+    secrets: inherit

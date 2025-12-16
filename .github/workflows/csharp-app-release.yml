@@ -230,7 +230,7 @@ jobs:
   build-docs:
     needs: [release-checks]
     if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
-    uses: ./.github/workflows/build-docs.yaml
+    uses: ./.github/workflows/build-docs.yml
     with:
       DEPLOY: true
       VERSION: ${{ needs.release-checks.outputs.version }}
@@ -345,3 +345,12 @@ jobs:
         run: |
           /scripts/update-version.sh --csharp --grow-changelog --release ${{ inputs.version_file }} ${{ inputs.changelog }}
         shell: bash
+
+  deploy-docs:
+    needs: [create-release, build-docs]
+    if: always() && !failure() && !cancelled() && ${{ needs.build-docs.outputs.artifact != '' }}
+    uses: ./.github/workflows/deploy-docs.yml
+    with:
+      PRODUCT: ${{ needs.build-docs.outputs.product }}
+      ARTIFACT: ${{ needs.build-docs.outputs.artifact }}
+    secrets: inherit
