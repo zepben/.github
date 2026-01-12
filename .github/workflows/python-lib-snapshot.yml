@@ -13,6 +13,11 @@ on:
         required: false
         default: "productreponotprovided"
         type: string
+      sourcepath:
+        description: 'Path to source directory (used for licence check)'
+        required: false
+        type: string
+        default: "src"
           #pypi-project-name:  # OPS-185, although this could be replaced by parsing the name from .pyproject.toml?
           #  description: 'The Pypi project to deploy to - should be the package name'
           #  required: true
