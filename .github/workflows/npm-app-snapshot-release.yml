@@ -49,7 +49,7 @@ jobs:
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
       version: ${{ steps.build.outputs.version }}
-    container: node:20-alpine
+    container: node:24-alpine
     steps:
     - name: Install Dependencies
       run: |
