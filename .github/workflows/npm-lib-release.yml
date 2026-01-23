@@ -34,7 +34,7 @@ jobs:
     continue-on-error: false
     outputs:
       changelog: ${{ steps.changelog.outputs.changelog }}
-      version: ${{ steps.version.outputs.version }}
+      version: ${{ steps.check.outputs.version }}
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -312,7 +312,7 @@ jobs:
 
   deploy-docs:
     needs: [create-release, build-docs]
-    if: always() && !failure() && !cancelled() && ${{ needs.build-docs.outputs.artifact != '' }}
+    if: ${{ always() && !failure() && !cancelled() && needs.build-docs.outputs.artifact != '' }}
     uses: ./.github/workflows/deploy-docs.yml
     with:
       PRODUCT: ${{ needs.build-docs.outputs.product }}
