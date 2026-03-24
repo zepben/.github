@@ -2,12 +2,19 @@ name: Internal Dependency Check
 
 on: 
   workflow_call:
+    inputs:
+      java-major-version:
+        description: The major version of Java required by the project. This influences the container used to build the package
+        required: false
+        type: string
+        default: "11"
+
 
 jobs:
 
   check_deps:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-java-ewb
+    container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}

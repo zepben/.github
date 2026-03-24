@@ -19,6 +19,11 @@ on:
         required: false
         type: string
         default: "src"
+      java-major-version:
+        description: The major version of Java required by the project. This influences the container used to build the package
+        required: false
+        type: string
+        default: "11"
 
     secrets:
       CI_GITHUB_TOKEN:
@@ -174,7 +179,7 @@ jobs:
       artifact: ${{ steps.build.outputs.artifact }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-    container: zepben/pipeline-java-ewb
+    container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     steps:
       - name: Work around git permission issue
         run: |
