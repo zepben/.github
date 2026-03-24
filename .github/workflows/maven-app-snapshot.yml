@@ -25,7 +25,7 @@ on:
         type: string
       java-major-version:
         description: The major version of Java required by the project. This influences the container used to build the package
-        required: true
+        required: false
         type: string
         default: "11"
 
