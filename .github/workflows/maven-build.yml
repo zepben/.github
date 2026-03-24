@@ -13,6 +13,12 @@ on:
         required: false
         type: string
         default: "src"
+      java-major-version:
+        description: The major version of Java required by the project. This influences the container used to build the package
+        required: true
+        type: string
+        default: "11"
+
     secrets:
       NEXUS_MAVEN_REPO:
         required: true
@@ -70,8 +76,8 @@ jobs:
 
   build-and-test:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-java-ewb
-    outputs: 
+    container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
+    outputs:
       docs-present: ${{ steps.docs.outputs.present }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}

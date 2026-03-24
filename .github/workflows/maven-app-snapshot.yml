@@ -23,6 +23,12 @@ on:
         required: false
         default: "productreponotprovided"
         type: string
+      java-major-version:
+        description: The major version of Java required by the project. This influences the container used to build the package
+        required: true
+        type: string
+        default: "11"
+
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -56,7 +62,7 @@ on:
 jobs:
   build-app:
     runs-on: ubuntu-latest
-    container: zepben/pipeline-java-ewb
+    container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
       version: ${{ steps.build.outputs.version }}
