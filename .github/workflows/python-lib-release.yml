@@ -46,7 +46,9 @@ on:
       DOCS_REPO_EVOLVE_WORKFLOW:
         required: true
 
-
+concurrency:
+  group: release-snapshot
+  cancel-in-progress: false
 
 jobs:
   release-checks:
