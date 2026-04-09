@@ -59,6 +59,11 @@ on:
       version:
         description: "The current released version."
         value: ${{ jobs.build-app.outputs.version }}
+
+concurrency:
+  group: release-snapshot
+  cancel-in-progress: false
+
 jobs:
   build-app:
     runs-on: ubuntu-latest
