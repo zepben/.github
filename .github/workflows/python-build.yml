@@ -13,6 +13,10 @@ on:
         required: false
         type: string
         default: "src"
+      docker_container:
+        description: "Docker container to run as part of build"
+        required: false
+        type: string
     secrets:
       LC_URL: 
         required: false
@@ -139,6 +143,11 @@ jobs:
           dname=$(echo ${{github.repository}} | cut -d'/' -f2)
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
+
+      - name: Stand up required service containers, and run code generation
+        if: inputs.docker_container != ''
+        run: |
+          docker compose up ${{ inputs.docker_container }}
 
       - name: Build and test
         run: |
