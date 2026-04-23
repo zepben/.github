@@ -144,6 +144,14 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Login to Docker Hub
+        if: inputs.docker_container != ''
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
       - name: Stand up required service containers, and run code generation
         if: inputs.docker_container != ''
         run: |
