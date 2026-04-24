@@ -23,6 +23,11 @@ on:
         description: "Docker container to run as part of build"
         required: false
         type: string
+      docker-compose-env:
+        description: "env to set for docker compose as a JSON string"
+        required: false
+        type: string
+        default: ""
       python-version:
         description: "Python versions to run 'build'"
         required: false
@@ -217,6 +222,7 @@ jobs:
 
       - name: Stand up required service containers, and run code generation
         if: inputs.docker-container != ''
+        env: ${{ fromJSON(inputs.docker-compose-env }}
         run: |
           docker compose up ${{ inputs.docker-container }}
 
