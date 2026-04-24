@@ -21,7 +21,7 @@ on:
         description: "env to set for docker compose as a JSON string"
         required: false
         type: string
-        default: ""
+        default: "{}"
       python-versions-to-test:
         description: "List of versions of python to run, as a JSON string"
         required: false
