@@ -93,11 +93,11 @@ jobs:
           path: /lc
           key: lcc
 
-#      - name: Check licence
-#        uses: zepben/licence-check-action@main
-#        with:
-#          LC_URL: ${{ secrets.LC_URL }}
-#          PATH: ${{ inputs.sourcepath }}
+      - name: Check licence
+        uses: zepben/licence-check-action@main
+        with:
+          LC_URL: ${{ secrets.LC_URL }}
+          PATH: ${{ inputs.sourcepath }}
 
       - name: Check if docs present
         id: docs
