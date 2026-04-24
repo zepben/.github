@@ -152,7 +152,7 @@ jobs:
   python-deps-check:
     needs: release-checks
     runs-on: ubuntu-latest
-    container: python:3.10
+    container: python:${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v4
 
