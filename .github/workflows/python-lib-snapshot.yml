@@ -154,7 +154,7 @@ jobs:
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
-          tox -e py${{ python-version }}
+          tox -e py${{ inputs.python-version }}
           twine upload --verbose --non-interactive --config-file ~/.pypirc dist/*
         shell: bash
 

@@ -223,7 +223,7 @@ jobs:
       - name: Build and publish
         id: build
         run: |
-          tox -e py${{ python-version }}
+          tox -e py${{ inputs.python-version }}
           twine upload --non-interactive --config-file ~/.pypirc dist/*
           artifact_id=$(cat pyproject.toml | grep '[[:space:]]*name[[:space:]]*=[[:space:]]*".*"$' | cut -d\" -f2 | tr -d '"' | sed 's-\.-_-g')
           artifact="${artifact_id}-${{ needs.release-checks.outputs.version }}-py3-none-any.whl"
