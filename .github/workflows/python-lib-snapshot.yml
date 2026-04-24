@@ -147,6 +147,7 @@ jobs:
 
       - name: Stand up required service containers, and run code generation
         if: inputs.docker-container != ''
+        env: ${{ fromJSON(inputs.docker-compose-env) }}
         run: |
           docker compose up ${{ inputs.docker-container }}
 
