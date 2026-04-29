@@ -35,12 +35,12 @@ on:
       configurations:
         description: 'Configurations'
         required: false
-        type: array
+        type: string
         default: '["Release"]'
       platforms:
         description: 'Platforms'
         required: false
-        type: array
+        type: string
         default: '["x64"]'
       binary_path:
         description: 'Path to the binaries.'
