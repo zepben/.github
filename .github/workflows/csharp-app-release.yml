@@ -27,16 +27,16 @@ on:
         required: false
         type: string
         default: "src"
-      configuration:
-        description: 'Configuration'
+      configurations:
+        description: 'Configurations'
         required: false
-        type: string
-        default: "Release"
-      platform:
-        description: 'Platform'
+        type: array
+        default: ["Release"]
+      platforms:
+        description: 'Platforms'
         required: false
-        type: string
-        default: "x64"
+        type: array
+        default: ["x64"]
       binary_path:
         description: 'Path to the binaries.'
         required: false
@@ -160,6 +160,10 @@ jobs:
   deploy:
     needs: release-checks
     runs-on: windows-2025
+    strategy:
+      matrix:
+        platform: ${{ inputs.platforms }}
+        configuration: ${{ inputs.configurations }}
     steps:
       - name: Work around git permission issue
         run: |
@@ -190,20 +194,21 @@ jobs:
 
       - name: Restore NuGet Packages
         run:
-          msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }} /t:restore
+          msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /t:restore
 
       - name: Build
         id: build
-        run: msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }}
+        run: msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
 
       - name: Test
-        run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ inputs.platform }}
+        if: ${{ inputs.test_files != "" }}
+        run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ matrix.platform }}
 
       - name: Set upload path
         id: upload_path
         run: |
           if [[ -z $BINARY_PATH ]]; then
-            echo "path=${{ needs.release-checks.outputs.artifact_id }}/bin/Release/" >> $GITHUB_OUTPUT
+            echo "path=${{ needs.release-checks.outputs.artifact_id }}/bin/${{ matrix.configuration }}" >> $GITHUB_OUTPUT
           else
             echo "path=$BINARY_PATH" >> $GITHUB_OUTPUT
           fi
@@ -215,7 +220,7 @@ jobs:
         id: upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ needs.release-checks.outputs.artifact_id }}
+          name: ${{ needs.release-checks.outputs.artifact_id }}-${{ matrix.platform }}
           path: ${{ steps.upload_path.outputs.path }}
           if-no-files-found: error
 
@@ -280,9 +285,11 @@ jobs:
       - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.release-checks.outputs.artifact_id }}
           path: built-artifacts
         continue-on-error: true
+
+      - name: Clean documents from the released binaries 
+        run: rm -rf built-artifacts/*docs*.zip
 
       - name: Archive Release
         uses: thedoctor0/zip-release@master

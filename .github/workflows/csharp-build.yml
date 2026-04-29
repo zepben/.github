@@ -18,16 +18,16 @@ on:
         required: false
         type: string
         default: "src"
-      configuration:
+      configurations:
         description: 'Configuration'
         required: false
-        type: string
-        default: "Release"
-      platform:
+        type: array
+        default: ["Release"]
+      platforms:
         description: 'Platform'
         required: false
-        type: string
-        default: "x64"
+        type: array
+        default: ["x64"]
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -146,6 +146,10 @@ jobs:
   build-and-test:
     needs: checks
     runs-on: windows-2025
+    strategy:
+      matrix:
+        platform: ${{ inputs.platforms }}
+        configuration: ${{ inputs.configurations }}
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -175,14 +179,14 @@ jobs:
 
     - name: Restore NuGet Packages
       run:   
-        msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }} /t:restore
+        msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /t:restore
 
     - name: Build
-      run: msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }}
+      run: msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
 
     - name: Test
       if: ${{ inputs.test_files != '' }}
-      run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ inputs.platform }}
+      run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ matrix.platform }}
 
   build-docs:
     needs: [checks]
