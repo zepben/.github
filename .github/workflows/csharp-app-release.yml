@@ -31,12 +31,12 @@ on:
         description: 'Configurations'
         required: false
         type: array
-        default: ["Release"]
+        default: '["Release"]'
       platforms:
         description: 'Platforms'
         required: false
         type: array
-        default: ["x64"]
+        default: '["x64"]'
       binary_path:
         description: 'Path to the binaries.'
         required: false
@@ -162,8 +162,8 @@ jobs:
     runs-on: windows-2025
     strategy:
       matrix:
-        platform: ${{ inputs.platforms }}
-        configuration: ${{ inputs.configurations }}
+        platform: ${{ fromJson(inputs.platforms) }}
+        configuration: ${{ fromJson(inputs.configurations) }}
     steps:
       - name: Work around git permission issue
         run: |
