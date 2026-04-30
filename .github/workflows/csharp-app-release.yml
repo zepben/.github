@@ -208,7 +208,7 @@ jobs:
         id: upload_path
         run: |
           if [[ -z $BINARY_PATH ]]; then
-            echo "path=${{ needs.release-checks.outputs.artifact_id }}/bin/${{ matrix.configuration }}" >> $GITHUB_OUTPUT
+            echo "path=${{ needs.release-checks.outputs.artifact_id }}/bin/${{ matrix.platform }}/${{ matrix.configuration }}" >> $GITHUB_OUTPUT
           else
             echo "path=$BINARY_PATH" >> $GITHUB_OUTPUT
           fi
