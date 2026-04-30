@@ -198,7 +198,7 @@ jobs:
       id: upload
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.artifact_id }}-${{ env.info_version }}
+        name: ${{ env.artifact_id }}-${{ env.info_version }}-${{ matrix.platform }}
         path: ${{ steps.upload_path.outputs.path }}
 
   build-docs:

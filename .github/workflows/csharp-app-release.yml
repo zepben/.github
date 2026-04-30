@@ -220,7 +220,7 @@ jobs:
         id: upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ needs.release-checks.outputs.artifact_id }}-${{ matrix.platform }}
+          name: ${{ needs.release-checks.outputs.artifact_id }}-${{ needs.release-checks.outputs.version }}-${{ matrix.platform }}
           path: ${{ steps.upload_path.outputs.path }}
           if-no-files-found: error
 
