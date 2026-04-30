@@ -202,8 +202,8 @@ jobs:
         path: ${{ steps.upload_path.outputs.path }}
 
   build-docs:
-    needs: [build]
-    if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
+    needs: [release-checks, build]
+    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yml
     with:
       DEPLOY: true
