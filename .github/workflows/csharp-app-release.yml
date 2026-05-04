@@ -76,7 +76,7 @@ jobs:
       docs-present: ${{ steps.docs.outputs.present }}
       changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -171,7 +171,7 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Checkout release branch
         run: |
@@ -181,10 +181,10 @@ jobs:
         shell: bash
 
       - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1.0.5
+        uses: NuGet/setup-nuget@v4
 
       - name: Setup MSBuild Path
-        uses: microsoft/setup-msbuild@v1
+        uses: microsoft/setup-msbuild@v3
 
       - name: Setup VSTest Path
         uses: darenm/Setup-VSTest@v1.1.1
@@ -218,7 +218,7 @@ jobs:
 
       - name: Upload Release
         id: upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ needs.release-checks.outputs.artifact_id }}-${{ needs.release-checks.outputs.version }}-${{ matrix.platform }}
           path: ${{ steps.upload_path.outputs.path }}
@@ -250,7 +250,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -283,7 +283,7 @@ jobs:
         shell: bash
 
       - name: Download binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: built-artifacts
         continue-on-error: true
@@ -338,7 +338,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
