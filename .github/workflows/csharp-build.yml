@@ -105,7 +105,7 @@ jobs:
           key: lcc
 
       - name: Check licence
-        uses: zepben/licence-check-action@main
+        uses: zepben/licence-check-action@v5
         with:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
