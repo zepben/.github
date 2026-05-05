@@ -32,16 +32,16 @@ on:
         required: false
         default: "productreponotprovided"
         type: string
-      configuration:
-        description: 'Configuration'
+      configurations:
+        description: 'Configurations'
         required: false
         type: string
-        default: "Release"
-      platform:
-        description: 'Platform'
+        default: '["Release"]'
+      platforms:
+        description: 'Platforms'
         required: false
         type: string
-        default: "x64"
+        default: '["x64"]'
       binary_path:
         description: 'Path to the binaries.'
         required: false
@@ -63,7 +63,7 @@ on:
         value: ${{ jobs.build.outputs.version }}
 
 jobs:
-  checks:
+  release-checks:
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     outputs: 
@@ -71,7 +71,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -82,7 +82,7 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /lc
           key: lcc
@@ -132,9 +132,13 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
       version: ${{ steps.update-info-version.outputs.info_version }}
+    strategy:
+      matrix:
+        platform: ${{ fromJson(inputs.platforms) }}
+        configuration: ${{ fromJson(inputs.configurations) }}
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Work around git permission issue
       run: |
@@ -143,10 +147,10 @@ jobs:
       shell: sh
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.5
+      uses: NuGet/setup-nuget@v4
 
     - name: Setup MSBuild Path
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v3
 
     - name: Setup VSTest Path
       uses: darenm/Setup-VSTest@v1.1.1
@@ -169,20 +173,20 @@ jobs:
 
     - name: Restore NuGet Packages
       run:
-        msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }} /t:restore
+        msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /t:restore
 
     - name: Build
-      run: msbuild /p:Configuration=${{ inputs.configuration }} /p:Platform=${{ inputs.platform }}
+      run: msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
 
     - name: Test
       if: ${{ inputs.test_files != '' }}
-      run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ inputs.platform }}
+      run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ matrix.platform }}
 
     - name: Set upload path
       id: upload_path
       run: |
         if [[ -z $BINARY_PATH ]]; then
-          echo "path=${{ needs.release-checks.outputs.artifact_id }}/bin/Release/" >> $GITHUB_OUTPUT
+          echo "path=${{ env.artifact_id }}/bin/${{ matrix.platform }}/${{ matrix.configuration }}" >> $GITHUB_OUTPUT
         else
           echo "path=$BINARY_PATH" >> $GITHUB_OUTPUT
         fi
@@ -192,14 +196,14 @@ jobs:
 
     - name: Upload Release
       id: upload
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: ${{ env.artifact_id }}-${{ env.info_version }}
-        path: ${{ env.artifact_id }}/bin/Release/
+        name: ${{ env.artifact_id }}-${{ env.info_version }}-${{ matrix.platform }}
+        path: ${{ steps.upload_path.outputs.path }}
 
   build-docs:
-    needs: [build]
-    if: ${{ needs.build-app.outputs.docs-present == 'yes' }}
+    needs: [release-checks, build]
+    if: ${{ needs.release-checks.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yml
     with:
       DEPLOY: true
