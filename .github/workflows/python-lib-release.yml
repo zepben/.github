@@ -19,6 +19,20 @@ on:
         required: false
         type: string
         default: "src"
+      docker-container:
+        description: "Docker container to run as part of build"
+        required: false
+        type: string
+      docker-compose-env:
+        description: "env to set for docker compose as a JSON string"
+        required: false
+        type: string
+        default: ""
+      python-version:
+        description: "Python versions to run 'build'"
+        required: false
+        type: string
+        default: 3.10
 
     secrets:
       CI_GITHUB_TOKEN:
@@ -143,7 +157,7 @@ jobs:
   python-deps-check:
     needs: release-checks
     runs-on: ubuntu-latest
-    container: python:3.10
+    container: python:${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -166,7 +180,7 @@ jobs:
     needs: [release-checks, build-docs]
     if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
-    container: python:3.10
+    container: python:${{ inputs.python-version }}
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
     steps:
@@ -198,10 +212,24 @@ jobs:
           echo "password = $PYPI_API_TOKEN" >> ~/.pypirc
           echo "\n" >> ~/.pypirc
 
+      - name: Login to Docker Hub
+        if: inputs.docker-container != ''
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Stand up required service containers, and run code generation
+        if: inputs.docker-container != ''
+        env: ${{ fromJSON(inputs.docker-compose-env }}
+        run: |
+          docker compose up ${{ inputs.docker-container }}
+
       - name: Build and publish
         id: build
         run: |
-          tox
+          tox -e py${{ inputs.python-version }}
           twine upload --non-interactive --config-file ~/.pypirc dist/*
           artifact_id=$(cat pyproject.toml | grep '[[:space:]]*name[[:space:]]*=[[:space:]]*".*"$' | cut -d\" -f2 | tr -d '"' | sed 's-\.-_-g')
           artifact="${artifact_id}-${{ needs.release-checks.outputs.version }}-py3-none-any.whl"

@@ -13,6 +13,20 @@ on:
         required: false
         type: string
         default: "src"
+      docker-container:
+        description: "Docker container to run as part of build"
+        required: false
+        type: string
+      docker-compose-env:
+        description: "env to set for docker compose as a JSON string"
+        required: false
+        type: string
+        default: ""
+      python-versions-to-test:
+        description: "List of versions of python to run, as a JSON string"
+        required: false
+        type: string
+        default: "['3.10']"
     secrets:
       LC_URL: 
         required: false
@@ -123,12 +137,19 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     needs: [check-for-leaks, run-checks]
-    container: python:3.10
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(inputs.python-versions-to-test) }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
 
       - name: Install dependencies
         run: |
@@ -140,9 +161,23 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Login to Docker Hub
+        if: inputs.docker-container != ''
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Stand up required service containers, and run code generation
+        if: inputs.docker-container != ''
+        env: ${{ fromJSON(inputs.docker-compose-env }}
+        run: |
+          docker compose up ${{ inputs.docker-container }}
+
       - name: Build and test
         run: |
-          tox
+          tox -e py${{ matrix.python-version }}
         shell: bash
 
       - name: Upload coverage to Codecov
