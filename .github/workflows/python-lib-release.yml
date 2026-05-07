@@ -364,7 +364,7 @@ jobs:
         continue-on-error: true
 
       - name: Create Release and upload assets
-        if: success() && ${{ !inputs.package-release-version }}
+        if: ${{ success() && !inputs.package-release-version }}
         id: create_release
         uses: softprops/action-gh-release@v1
         env:
@@ -379,7 +379,7 @@ jobs:
         continue-on-error: true
 
       - name: Create Release and upload assets (version-override)
-        if: success() && ${{ inputs.package-release-version }}
+        if: ${{ success() && inputs.package-release-version }}
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -395,7 +395,7 @@ jobs:
 
   update-version:
     needs: [create-release]
-    if: always() && !failure() && !cancelled() && ${{ !inputs.package-release-version }}
+    if: ${{ always() && !failure() && !cancelled() && !inputs.package-release-version }}
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     env:
