@@ -436,7 +436,6 @@ jobs:
     needs: [create-release, update-version]
     if: failure()
     runs-on: ubuntu-latest
-    container: zepben/pipeline-basic
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
