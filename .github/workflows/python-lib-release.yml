@@ -32,7 +32,7 @@ on:
         description: "Python versions to run 'build'"
         required: false
         type: string
-        default: 3.10
+        default: "3.10"
       package-release-version:
         description: "Version to release"
         required: false
@@ -454,4 +454,3 @@ jobs:
           echo "There was a failure in the workflow. release branch was deleted."
           exit 0
         shell: bash
-
