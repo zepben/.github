@@ -201,7 +201,7 @@ jobs:
         run: msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
 
       - name: Test
-        if: ${{ inputs.test_files != "" }}
+        if: ${{ inputs.test_files != '' }}
         run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ matrix.platform }}
 
       - name: Set upload path
