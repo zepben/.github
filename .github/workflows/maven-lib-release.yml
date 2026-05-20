@@ -63,7 +63,9 @@ on:
       DOCS_REPO_EVOLVE_WORKFLOW:
         required: true
 
-
+concurrency:
+  group: release-snapshot
+  cancel-in-progress: false
 
 jobs:
   release-checks:
@@ -251,7 +253,9 @@ jobs:
         if: steps.build.outcome == 'failure'
         run: |
           git push origin -d release
-          echo "There was an error in the mvn deploy command above."
+          echo "##########################################################################"
+          echo "#  There was an error in the mvn deploy command above (Mvn Package Step) #"
+          echo "##########################################################################"
           exit 1
         shell: bash
 
