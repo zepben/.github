@@ -1,0 +1,93 @@
+# Reusable release workflow for Helm charts under helm_dir (default: helm/).
+# Pushes and tags releases. We expect tests etc passed on the PR workflow.
+name: Helm Charts Release
+
+on:
+  workflow_call:
+    inputs:
+      helm_dir:
+        description: Path to the helm directory containing ct.yaml and charts/
+        type: string
+        default: helm
+      ci_utils_ref:
+        description: Git ref of zepben/ci-utils for local-k8s install
+        type: string
+        default: main
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  list-changed:
+    runs-on: ubuntu-latest
+    outputs:
+      charts: ${{ steps.detect.outputs.charts }}
+    steps:
+      - name: Setup local-k8s
+        # Relative ./.github/actions resolves to the *caller* workspace (e.g. deployments),
+        # not this reusable-workflow repo so must use an absolute org/repo@ref.
+        uses: zepben/.github/.github/actions/setup-local-k8s@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: List changed charts
+        id: detect
+        run: |
+          before="${{ github.event.before }}"
+          if [[ -z "$before" || "$before" =~ ^0+$ ]]; then
+            before=HEAD~1
+          fi
+          charts=$(local-k8s chart list-changed \
+            --helm-dir "${{ inputs.helm_dir }}" \
+            --since "$before")
+          echo "charts=$charts" >> "$GITHUB_OUTPUT"
+          echo "Changed charts (since $before): $charts"
+
+  release:
+    needs: list-changed
+    if: needs.list-changed.outputs.charts != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
+    steps:
+      - name: Setup local-k8s
+        uses: zepben/.github/.github/actions/setup-local-k8s@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          token: ${{ github.token }}
+
+      - name: Push chart
+        id: push
+        run: |
+          json=$(local-k8s chart push \
+            --chart "${{ matrix.chart }}" \
+            --registry-config "$HELM_REGISTRY_CONFIG" \
+            --oci-repo "${{ github.repository }}" \
+            --fail-if-exists)
+          echo "$json"
+          name=$(echo "$json" | jq -r .name)
+          version=$(echo "$json" | jq -r .version)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Tag release commit
+        run: |
+          TAG="${{ steps.push.outputs.name }}/${{ steps.push.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.push.outputs.name }}/${{ steps.push.outputs.version }}"
+          gh release create "$TAG" --generate-notes
