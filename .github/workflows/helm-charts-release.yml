@@ -52,6 +52,8 @@ jobs:
       fail-fast: false
       matrix:
         chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
+    env:
+      GITHUB_TOKEN: ${secret.CI_GITHUB_TOKEN}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -66,7 +68,7 @@ jobs:
       - name: Helm registry login
         uses: zepben/.github/.github/actions/helm-registry-login@main
         with:
-          token: ${{ github.token }}
+          token: ${{ env.GITHUB_TOKEN }}
 
       - name: Push chart
         id: push
@@ -90,7 +92,7 @@ jobs:
 
       - name: Create GitHub Release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ env.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.push.outputs.name }}/${{ steps.push.outputs.version }}"
           gh release create "$TAG" --generate-notes
