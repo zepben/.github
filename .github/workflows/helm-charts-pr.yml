@@ -1,0 +1,133 @@
+# Reusable PR workflow for Helm charts under helm_dir (default: helm/).
+name: Helm Charts PR
+
+on:
+  workflow_call:
+    inputs:
+      helm_dir:
+        description: Path to the helm directory containing ct.yaml and charts/
+        type: string
+        default: helm
+      ci_utils_ref:
+        description: Git ref of zepben/ci-utils for local-k8s install
+        type: string
+        default: main
+      # TODO: fix this to be more flexible
+      ci_secret_env_var:
+        description: Env var name pointing at the CI secret env-file path (optional)
+        type: string
+        required: false
+        default: ''
+    secrets:
+      CI_GITHUB_TOKEN:
+        description: >
+          PAT for docker/login and helm registry login on lint/test
+          (cross-repo OCI pulls e.g. helm-commons).
+        required: true
+      # TODO: fix this to be more flexible - goes with comment above
+      CI_SECRET_ENV_FILE:
+        description: Contents of the env-file secret written when ci_secret_env_var is set
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  list-changed:
+    runs-on: ubuntu-latest
+    outputs:
+      charts: ${{ steps.detect.outputs.charts }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup local-k8s
+        # Relative ./.github/actions resolves to the *caller* workspace (e.g. deployments),
+        # not this reusable-workflow repo — must use an absolute org/repo@ref.
+        uses: zepben/.github/.github/actions/setup-local-k8s@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: List changed charts
+        id: detect
+        run: |
+          charts=$(local-k8s chart list-changed --helm-dir "${{ inputs.helm_dir }}")
+          echo "charts=$charts" >> "$GITHUB_OUTPUT"
+          echo "Changed charts: $charts"
+
+  lint:
+    needs: list-changed
+    if: needs.list-changed.outputs.charts != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
+    steps:
+      - name: Setup local-k8s
+        uses: zepben/.github/.github/actions/setup-local-k8s@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          # PAT: GITHUB_TOKEN cannot read private packages from other repos (e.g. helm-commons).
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Lint chart
+        run: |
+          local-k8s chart lint \
+            --helm-dir "${{ inputs.helm_dir }}" \
+            --chart "${{ matrix.chart }}"
+
+  test:
+    needs: list-changed
+    if: needs.list-changed.outputs.charts != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
+    steps:
+      - name: Setup local-k8s
+        uses: zepben/.github/.github/actions/setup-local-k8s@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: Login to GHCR (docker)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          # PAT: GITHUB_TOKEN cannot read private packages from other repos (e.g. helm-commons).
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Write CI secret env-file
+        if: inputs.ci_secret_env_var != ''
+        env:
+          CI_SECRET_ENV_FILE: ${{ secrets.CI_SECRET_ENV_FILE }}
+        run: |
+          secret_path="$RUNNER_TEMP/ci-secret.env"
+          printf '%s\n' "$CI_SECRET_ENV_FILE" > "$secret_path"
+          echo "${{ inputs.ci_secret_env_var }}=$secret_path" >> "$GITHUB_ENV"
+
+      - name: Create kind cluster
+        run: |
+          local-k8s cluster create \
+            --kind-config "${{ inputs.helm_dir }}/kind-cluster.yaml" \
+            --components "${{ inputs.helm_dir }}/cluster-components.yaml"
+          echo "KUBECONFIG=/tmp/kind-k8s-conf.yaml" >> "$GITHUB_ENV"
+
+      - name: Test chart
+        run: |
+          local-k8s chart test \
+            --helm-dir "${{ inputs.helm_dir }}" \
+            --chart "${{ matrix.chart }}"

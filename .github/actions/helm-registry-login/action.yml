@@ -1,0 +1,19 @@
+name: Helm registry login
+description: Log in to ghcr.io for helm and export HELM_REGISTRY_CONFIG for subsequent steps.
+
+inputs:
+  token:
+    description: Token to authenticate with ghcr.io (e.g. CI_GITHUB_TOKEN or github.token)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Helm registry login
+      shell: bash
+      run: |
+        export HELM_REGISTRY_CONFIG="$RUNNER_TEMP/helm-registry-config.json"
+        echo "HELM_REGISTRY_CONFIG=$HELM_REGISTRY_CONFIG" >> "$GITHUB_ENV"
+        echo "${{ inputs.token }}" | helm registry login ghcr.io \
+          -u "${{ github.actor }}" \
+          --password-stdin
