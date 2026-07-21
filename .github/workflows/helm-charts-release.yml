@@ -53,6 +53,11 @@ jobs:
       matrix:
         chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+          fetch-depth: 0
+
       - name: Setup local-k8s
         uses: zepben/.github/.github/actions/setup-local-k8s@main
         with:
@@ -80,8 +85,6 @@ jobs:
       - name: Tag release commit
         run: |
           TAG="${{ steps.push.outputs.name }}/${{ steps.push.outputs.version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "$TAG"
           git push origin "$TAG"
 
