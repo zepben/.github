@@ -1,5 +1,5 @@
 name: Setup local-k8s
-description: Checkout, install Python, and install the local-k8s CLI (from zepben/ci-utils) with its tools on PATH.
+description: Install Python and the local-k8s CLI (from zepben/ci-utils) with its tools on PATH.
 
 inputs:
   ci_utils_ref:

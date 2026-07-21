@@ -66,6 +66,9 @@ jobs:
       matrix:
         chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Setup local-k8s
         uses: zepben/.github/.github/actions/setup-local-k8s@main
         with:
@@ -92,6 +95,9 @@ jobs:
       matrix:
         chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Setup local-k8s
         uses: zepben/.github/.github/actions/setup-local-k8s@main
         with:

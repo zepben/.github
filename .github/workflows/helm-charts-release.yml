@@ -24,6 +24,11 @@ jobs:
     outputs:
       charts: ${{ steps.detect.outputs.charts }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
       - name: Setup local-k8s
         # Relative ./.github/actions resolves to the *caller* workspace (e.g. deployments),
         # not this reusable-workflow repo so must use an absolute org/repo@ref.
@@ -53,7 +58,7 @@ jobs:
       matrix:
         chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
     env:
-      GITHUB_TOKEN: ${secret.CI_GITHUB_TOKEN}
+      GITHUB_TOKEN: ${secrets.CI_GITHUB_TOKEN}
     steps:
       - uses: actions/checkout@v7
         with:
