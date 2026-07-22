@@ -58,7 +58,7 @@ jobs:
       matrix:
         chart: ${{ fromJson(needs.list-changed.outputs.charts) }}
     env:
-      GITHUB_TOKEN: ${secrets.CI_GITHUB_TOKEN}
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v7
         with:
