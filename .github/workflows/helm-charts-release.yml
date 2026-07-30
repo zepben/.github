@@ -10,7 +10,7 @@ on:
         type: string
         default: helm
       ci_utils_ref:
-        description: Git ref of zepben/ci-utils for local-k8s install
+        description: Git ref of zepben/ci-utils for zep-dev install
         type: string
         default: main
 
@@ -29,10 +29,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup local-k8s
+      - name: Setup zep-dev
         # Relative ./.github/actions resolves to the *caller* workspace (e.g. deployments),
         # not this reusable-workflow repo so must use an absolute org/repo@ref.
-        uses: zepben/.github/.github/actions/setup-local-k8s@main
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
         with:
           ci_utils_ref: ${{ inputs.ci_utils_ref }}
 
@@ -43,7 +43,7 @@ jobs:
           if [[ -z "$before" || "$before" =~ ^0+$ ]]; then
             before=HEAD~1
           fi
-          charts=$(local-k8s chart list-changed \
+          charts=$(zep-dev chart list-changed \
             --helm-dir "${{ inputs.helm_dir }}" \
             --since "$before")
           echo "charts=$charts" >> "$GITHUB_OUTPUT"
@@ -65,8 +65,8 @@ jobs:
           token: ${{ env.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Setup local-k8s
-        uses: zepben/.github/.github/actions/setup-local-k8s@main
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
         with:
           ci_utils_ref: ${{ inputs.ci_utils_ref }}
 
@@ -78,7 +78,7 @@ jobs:
       - name: Push chart
         id: push
         run: |
-          json=$(local-k8s chart push \
+          json=$(zep-dev chart push \
             --chart "${{ matrix.chart }}" \
             --registry-config "$HELM_REGISTRY_CONFIG" \
             --oci-repo "${{ github.repository }}" \

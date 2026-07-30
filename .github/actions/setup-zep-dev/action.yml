@@ -1,9 +1,9 @@
-name: Setup local-k8s
-description: Install Python and the local-k8s CLI (from zepben/ci-utils) with its tools on PATH.
+name: Setup zep-dev
+description: Install Python and the zep-dev CLI (from zepben/ci-utils) with its tools on PATH.
 
 inputs:
   ci_utils_ref:
-    description: Git ref of zepben/ci-utils for local-k8s install
+    description: Git ref of zepben/ci-utils for zep-dev install
     required: false
     default: 'main'
   python-version:
@@ -19,25 +19,25 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Cache local-k8s tools
+    - name: Cache zep-dev tools
       uses: actions/cache@v6
       with:
         path: ~/.local/share/${{ github.event.repository.name }}
-        key: local-k8s-tools-${{ runner.os }}-${{ inputs.ci_utils_ref }}
+        key: zep-dev-tools-${{ runner.os }}-${{ inputs.ci_utils_ref }}
 
     - name: Cache pip downloads
       uses: actions/cache@v6
       with:
         path: ~/.cache/pip
-        key: local-k8s-pip-${{ runner.os }}-${{ inputs.ci_utils_ref }}
+        key: zep-dev-pip-${{ runner.os }}-${{ inputs.ci_utils_ref }}
 
-    - name: Install local-k8s
+    - name: Install zep-dev
       shell: bash
       run: |
         python -m venv .venv
         # shellcheck disable=SC1091
         source .venv/bin/activate
-        pip install "git+https://github.com/zepben/ci-utils.git@${{ inputs.ci_utils_ref }}#subdirectory=local-k8s"
-        local-k8s tools install
-        echo "$(local-k8s tools path)" >> "$GITHUB_PATH"
+        pip install "git+https://github.com/zepben/ci-utils.git@${{ inputs.ci_utils_ref }}#subdirectory=zep-dev"
+        zep-dev tools install
+        echo "$(zep-dev tools path)" >> "$GITHUB_PATH"
         echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
