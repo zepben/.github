@@ -95,9 +95,3 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ env.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.push.outputs.name }}/${{ steps.push.outputs.version }}"
-          gh release create "$TAG" --generate-notes
