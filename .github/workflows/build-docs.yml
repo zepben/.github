@@ -36,7 +36,7 @@ jobs:
       PRODUCT: ${{ vars.PRODUCT }}
     steps:
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -106,7 +106,7 @@ jobs:
           zip -r ../../docs.zip .
         shell: bash
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ steps.build.outcome == 'success' && env.deployDocs == 'yes' }}
         id: upload
         with:

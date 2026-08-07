@@ -56,12 +56,12 @@ jobs:
         apk add jq tar alpine-conf git curl bash github-cli
 
     - name: Cache nodejs deps
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.npm
         key: npm
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Work around git permission issue
       run: |
@@ -70,7 +70,7 @@ jobs:
       shell: sh
 
     - name: Cache licence-check
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: /lc
         key: lcc
@@ -106,7 +106,7 @@ jobs:
         echo "artifact=$artifact" >> ${GITHUB_ENV}
         echo "version=$version" >> ${GITHUB_ENV}
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: steps.build.outcome == 'success'
       with:
           name: ${{ env.artifact }}
@@ -169,7 +169,7 @@ jobs:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
