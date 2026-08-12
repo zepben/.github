@@ -78,20 +78,9 @@ jobs:
       - name: Push chart
         id: push
         run: |
-          json=$(zep-dev chart push \
+          zep-dev chart push \
             --chart "${{ matrix.chart }}" \
             --registry-config "$HELM_REGISTRY_CONFIG" \
             --oci-repo "${{ github.repository }}" \
-            --fail-if-exists)
-          echo "$json"
-          name=$(echo "$json" | jq -r .name)
-          version=$(echo "$json" | jq -r .version)
-          echo "name=$name" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Tag release commit
-        run: |
-          TAG="${{ steps.push.outputs.name }}/${{ steps.push.outputs.version }}"
-          git tag "$TAG"
-          git push origin "$TAG"
 
