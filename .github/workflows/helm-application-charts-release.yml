@@ -1,0 +1,113 @@
+# Reusable release workflow for application Helm charts that have explicitly
+# opted in via the zepben.com/publish-with-application-image annotation.
+#
+# The checked-in chart version, appVersion, and image tag are development
+# defaults. At release time, we derive the chart metadata from the checked-out
+# commit and replace image.tag with the image published by the release. These
+# changes are made only in the runner checkout and are never committed.
+#
+# If no charts have opted in, we skip publication and complete successfully.
+name: Helm Application Charts Release
+
+on:
+  workflow_call:
+    inputs:
+      helm_dir:
+        description: Path to the helm directory containing ct.yaml and charts/
+        type: string
+        default: helm
+      commit:
+        description: Git ref containing the charts to publish
+        type: string
+        default: ''
+      image_tag:
+        description: Published image tag to write to selected application chart values.yaml
+        type: string
+        required: true
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: helm-chart-publish-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      charts: ${{ steps.charts.outputs.charts }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.commit }}
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: main
+
+      - name: Discover opted-in application charts
+        id: charts
+        env:
+          HELM_DIR: ${{ inputs.helm_dir }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          if [[ -z "$IMAGE_TAG" ]]; then
+            echo "::error::image_tag is required" >&2
+            exit 1
+          fi
+
+          charts=$(zep-dev chart list \
+            --helm-dir "$HELM_DIR" \
+            --annotation zepben.com/publish-with-application-image=true \
+            --type application)
+          echo "charts=$charts" >> "$GITHUB_OUTPUT"
+          echo "Charts: $charts"
+
+          if [[ "$charts" == "[]" ]]; then
+            echo "No opted-in application charts found; skipping publication"
+          fi
+
+  release:
+    if: ${{ needs.discover.outputs.charts != '[]' }}
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJSON(needs.discover.outputs.charts) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: main
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Update and publish chart
+        env:
+          CHART: ${{ matrix.chart }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          OCI_REPO: ${{ github.repository }}
+        run: |
+          zep-dev chart metadata update --chart "$CHART" \
+            --image-tag "$IMAGE_TAG"
+          zep-dev chart push \
+            --chart "$CHART" \
+            --registry-config "$HELM_REGISTRY_CONFIG" \
+            --oci-repo "$OCI_REPO"
