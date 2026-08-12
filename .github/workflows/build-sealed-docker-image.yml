@@ -71,6 +71,11 @@ on:
       NEXUS_NUGET_FEED:
         required: true
 
+    outputs:
+      image_tag:
+        description: Primary image tag (metadata-action priority)
+        value: ${{ jobs.build.outputs.image_tag }}
+
 env:
   REGISTRY_URL: "ghcr.io/${{ github.repository }}"
   NEXUS_REGISTRY_URL: "${{ secrets.NEXUS_DOCKER_REPO }}/${{ github.repository }}"
@@ -81,6 +86,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
