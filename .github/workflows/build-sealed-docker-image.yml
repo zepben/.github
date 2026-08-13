@@ -75,6 +75,9 @@ on:
       image_tag:
         description: Primary image tag (metadata-action priority)
         value: ${{ jobs.build.outputs.image_tag }}
+      commit_sha:
+        description: Exact commit used as the Docker build context
+        value: ${{ jobs.build.outputs.commit_sha }}
 
 env:
   REGISTRY_URL: "ghcr.io/${{ github.repository }}"
@@ -88,6 +91,7 @@ jobs:
       packages: write
     outputs:
       image_tag: ${{ steps.meta.outputs.version }}
+      commit_sha: ${{ steps.sha.outputs.long_ref }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -176,4 +180,3 @@ jobs:
             npm=/home/runner/.npmrc
             maven=/home/runner/.m2/settings.xml
             nuget=/home/runner/.nuget/NuGet/NuGet.Config
-
