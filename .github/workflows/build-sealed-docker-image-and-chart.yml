@@ -1,0 +1,136 @@
+# Reusable application release workflow. Intended as a drop-in
+# replacement for .github/workflows/build-sealed-docker-image.yml
+name: Build Sealed Docker Image and Chart
+
+on:
+  workflow_call:
+    inputs:
+      version_tag:
+        description: Precomputed version tag to use as a Docker image tag
+        type: string
+        default: ''
+      latest_tag:
+        description: If the image should be tagged with 'latest'. Should only be used for release builds
+        type: boolean
+        default: false
+      edge_tag:
+        description: If the image should be tagged with 'edge'. Should only be used for snapshot builds
+        type: boolean
+        default: false
+      push_image:
+        description: If the image should be pushed to GHCR
+        type: boolean
+        default: false
+      dockerfile:
+        description: Override the Dockerfile in use
+        type: string
+        default: 'Dockerfile'
+      build-args:
+        description: Build args for building the Dockerfile
+        required: false
+        type: string
+        default: ''
+      commit:
+        description: Override the commit to build the container and charts from
+        required: false
+        type: string
+        default: ''
+      sha-tags:
+        description: Override if SHA-based image tags should be published
+        required: false
+        type: boolean
+        default: true
+      helm_dir:
+        description: Path to the helm directory containing ct.yaml and charts/
+        type: string
+        default: helm
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      CI_NPM_TOKEN:
+        required: true
+
+      # Nexus Login
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD:
+        required: true
+      NEXUS_SIGNATURE:
+        required: true
+
+      # Nexus docker CR
+      NEXUS_DOCKER_REPO:
+        required: true
+
+      # Maven
+      NEXUS_MAVEN_REPO:
+        required: true
+      NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      NEXUS_MAVEN_RELEASE:
+        required: true
+
+      # NPM
+      NEXUS_NPM_REPO:
+        required: true
+
+      # Nuget
+      NEXUS_NUGET_FEED:
+        required: true
+
+jobs:
+  image:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-sealed-docker-image.yml
+    secrets:
+      CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      CI_NPM_TOKEN: ${{ secrets.CI_NPM_TOKEN }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_SIGNATURE: ${{ secrets.NEXUS_SIGNATURE }}
+      NEXUS_DOCKER_REPO: ${{ secrets.NEXUS_DOCKER_REPO }}
+      NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
+      NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+      NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+      NEXUS_NPM_REPO: ${{ secrets.NEXUS_NPM_REPO }}
+      NEXUS_NUGET_FEED: ${{ secrets.NEXUS_NUGET_FEED }}
+    with:
+      version_tag: ${{ inputs.version_tag }}
+      latest_tag: ${{ inputs.latest_tag }}
+      edge_tag: ${{ inputs.edge_tag }}
+      push_image: ${{ inputs.push_image }}
+      dockerfile: ${{ inputs.dockerfile }}
+      build-args: ${{ inputs.build-args }}
+      commit: ${{ inputs.commit }}
+      sha-tags: ${{ inputs.sha-tags }}
+
+  validate-image:
+    if: ${{ inputs.push_image }}
+    needs: image
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require published image tag
+        env:
+          IMAGE_TAG: ${{ needs.image.outputs.image_tag }}
+        run: |
+          if [[ -z "$IMAGE_TAG" ]]; then
+            echo "::error::Image workflow did not produce an image tag" >&2
+            exit 1
+          fi
+
+  chart:
+    if: ${{ inputs.push_image }}
+    needs: [image, validate-image]
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/helm-application-charts-release.yml
+    secrets:
+      CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    with:
+      commit: ${{ inputs.commit }}
+      image_tag: ${{ needs.image.outputs.image_tag }}
+      helm_dir: ${{ inputs.helm_dir }}
