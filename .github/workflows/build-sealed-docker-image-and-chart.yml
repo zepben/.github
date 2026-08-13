@@ -78,6 +78,14 @@ on:
       NEXUS_NUGET_FEED:
         required: true
 
+    outputs:
+      image_tag:
+        description: Primary published image tag
+        value: ${{ jobs.image.outputs.image_tag }}
+      commit_sha:
+        description: Exact commit used for the image and charts
+        value: ${{ jobs.image.outputs.commit_sha }}
+
 jobs:
   image:
     permissions:
@@ -112,12 +120,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Require published image tag
+      - name: Require image publication metadata
         env:
           IMAGE_TAG: ${{ needs.image.outputs.image_tag }}
+          COMMIT_SHA: ${{ needs.image.outputs.commit_sha }}
         run: |
           if [[ -z "$IMAGE_TAG" ]]; then
             echo "::error::Image workflow did not produce an image tag" >&2
+            exit 1
+          fi
+
+          if [[ ! "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Image workflow did not produce a full commit SHA" >&2
             exit 1
           fi
 
@@ -131,6 +145,6 @@ jobs:
     secrets:
       CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     with:
-      commit: ${{ inputs.commit }}
+      commit: ${{ needs.image.outputs.commit_sha }}
       image_tag: ${{ needs.image.outputs.image_tag }}
       helm_dir: ${{ inputs.helm_dir }}
