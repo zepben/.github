@@ -103,7 +103,7 @@ jobs:
         env:
           CHART: ${{ matrix.chart }}
           IMAGE_TAG: ${{ inputs.image_tag }}
-          OCI_REPO: ${{ github.repository }}
+          OCI_REPO: zepben/charts
         run: |
           zep-dev chart metadata update --chart "$CHART" \
             --image-tag "$IMAGE_TAG"
