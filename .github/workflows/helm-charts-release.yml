@@ -80,8 +80,10 @@ jobs:
           token: ${{ env.GITHUB_TOKEN }}
 
       - name: Push chart
+        env:
+          OCI_REPO: zepben/charts
         run: |
           zep-dev chart push \
             --chart "${{ matrix.chart }}" \
             --registry-config "$HELM_REGISTRY_CONFIG" \
-            --oci-repo "${{ github.repository }}"
+            --oci-repo "$OCI_REPO"
