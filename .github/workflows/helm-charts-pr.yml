@@ -12,21 +12,14 @@ on:
         description: Git ref of zepben/ci-utils for zep-dev install
         type: string
         default: main
-      # TODO: fix this to be more flexible
-      ci_secret_env_var:
-        description: Env var name pointing at the CI secret env-file path (optional)
-        type: string
-        required: false
-        default: ''
     secrets:
       CI_GITHUB_TOKEN:
         description: >
           PAT for docker/login and helm registry login on lint/test
           (cross-repo OCI pulls e.g. helm-commons).
         required: true
-      # TODO: fix this to be more flexible - goes with comment above
-      CI_SECRET_ENV_FILE:
-        description: Contents of the env-file secret written when ci_secret_env_var is set
+      CI_SECRET_ENV:
+        description: Optional KEY=value lines representing environment variables.
         required: false
 
 permissions:
@@ -116,15 +109,6 @@ jobs:
           # PAT: GITHUB_TOKEN cannot read private packages from other repos (e.g. helm-commons).
           token: ${{ secrets.CI_GITHUB_TOKEN }}
 
-      - name: Write CI secret env-file
-        if: inputs.ci_secret_env_var != ''
-        env:
-          CI_SECRET_ENV_FILE: ${{ secrets.CI_SECRET_ENV_FILE }}
-        run: |
-          secret_path="$RUNNER_TEMP/ci-secret.env"
-          printf '%s\n' "$CI_SECRET_ENV_FILE" > "$secret_path"
-          echo "${{ inputs.ci_secret_env_var }}=$secret_path" >> "$GITHUB_ENV"
-
       - name: Create kind cluster
         run: |
           zep-dev cluster create \
@@ -133,6 +117,8 @@ jobs:
           echo "KUBECONFIG=/tmp/kind-k8s-conf.yaml" >> "$GITHUB_ENV"
 
       - name: Test chart
+        env:
+          CI_SECRET_ENV: ${{ secrets.CI_SECRET_ENV }}
         run: |
           zep-dev chart test \
             --helm-dir "${{ inputs.helm_dir }}" \
