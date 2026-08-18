@@ -12,6 +12,10 @@ on:
         description: Git ref of zepben/ci-utils for zep-dev install
         type: string
         default: main
+      components:
+        description: Cluster components YAML relative to helm_dir
+        type: string
+        default: cluster-components.yaml
     secrets:
       CI_GITHUB_TOKEN:
         description: >
@@ -113,7 +117,7 @@ jobs:
         run: |
           zep-dev cluster create \
             --kind-config "${{ inputs.helm_dir }}/kind-cluster.yaml" \
-            --components "${{ inputs.helm_dir }}/cluster-components.yaml"
+            --components "${{ inputs.helm_dir }}/${{ inputs.components }}"
           echo "KUBECONFIG=/tmp/kind-k8s-conf.yaml" >> "$GITHUB_ENV"
 
       - name: Test chart
