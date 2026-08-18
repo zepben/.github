@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Install Dependencies
         run: |
-          apk add jq tar alpine-conf git
+          apk add jq tar alpine-conf git python3
 
       - name: Cache nodejs deps
         uses: actions/cache@v6
@@ -71,6 +71,10 @@ jobs:
           new_version=$version-$ticket    
           jq --arg VERSION $new_version '.version = $VERSION' package.json
         shell: bash
+
+      - name: Add git info to the package
+        run: |
+          python3 tools/update_npm_project_git.py
 
       - name: build and deploy
         id: build
