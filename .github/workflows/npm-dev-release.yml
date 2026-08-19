@@ -30,6 +30,19 @@ jobs:
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
+      - name: Show everything
+        env: 
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+          INPUTS_CONTEXT: ${{ toJson(inputs) }}
+          JOB_CONTEXT: ${{ toJson(job) }}
+        run: |
+          echo "== github =="
+          echo "$GITHUB_CONTEXT"
+          echo "== job =="
+          echo "$JOB_CONTEXT"
+          echo "== inputs =="
+          echo "$INPUTS_CONTEXT"
+
        # Checkout the .github repo itself, into a subfolder
       - name: Checkout .github repo
         uses: actions/checkout@v7
