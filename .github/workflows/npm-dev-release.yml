@@ -26,6 +26,14 @@ jobs:
           path: ~/.npm
           key: npm
 
+       # Checkout the .github repo itself, into a subfolder
+      - name: Checkout .github repo
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.workflow_repository }}
+          ref: ${{ github.workflow_sha }}
+          path: central
+
       - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
@@ -74,7 +82,7 @@ jobs:
 
       - name: Add git info to the package
         run: |
-          python3 tools/update_npm_project_git.py
+          python3 central/tools/update_npm_project_git.py
 
       - name: build and deploy
         id: build
