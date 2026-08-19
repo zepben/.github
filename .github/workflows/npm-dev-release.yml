@@ -47,8 +47,8 @@ jobs:
       - name: Checkout .github repo
         uses: actions/checkout@v7
         with:
-          repository: zepben/.github
-          ref: ${{ github.workflow_sha }}
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
           path: central
 
 
