@@ -26,17 +26,18 @@ jobs:
           path: ~/.npm
           key: npm
 
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
        # Checkout the .github repo itself, into a subfolder
       - name: Checkout .github repo
         uses: actions/checkout@v7
         with:
-          repository: ${{ github.workflow_repository }}
+          repository: zepben/.github
           ref: ${{ github.workflow_sha }}
           path: central
 
-      - uses: actions/checkout@v7
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
 
       - name: Set timezone to Australia/ACT
         run: |
