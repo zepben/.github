@@ -30,19 +30,6 @@ jobs:
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
-      - name: Show everything
-        env: 
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-          INPUTS_CONTEXT: ${{ toJson(inputs) }}
-          JOB_CONTEXT: ${{ toJson(job) }}
-        run: |
-          echo "== github =="
-          echo "$GITHUB_CONTEXT"
-          echo "== job =="
-          echo "$JOB_CONTEXT"
-          echo "== inputs =="
-          echo "$INPUTS_CONTEXT"
-
        # Checkout the .github repo itself, into a subfolder
       - name: Checkout .github repo
         uses: actions/checkout@v7
@@ -91,12 +78,14 @@ jobs:
               echo "-----------------------------------------------------------------------------"
           fi
           new_version=$version-$ticket    
-          jq --arg VERSION $new_version '.version = $VERSION' package.json
+          jq --arg VERSION $new_version '.version = $VERSION' package.json > new_package.json
+          mv new_package.json package.json
         shell: bash
 
       - name: Add git info to the package
         run: |
           python3 central/tools/update_npm_project_git.py
+          cat package.json
 
       - name: build and deploy
         id: build
