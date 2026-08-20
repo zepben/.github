@@ -85,6 +85,8 @@ jobs:
       - name: Add git info to the package
         run: |
           python3 central/tools/update_npm_project_git.py
+          jq '.' package.json > new_package.json
+          mv new_package.json package.json
           git diff
 
       - name: build and deploy
