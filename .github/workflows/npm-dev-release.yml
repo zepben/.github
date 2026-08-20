@@ -90,5 +90,5 @@ jobs:
       - name: build and deploy
         id: build
         run: |
-          npm run ci --unsafe-perm
+          npm run ci 
           npm run deploy
