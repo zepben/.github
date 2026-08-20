@@ -41,7 +41,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -52,7 +52,7 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /lc
           key: lcc
@@ -90,7 +90,7 @@ jobs:
   build-artifact:
     needs: release-checks
     runs-on: ubuntu-latest
-    container: node:20-alpine
+    container: node:24-alpine
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
@@ -104,12 +104,12 @@ jobs:
           apk add jq tar alpine-conf git
 
       - name: Cache nodejs deps
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -153,7 +153,7 @@ jobs:
           echo "artifact=$artifact" >> "${GITHUB_OUTPUT}" 
         continue-on-error: true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.build.outcome == 'success'
         with:
           name: ${{ steps.build.outputs.artifact }}
@@ -209,7 +209,7 @@ jobs:
     outputs:
       artifact: ${{ steps.merge.outputs.artifact }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
@@ -227,7 +227,7 @@ jobs:
         continue-on-error: true
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ needs.build-artifact.outputs.artifact }}
           path: built-artifacts/
@@ -295,7 +295,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 

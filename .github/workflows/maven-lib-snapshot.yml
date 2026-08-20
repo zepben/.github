@@ -66,7 +66,7 @@ jobs:
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
     steps: 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check if docs present
         id: docs
@@ -113,10 +113,10 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Cache maven deps
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /maven
           key: maven
@@ -128,7 +128,7 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /lc
           key: lcc
@@ -196,7 +196,7 @@ jobs:
       NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
       NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
