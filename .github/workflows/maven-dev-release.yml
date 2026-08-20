@@ -1,0 +1,80 @@
+# Note: default release notes file is docs/release.md.
+name: Maven App Release + Docs
+
+on: 
+  workflow_call:
+      java-major-version:
+        description: The major version of Java required by the project. This influences the container used to build the package
+        required: false
+        type: string
+        default: "11"
+
+    secrets:
+      DEV_NEXUS_REPO:
+        required: true
+      DEV_NEXUS_USERNAME:
+        required: true
+      DEV_NEXUS_PASSWORD:
+        required: true
+      NEXUS_SIGNATURE:
+        required: true
+      DEV_NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      DEV_NEXUS_MAVEN_RELEASE:
+        required: true
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: Cache maven deps
+        uses: actions/cache@v6
+        with:
+          path: /maven
+          key: maven
+
+      - name: Update dev version
+        run: |
+          shopt -s nocasematch
+          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
+
+          # Clickup Ticket regex 
+          regex="(PROJ|EWB|EDNAR|BD|DEV|OPS|SUPPORT)-[0-9]{1,5}"
+          # Detect TaskID
+          if [[ $GITHUB_REF =~ $regex ]]; then
+              # ${BASH_REMATCH[0]} contains the exact matched identifier
+              ticket=${BASH_REMATCH[0]}
+              echo "   -------------------------   "
+              echo "   Found the ticket: $ticket   "
+              echo "   -------------------------   "
+          else
+              ticket=$(git rev-parse --short HEAD)
+              echo "-----------------------------------------------------------------------------"
+              echo "    No tickets were found for this branch, using sha '$ticket' for version   "
+              echo "-----------------------------------------------------------------------------"
+          fi
+          new_version=$version-$ticket    
+          xmlstarlet ed -P -L -N pom="http://maven.apache.org/POM/4.0.0" -u "/pom:project/pom:version" -v "$new_version" pom.xml
+          echo "Updated pom.xml with a new dev version: $new_version"
+        shell: bash
+
+      - name: Maven deploy to dev Nexus
+        id: build
+        uses: zepben/maven-deploy-central-action@main
+        with:
+          NEXUS_MAVEN_REPO: ${{ secrets.DEV_NEXUS_REPO }}
+          NEXUS_USERNAME: ${{ secrets.DEV_NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.DEV_NEXUS_PASSWORD }}
+          NEXUS_RELEASE_URL: ${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
+          NEXUS_SNAPSHOT_URL: ${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
+          PROFILE: zepben-maven
