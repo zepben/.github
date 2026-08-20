@@ -8,6 +8,10 @@ on:
         required: true
       CI_NPM_DEV_TOKEN:
         required: true
+      NEXUS_NPM_REPO:
+        required: true
+      CI_NPM_TOKEN:
+        required: true
 
 jobs:
   build-artifact:
@@ -52,9 +56,13 @@ jobs:
       - name: create .npmrc
         run: |
           rm -rf .npmrc
-          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}" >> .npmrc
-          echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+          echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
           echo "\n" >> .npmrc
+
+      - name: Get the modules
+        run: |
+          npm ci
 
       - name: Update dev version
         run: |
@@ -85,9 +93,13 @@ jobs:
       - name: Add git info to the package
         run: |
           python3 central/tools/update_npm_project_git.py
-          jq '.' package.json > new_package.json
-          mv new_package.json package.json
-          git diff
+
+      - name: update .npmrc to dev nexus
+        run: |
+          rm -rf .npmrc
+          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}" >> .npmrc
+          echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+          echo "\n" >> .npmrc
 
       - name: build and deploy
         id: build
