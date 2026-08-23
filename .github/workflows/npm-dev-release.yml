@@ -105,4 +105,4 @@ jobs:
         id: build
         run: |
           npm run ci 
-          npm run deploy
+          npm run dev-deploy
