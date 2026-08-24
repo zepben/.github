@@ -96,8 +96,8 @@ jobs:
       - name: update .npmrc to dev nexus
         run: |
           rm -rf .npmrc
-          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}" >> .npmrc
-          echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}/" >> .npmrc
+          echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}/:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
 
       - name: build and deploy
         id: build
