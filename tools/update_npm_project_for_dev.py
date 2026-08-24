@@ -21,7 +21,10 @@ def update_project():
             'buildTime': build_time,
         }
 
-        # 4. Save the updated package.json back to disk with proper formatting
+        # 4. Give publishing a tag
+        package_json['publishConfig']['tag'] = "dev"
+
+        # 5. Save the updated package.json back to disk with proper formatting
         with open('package.json', 'w', encoding='utf-8') as f:
             json.dump(package_json, f, indent=2)
             f.write('\n') # Add a final newline character
