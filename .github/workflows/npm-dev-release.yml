@@ -91,7 +91,7 @@ jobs:
 
       - name: Add git info to the package
         run: |
-          python3 central/tools/update_npm_project_git.py
+          python3 central/tools/update_npm_project_for_dev.py
 
       - name: update .npmrc to dev nexus
         run: |
@@ -103,4 +103,4 @@ jobs:
         id: build
         run: |
           npm run ci 
-          npm run dev-deploy
+          npm run deploy
