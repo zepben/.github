@@ -3,6 +3,7 @@ name: Maven App Release + Docs
 
 on: 
   workflow_call:
+    inputs:
       java-major-version:
         description: The major version of Java required by the project. This influences the container used to build the package
         required: false
