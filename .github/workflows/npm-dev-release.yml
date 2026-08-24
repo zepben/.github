@@ -58,7 +58,6 @@ jobs:
           rm -rf .npmrc
           echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
           echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
-          echo "\n" >> .npmrc
 
       - name: Get the modules
         run: |
@@ -99,7 +98,6 @@ jobs:
           rm -rf .npmrc
           echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}" >> .npmrc
           echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
-          echo "\n" >> .npmrc
 
       - name: build and deploy
         id: build
