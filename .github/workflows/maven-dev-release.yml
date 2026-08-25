@@ -71,7 +71,7 @@ jobs:
 
       - name: Maven deploy to dev Nexus
         id: build
-        uses: zepben/maven-deploy-central-action@main
+        uses: zepben/maven-deploy-central-action@test
         with:
           NEXUS_MAVEN_REPO: ${{ secrets.DEV_NEXUS_REPO }}
           NEXUS_USERNAME: ${{ secrets.DEV_NEXUS_USERNAME }}
