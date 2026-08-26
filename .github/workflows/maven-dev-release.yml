@@ -74,7 +74,7 @@ jobs:
             -u "/pom:project/pom:distributionManagement/pom:repository/pom:url" -v "\${dev.releases.url}" \
             -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:id" -v "zepben-maven-dev" \
             -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:name" -v "Zepben Dev Repository" \
-            -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:url" -v "\${dev.releases.url}" pom.xml
+            -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:url" -v "\${dev.snapshots.url}" pom.xml
           echo "Updated pom.xml with a new dev version: $new_version"
           cat pom.xml
         shell: bash
