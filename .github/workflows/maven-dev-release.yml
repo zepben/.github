@@ -75,7 +75,7 @@ jobs:
             -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:id" -v "zepben-maven-dev" \
             -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:name" -v "Zepben Dev Repository" \
             -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:url" -v "\${dev.releases.url}" pom.xml
-        echo "Updated pom.xml with a new dev version: $new_version"
+          echo "Updated pom.xml with a new dev version: $new_version"
         shell: bash
 
       - name: Maven deploy to dev Nexus
