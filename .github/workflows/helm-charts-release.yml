@@ -9,6 +9,10 @@ on:
         description: Path to the helm directory containing ct.yaml and charts/
         type: string
         default: helm
+      oci_repo:
+        description: OCI repository prefix beneath ghcr.io
+        type: string
+        default: zepben/charts
       ci_utils_ref:
         description: Git ref of zepben/ci-utils for zep-dev install
         type: string
@@ -81,7 +85,7 @@ jobs:
 
       - name: Push chart
         env:
-          OCI_REPO: zepben/charts
+          OCI_REPO: ${{ inputs.oci_repo }}
         run: |
           zep-dev chart push \
             --chart "${{ matrix.chart }}" \
