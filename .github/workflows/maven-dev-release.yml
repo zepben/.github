@@ -82,7 +82,7 @@ jobs:
         id: build
         uses: zepben/maven-deploy-central-action@test
         with:
-          NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_REPO }}
+          NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
