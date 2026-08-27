@@ -60,7 +60,7 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Work around git permission issue
         run: |
@@ -69,7 +69,7 @@ jobs:
         shell: sh
 
       - name: Cache licence-check
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /lc
           key: lcc
@@ -121,7 +121,7 @@ jobs:
         #    permissions:  # Uncomment these when trusted publishing supports reusable workflows OPS-185
         #      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -187,7 +187,7 @@ jobs:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
 
