@@ -66,24 +66,9 @@ jobs:
       - name: Update dev version
         run: |
           # Update the version to dev
-          shopt -s nocasematch
           version=$(jq -r .version package.json)
 
-          # Clickup Ticket regex 
-          regex="(PROJ|EWB|EDNAR|BD|DEV|OPS|SUPPORT)-[0-9]{1,5}"
-          # Detect TaskID
-          if [[ $GITHUB_REF =~ $regex ]]; then
-              # ${BASH_REMATCH[0]} contains the exact matched identifier
-              ticket=${BASH_REMATCH[0]}
-              echo "   -------------------------   "
-              echo "   Found the ticket: $ticket   "
-              echo "   -------------------------   "
-          else
-              ticket=$(git rev-parse --short HEAD)
-              echo "-----------------------------------------------------------------------------"
-              echo "    No tickets were found for this branch, using sha '$ticket' for version   "
-              echo "-----------------------------------------------------------------------------"
-          fi
+          ticket=$(python3 central/tools/fetch-ticket-sha.py)
           new_version=$version-$ticket    
           jq --arg VERSION $new_version '.version = $VERSION' package.json > new_package.json
           mv new_package.json package.json
