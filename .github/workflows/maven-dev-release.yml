@@ -1,5 +1,4 @@
-# Note: default release notes file is docs/release.md.
-name: Maven App Release + Docs
+name: Maven Lib Dev Release
 
 on: 
   workflow_call:

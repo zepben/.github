@@ -1,4 +1,4 @@
-name: NPM Static App Release
+name: NPM Lib Dev Release
 
 on:
   workflow_call:
