@@ -69,7 +69,7 @@ on:
         required: true
       NEXUS_MAVEN_RELEASE:
         required: true
-      DEV_NEXUS_REPO:
+      DEV_NEXUS_MAVEN_REPO:
         required: true
       DEV_NEXUS_MAVEN_SNAPSHOT:
         required: true
@@ -138,7 +138,7 @@ jobs:
           server-username: ${{ secrets.NEXUS_USERNAME }}
           server-password: ${{ secrets.NEXUS_PASSWORD }}
           nexus-signature: ${{ secrets.NEXUS_SIGNATURE }}
-          dev-repo-url: ${{ secrets.DEV_NEXUS_REPO }}
+          dev-maven-repo-url: ${{ secrets.DEV_NEXUS_MAVEN_REPO }}
           dev-release-url: ${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
           dev-snapshot-url: ${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
           dev-server-username: ${{ secrets.DEV_NEXUS_USERNAME }}
