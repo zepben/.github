@@ -1,0 +1,91 @@
+name: NPM Lib Dev Release
+
+on:
+  workflow_call:
+
+    secrets:
+      NEXUS_NPM_DEV_REPO:
+        required: true
+      CI_NPM_DEV_TOKEN:
+        required: true
+      NEXUS_NPM_REPO:
+        required: true
+      CI_NPM_TOKEN:
+        required: true
+
+jobs:
+  build-artifact:
+    runs-on: ubuntu-latest
+    container: node:24-alpine
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+      - name: Install Dependencies
+        run: |
+          apk add jq tar alpine-conf git bash python3
+
+      - name: Cache nodejs deps
+        uses: actions/cache@v6
+        with:
+          path: ~/.npm
+          key: npm
+
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+       # Checkout the .github repo itself, into a subfolder
+      - name: Checkout .github repo
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: central
+
+
+      - name: Set timezone to Australia/ACT
+        run: |
+          setup-timezone -z Australia/ACT
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+      - name: create .npmrc
+        run: |
+          rm -rf .npmrc
+          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+          echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+
+      - name: Get the modules
+        run: |
+          npm ci
+
+      - name: Update dev version
+        run: |
+          # Update the version to dev
+          version=$(jq -r .version package.json)
+
+          ticket=$(python3 central/tools/fetch-ticket-sha.py)
+          new_version=$version-$ticket    
+          jq --arg VERSION $new_version '.version = $VERSION' package.json > new_package.json
+          mv new_package.json package.json
+        shell: bash
+
+      - name: Add git info to the package
+        run: |
+          python3 central/tools/update_npm_project_for_dev.py
+
+      - name: update .npmrc to dev nexus
+        run: |
+          rm -rf .npmrc
+          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}/" >> .npmrc
+          echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}/:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+
+      - name: build and deploy
+        id: build
+        run: |
+          npm run ci 
+          npm run deploy
