@@ -37,6 +37,11 @@ on:
         required: false
       LC_URL: 
         required: false
+
+build:
+  concurrency:
+    group: build-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
  
 jobs:
   check-for-leaks:
