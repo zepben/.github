@@ -97,6 +97,7 @@ on:
 env:
   REGISTRY_URL: "ghcr.io/${{ github.repository }}"
   NEXUS_REGISTRY_URL: "${{ secrets.NEXUS_DOCKER_REPO }}/${{ github.repository }}"
+  DEV_NEXUS_REGISTRY_URL: "${{ secrets.DEV_NEXUS_DOCKER_REPO }}/${{ github.repository }}"
 
 jobs:
   build:
@@ -121,9 +122,19 @@ jobs:
           echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
           echo "long_ref=$LONG_REF" >> $GITHUB_OUTPUT
 
+      - name: Figure out the dev version
+        id: version
+        run: |
+          ticket=$(python3 central/tools/fetch-ticket-sha.py)
+          ecdho "dev-version=$version-$ticket" >> $GITHUB_OUTPUT
+
       - name: Login to NPM
         run: |
           rm -rf ~/.npmrc
+
+
+          // if dev, use dev nexus
+          // otherwise use regular nexus
           echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
           echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
@@ -181,10 +192,12 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.REGISTRY_URL }}
-            ${{ env.NEXUS_REGISTRY_URL }}
+            ${{ env.REGISTRY_URL }},enable=${{ inputs.dev == false }}
+            ${{ env.NEXUS_REGISTRY_URL }},enable=${{ inputs.dev == false }}
+            ${{ env.DEV_NEXUS_REGISTRY_URL }},enable=${{ inputs.dev == true }}
           labels: |
             org.opencontainers.image.vendor=Zepben
+            org.opencontainers.dev.version=${{ steps.version.outputs.dev-version }},enable=${{ inputs.dev == true }}
           tags: |
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},enable=${{ inputs.sha-tags }},priority=200
             type=raw,value=sha-${{ steps.sha.outputs.long_ref }},enable=${{ inputs.sha-tags }},priority=220
