@@ -1,0 +1,26 @@
+name: Check that branch hasn't moved
+description: Exits cleanly if the branch tip advanced while this run was queued behind the concurrency lock
+outputs:
+  same_as_me:
+    value: ${{ steps.check.outputs.same_as_me }}
+
+runs:
+  using: composite
+  steps:
+    - id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        BRANCH: ${{ github.ref_name }}
+        TRIGGER_SHA: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+        TIP=$(gh api "repos/${REPO}/commits/${BRANCH}" --jq '.sha')
+
+        if [ "$TIP" != "$TRIGGER_SHA" ]; then
+          echo "::notice title=Skipping run::Branch '${BRANCH}' moved (was ${TRIGGER_SHA:0:7}, now ${TIP_SHA:0:7}) while this run was queued behind another release/snapshot. Start this build anew, DO NOT RERUN"
+          echo "same_as_me=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "same_as_me=true" >> "$GITHUB_OUTPUT"
+        fi
