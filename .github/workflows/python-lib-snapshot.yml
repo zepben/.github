@@ -48,10 +48,28 @@ on:
       PYPI_PASSWORD:
         required: false
 
+concurrency:
+  group: release-snapshot-lock-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
 
+  # Check if this branch has advanced while we've waited in a concurrency queue
+  check-branch-tip:
+    runs-on: ubuntu-latest
+    outputs:
+      same_as_me: ${{ steps.check.outputs.same_as_me }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check that the tip of the branch hasn't moved
+        id: check
+        uses: zepben/.github/.github/actions/check-branch-tip@main
+
+  # Only proceed if on the same SHA as when started
   run-checks:
     runs-on: ubuntu-latest
+    needs: check-branch-tip
+    if: ${{ needs.check-branch-tip.outputs.same_as_me == 'true' }}
     container: zepben/pipeline-basic
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
