@@ -87,7 +87,8 @@ jobs:
         run: |
           echo "There was an error in the docusaurus build above. Docs are not pushed"
           echo " :boom: There was an error in the docusaurus build step. Current docs are not published" >> ${GITHUB_STEP_SUMMARY}
-        shell: sh
+          exit 1
+        shell: bash
 
       - name: Check if we need to skip deployment for hotfix or LTS branch
         if: ${{ inputs.DEPLOY }}
