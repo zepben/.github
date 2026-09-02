@@ -19,7 +19,8 @@ runs:
         TIP=$(gh api "repos/${REPO}/commits/${BRANCH}" --jq '.sha')
 
         if [ "$TIP" != "$TRIGGER_SHA" ]; then
-          echo "::notice title=Skipping run::Branch '${BRANCH}' moved (was ${TRIGGER_SHA:0:7}, now ${TIP_SHA:0:7}) while this run was queued behind another release/snapshot. Start this build anew, DO NOT RERUN"
+          echo "::notice title=Skipping run::Branch '${BRANCH}' moved (was ${TRIGGER_SHA:0:7}, now ${TIP_SHA:0:7}) while this run was queued behind another release/snapshot. Start this build anew, DO NOT RERUN" 
+          echo "::notice title=Skipping run::Branch '${BRANCH}' moved (was ${TRIGGER_SHA:0:7}, now ${TIP_SHA:0:7}) while this run was queued behind another release/snapshot. Start this build anew, DO NOT RERUN" >> ${GITHUB_STEP_SUMMARY}
           echo "same_as_me=false" >> "$GITHUB_OUTPUT"
         else
           echo "same_as_me=true" >> "$GITHUB_OUTPUT"
