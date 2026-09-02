@@ -78,7 +78,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Check that the tip of the branch hasn't moved
         id: check
-        uses: zepben/.github/.github/actions/check-branch-tip@main
+        uses: zepben/.github/.github/actions/check-branch-tip@ci-update-4
 
   # Only proceed if on the same SHA as when started
   release-checks:
