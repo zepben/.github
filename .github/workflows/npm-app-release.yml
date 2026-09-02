@@ -46,7 +46,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     outputs:
-      version: ${{ steps.check.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
       docs-present: ${{ steps.docs.outputs.present }}
       changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
@@ -77,9 +77,11 @@ jobs:
         run: |
           /scripts/release-checks.sh --js package.json
           /scripts/finalize-version.sh --js package.json changelog.md
-          version=$(jq -r .version package.json)
-          echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
+
+      - name: Extract package.json version and set job output
+        id: version
+        uses: $/.github/actions/get-npm-version
 
       - name: Check if docs present
         id: docs
@@ -117,7 +119,7 @@ jobs:
       - name: Test changelog format
         id: changelog
         run: |
-          changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
+          changelog=$(sed -n -E "/${{ steps.version.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
           if [[ -z "$changelog" ]]; then
             echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
             git push origin -d release
@@ -145,13 +147,13 @@ jobs:
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
-      version: ${{ steps.build.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - name: Install Dependencies
         run: |
-          apk add jq tar alpine-conf git
+          apk add jq tar alpine-conf git python3
 
       - name: Cache nodejs deps
         uses: actions/cache@v6
@@ -187,16 +189,20 @@ jobs:
           echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
           echo "\n" >> .npmrc
 
+      - name: Extract package.json version and set job output
+        id: version
+        uses: $/.github/actions/get-npm-version
+
       - name: build
         id: build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           npm ci --unsafe-perm
           npm run prod
-          version=$(jq -r .version package.json)
           artifactId=$(jq -r .name package.json)
-          artifact="$artifactId-$version.tar.bz2"
+          artifact="$artifactId-$VERSION.tar.bz2"
           tar jcvf "$artifact" -C dist .
-          echo "version=$version" >> "${GITHUB_OUTPUT}"
           echo "artifact=$artifact" >> "${GITHUB_OUTPUT}"
         continue-on-error: true
 
