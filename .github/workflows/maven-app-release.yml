@@ -72,7 +72,7 @@ jobs:
       SLACK_NOTIFICATION: YES
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     outputs:
-      version: ${{ steps.check.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
       docs-present: ${{ steps.docs.outputs.present }}
       changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
@@ -103,9 +103,11 @@ jobs:
         run: |
           /scripts/release-checks.sh --java --maven pom.xml
           /scripts/finalize-version.sh --java --maven pom.xml changelog.md
-          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
-          echo "version=$version" >> "${GITHUB_OUTPUT}"
         shell: bash
+
+      - name: Extract pom.xml version and set job output
+        id: version
+        uses: $/.github/actions/get-maven-version
 
       - name: Check if docs present
         id: docs
@@ -143,7 +145,7 @@ jobs:
         id: changelog
         shell: bash
         run: |
-          changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
+          changelog=$(sed -n -E "/${{ steps.version.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
           if [[ -z "$changelog" ]]; then
             echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
             git push origin -d release
@@ -172,7 +174,7 @@ jobs:
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
-      version: ${{ steps.build.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
     env:
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
@@ -200,17 +202,21 @@ jobs:
           git checkout release
         shell: bash
 
+      - name: Extract pom.xml version and set job output
+        id: version
+        uses: $/.github/actions/get-maven-version
+
       - name: Maven package
         id: build
         run: |
           artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
-          version=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/version")
+          version="${{ steps.version.outputs.version }}"
           artifact="${artifactId}-${version}"
           mvn clean package -B -f pom.xml -P release -Dgpg.key.id=$GPG_KEY_ID -Dgpg.key.password=$GPG_KEY_PASSWORD -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE
           mkdir .artifact-$artifact
           cp target/* -t .artifact-$artifact || :
           rm .artifact-$artifact/original*.jar || :
-          echo "version=$(echo $version)" >> ${GITHUB_OUTPUT}
+          echo "version=${version}" >> ${GITHUB_OUTPUT}
           echo "artifact=$(echo $artifact)" >> ${GITHUB_OUTPUT}
           echo "artifact-id=$(echo $artifactId)" >> ${GITHUB_OUTPUT}
           echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_OUTPUT}
