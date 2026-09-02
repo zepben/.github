@@ -1,0 +1,61 @@
+name: Tag snapshot
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Published snapshot version used to form snapshot/v<version>.
+        required: true
+        type: string
+      sha:
+        description: Commit SHA that published the snapshot; the tag must point here.
+        required: true
+        type: string
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  tag-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Create snapshot tag at published commit
+        env:
+          VERSION: ${{ inputs.version }}
+          TARGET_SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${VERSION}" ]; then
+            echo "::error::Snapshot version is required to create a tag."
+            exit 1
+          fi
+
+          if [ -z "${TARGET_SHA}" ]; then
+            echo "::error::Target commit SHA is required to create a snapshot tag."
+            exit 1
+          fi
+
+          # Maven version has -SNAPSHOT suffix, which we don't want. Strip it.
+          tag_version="${VERSION%-SNAPSHOT}"
+          tag="snapshot/v${tag_version}"
+          existing_sha="$(git ls-remote origin "refs/tags/${tag}" | awk '{print $1}')"
+
+          if [ -n "${existing_sha}" ]; then
+            if [ "${existing_sha}" = "${TARGET_SHA}" ]; then
+              echo "Tag ${tag} already points to ${TARGET_SHA}."
+              exit 0
+            fi
+            echo "::error::Tag ${tag} already exists at ${existing_sha}, expected ${TARGET_SHA}."
+            exit 1
+          fi
+
+          git push origin "${TARGET_SHA}:refs/tags/${tag}"
+          echo "Created tag ${tag} at ${TARGET_SHA}."

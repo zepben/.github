@@ -48,6 +48,11 @@ on:
       PYPI_PASSWORD:
         required: false
 
+    outputs:
+      version:
+        description: "The current snapshot version."
+        value: ${{ jobs.run-checks.outputs.version }}
+
 jobs:
 
   run-checks:
@@ -57,10 +62,15 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs: 
       docs-present: ${{ steps.docs.outputs.present }}
+      version: ${{ steps.version.outputs.version }}
 
     steps:
 
       - uses: actions/checkout@v7
+
+      - name: Extract pyproject.toml version and set job output
+        id: version
+        uses: $/.github/actions/get-python-version
 
       - name: Work around git permission issue
         run: |
@@ -209,6 +219,15 @@ jobs:
     with:
       DEPLOY: true
     secrets: inherit
+
+  tag-snapshot:
+    needs: [run-checks, deploy]
+    uses: ./.github/workflows/tag-snapshot.yml
+    with:
+      version: ${{ needs.run-checks.outputs.version }}
+      sha: ${{ github.sha }}
+    secrets:
+      CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
   deploy-docs:
     needs: [build-docs]

@@ -48,12 +48,12 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
-      version: ${{ steps.build.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
     container: node:24-alpine
     steps:
     - name: Install Dependencies
       run: |
-        apk add jq tar alpine-conf git curl bash github-cli
+        apk add jq tar alpine-conf git curl bash github-cli python3
 
     - name: Cache nodejs deps
       uses: actions/cache@v6
@@ -94,19 +94,24 @@ jobs:
         echo "tag=snapshot" >> ~/.npmrc
         echo "\n" >> ~/.npmrc
 
+    - name: Extract package.json version and set job output
+      id: version
+      uses: $/.github/actions/get-npm-version
+
     - name: build
       id: build
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
       run: |
         echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
         npm ci --unsafe-perm
         npm run prod
-        version=$(jq -r .version package.json)
         artifactId=$(jq -r .name package.json)
-        artifact="$artifactId-$version-SNAPSHOT.tar.bz2"
+        artifact="$artifactId-$VERSION-SNAPSHOT.tar.bz2"
         tar jcvf "$artifact" -C dist .
         echo "artifact=$artifact" >> ${GITHUB_ENV}
-        echo "version=$version" >> ${GITHUB_ENV}
-        echo "version=$version" >> ${GITHUB_OUTPUT}
+        echo "version=$VERSION" >> ${GITHUB_ENV}
+        echo "version=$VERSION" >> ${GITHUB_OUTPUT}
 
     - uses: actions/upload-artifact@v7
       if: steps.build.outcome == 'success'
@@ -160,6 +165,15 @@ jobs:
     with:
       DEPLOY: true
     secrets: inherit
+
+  tag-snapshot:
+    needs: [build-artifact]
+    uses: ./.github/workflows/tag-snapshot.yml
+    with:
+      version: ${{ needs.build-artifact.outputs.version }}
+      sha: ${{ github.sha }}
+    secrets:
+      CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
   update-snapshot-version:
     needs: [build-artifact]
