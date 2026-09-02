@@ -34,7 +34,7 @@ jobs:
     continue-on-error: false
     outputs:
       changelog: ${{ steps.changelog.outputs.changelog }}
-      version: ${{ steps.check.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
     env:
       DEBUG: ${{ secrets.DEBUG }}
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -68,15 +68,17 @@ jobs:
         run: |
           /scripts/release-checks.sh --js package.json
           /scripts/finalize-version.sh --js package.json changelog.md
-          version=$(jq -r .version package.json)
-          echo "version=$version" >> $GITHUB_OUTPUT
         shell: bash
+
+      - name: Extract package.json version and set job output
+        id: version
+        uses: $/.github/actions/get-npm-version
 
       - name: Test changelog format
         id: changelog
         shell: bash
         run: |
-          changelog=$(sed -n -E "/${{ steps.check.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
+          changelog=$(sed -n -E "/${{ steps.version.outputs.version }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" changelog.md)
           if [[ -z "$changelog" ]]; then
             echo "Changelog content was not found - ensure your changelog.md matches the expected growing format. Deleting release branch."
             git push origin -d release
@@ -94,14 +96,14 @@ jobs:
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
       artifact-id: ${{ steps.build.outputs.artifact-id }}
-      version: ${{ steps.build.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
       docs-present: ${{ steps.docs.outputs.present }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
       - name: Install Dependencies
         run: |
-          apk add jq tar alpine-conf git
+          apk add jq tar alpine-conf git python3
 
       - name: Cache nodejs deps
         uses: actions/cache@v6
@@ -148,10 +150,13 @@ jobs:
           npm pack
           artifact="$(npm pack --foreground-scripts=false --json --dry-run | jq -r .[0].filename)"
           npm publish
-          version=$(jq -r .version package.json)
-          echo "version=$version" >> "${GITHUB_OUTPUT}"
           echo "artifact=$artifact" >> "${GITHUB_OUTPUT}" 
         continue-on-error: true
+
+      - name: Extract package.json version and set job output
+        if: steps.build.outcome == 'success'
+        id: version
+        uses: $/.github/actions/get-npm-version
 
       - uses: actions/upload-artifact@v7
         if: steps.build.outcome == 'success'
