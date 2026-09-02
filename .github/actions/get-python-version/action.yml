@@ -1,0 +1,17 @@
+name: Get Python version
+description: Read the static root pyproject.toml project version.
+
+outputs:
+  version:
+    description: The root pyproject.toml project version.
+    value: ${{ steps.extract.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - id: extract
+      shell: bash
+      run: |
+        version="$(python3 "$GITHUB_ACTION_PATH/../internal/get_version.py" --mode python)"
+        echo "version=${version}" >> "$GITHUB_OUTPUT"
+        echo "Extracted version: ${version}"

@@ -1,0 +1,17 @@
+name: Get npm version
+description: Read the root package.json version.
+
+outputs:
+  version:
+    description: The root package.json version.
+    value: ${{ steps.extract.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - id: extract
+      shell: bash
+      run: |
+        version="$(python3 "$GITHUB_ACTION_PATH/../internal/get_version.py" --mode npm)"
+        echo "version=${version}" >> "$GITHUB_OUTPUT"
+        echo "Extracted version: ${version}"
