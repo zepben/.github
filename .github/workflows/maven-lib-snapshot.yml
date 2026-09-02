@@ -127,7 +127,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: verify-not-stale
+    needs: check-branch-tip
     if: ${{ needs.check-branch-tip.outputs.same_as_me == 'true' }}
     container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     env:
