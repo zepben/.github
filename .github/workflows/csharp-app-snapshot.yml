@@ -210,6 +210,15 @@ jobs:
       DEPLOY: true
     secrets: inherit
 
+  tag-snapshot:
+    needs: [release-checks, build]
+    uses: ./.github/workflows/tag-snapshot.yml
+    with:
+      version: ${{ needs.build.outputs.version }}
+      sha: ${{ github.sha }}
+    secrets:
+      CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+
   deploy-docs:
     needs: [build-docs]
     if: ${{ needs.build-docs.outputs.artifact != '' }}

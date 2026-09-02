@@ -37,6 +37,11 @@ on:
       LC_URL:
         required: false
 
+    outputs:
+      version:
+        description: "The current snapshot version."
+        value: ${{ jobs.build-artifact.outputs.version }}
+
 jobs:
   build-artifact:
     runs-on: ubuntu-latest
@@ -45,10 +50,11 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
+      version: ${{ steps.version.outputs.version }}
     steps:
     - name: Install Dependencies
       run: |
-        apk add jq tar alpine-conf git curl bash github-cli
+        apk add jq tar alpine-conf git curl bash github-cli python3
 
     - name: Cache nodejs deps
       uses: actions/cache@v6
@@ -98,8 +104,12 @@ jobs:
         npm pack
         artifact="$(npm pack --foreground-scripts=false --json --dry-run | jq -r .[0].filename)"
         npm publish
-        # version=$(jq -r .version package.json)
         echo "artifact=$(echo $artifact)" >> ${GITHUB_ENV}
+
+    - name: Extract package.json version and set job output
+      if: steps.build.outcome == 'success'
+      id: version
+      uses: $/.github/actions/get-npm-version
 
     - uses: actions/upload-artifact@v7
       if: steps.build.outcome == 'success'
@@ -152,6 +162,15 @@ jobs:
     with:
       DEPLOY: true
     secrets: inherit
+
+  tag-snapshot:
+    needs: [build-artifact]
+    uses: ./.github/workflows/tag-snapshot.yml
+    with:
+      version: ${{ needs.build-artifact.outputs.version }}
+      sha: ${{ github.sha }}
+    secrets:
+      CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
   update-snapshot-version:
     needs: [build-artifact]
