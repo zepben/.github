@@ -59,6 +59,11 @@ on:
       LC_URL: 
         required: false
 
+    outputs:
+      version:
+        description: "The current snapshot version."
+        value: ${{ jobs.deploy.outputs.version }}
+
 concurrency:
   group: release-snapshot-lock-${{ github.repository }}-${{ github.ref }}
   cancel-in-progress: false
@@ -128,6 +133,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-stale-tip
     container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
     steps:
@@ -166,6 +173,7 @@ jobs:
           fi
 
       - name: Maven deploy to Central
+        id: build
         uses: zepben/maven-deploy-central-action@main
         with:
           NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
@@ -185,6 +193,11 @@ jobs:
           GPG_KEY_PASSWORD: ${{ secrets.GPG_KEY_PASSWORD }}
           PROFILE: ${{ env.PROFILE }}
 
+      - name: Extract pom.xml version and set job output
+        if: steps.build.outcome == 'success'
+        id: version
+        uses: $/.github/actions/get-maven-version
+
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'
         uses: codecov/codecov-action@v4
@@ -199,6 +212,15 @@ jobs:
     with:
       DEPLOY: true
     secrets: inherit
+
+  tag-snapshot:
+    needs: [deploy]
+    uses: ./.github/workflows/tag-snapshot.yml
+    with:
+      version: ${{ needs.deploy.outputs.version }}
+      sha: ${{ github.sha }}
+    secrets:
+      CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
   update-snapshot-version:
     needs: [deploy]
