@@ -1,4 +1,4 @@
-name: Get Maven application version
+name: Get Maven version
 description: Read the root Maven project version.
 
 outputs:
@@ -12,6 +12,6 @@ runs:
     - id: extract
       shell: bash
       run: |
-        version="$(python3 "$GITHUB_ACTION_PATH/../internal/get_version.py" --mode maven-app)"
+        version="$(python3 "$GITHUB_ACTION_PATH/../internal/get_version.py" --mode maven)"
         echo "version=${version}" >> "$GITHUB_OUTPUT"
         echo "Extracted version: ${version}"
