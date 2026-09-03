@@ -225,6 +225,11 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_RELEASE_URL: ${{ secrets.NEXUS_MAVEN_RELEASE }}
           NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+          DEV_NEXUS_MAVEN_REPO: ${{ secrets.DEV_NEXUS_MAVEN_REPO }}
+          DEV_NEXUS_USERNAME: ${{ secrets.DEV_NEXUS_USERNAME }}
+          DEV_NEXUS_PASSWORD: ${{ secrets.DEV_NEXUS_PASSWORD }}
+          DEV_NEXUS_RELEASE_URL: ${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
+          DEV_NEXUS_SNAPSHOT_URL: ${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
           ZEPBEN_GPG_KEY: ${{ secrets.ZEPBEN_GPG_KEY_B64 }}
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
