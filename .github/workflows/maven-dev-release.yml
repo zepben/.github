@@ -61,21 +61,11 @@ jobs:
           new_version=$version-$ticket    
           xmlstarlet ed -P -L -N pom="http://maven.apache.org/POM/4.0.0" -u "/pom:project/pom:version" -v "$new_version" pom.xml
           echo "Updated pom.xml with a new dev version: $new_version"
-
-          # # If the deployment is supported, deploy it
-          # xmlstarlet ed -P -L -N pom="http://maven.apache.org/POM/4.0.0" \
-          #   -u "/pom:project/pom:distributionManagement/pom:repository/pom:id" -v "zepben-maven-dev" \
-          #   -u "/pom:project/pom:distributionManagement/pom:repository/pom:name" -v "Zepben Dev Repository" \
-          #   -u "/pom:project/pom:distributionManagement/pom:repository/pom:url" -v "\${dev.releases.url}" \
-          #   -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:id" -v "zepben-maven-dev" \
-          #   -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:name" -v "Zepben Dev Repository" \
-          #   -u "/pom:project/pom:distributionManagement/pom:snapshotRepository/pom:url" -v "\${dev.snapshots.url}" pom.xml
-          # echo "Switched deployment to dev nexus"
         shell: bash
 
       - name: Maven deploy to dev Nexus
         id: build
-        uses: zepben/maven-deploy-central-action@DEV-10233-dev-deploy
+        uses: zepben/maven-deploy-central-action@main
         with:
           NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
@@ -87,5 +77,5 @@ jobs:
           DEV_NEXUS_PASSWORD: ${{ secrets.DEV_NEXUS_PASSWORD }}
           DEV_NEXUS_RELEASE_URL: ${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
           DEV_NEXUS_SNAPSHOT_URL: ${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
-          PROFILE: zepben-maven-dev
+          PROFILE: zepben-maven
           DEV_ONLY: yes
