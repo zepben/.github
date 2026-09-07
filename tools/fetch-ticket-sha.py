@@ -13,7 +13,7 @@ def fetch_ticket_or_sha() -> str:
 
     if match:
         # match.group(0) contains the exact matched identifier
-        print(github_ref)
+        print(match[0])
     else:
         print(subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"], text=True
