@@ -172,7 +172,7 @@ jobs:
           fi
 
       - name: Maven deploy to Central
-        uses: zepben/maven-deploy-central-action@main
+        uses: zepben/maven-deploy-central-action@DEV-10355-fix-caching
         with:
           NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
