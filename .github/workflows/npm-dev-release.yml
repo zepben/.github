@@ -53,16 +53,6 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - name: create .npmrc
-        run: |
-          rm -rf .npmrc
-          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
-          echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
-
-      - name: Get the modules
-        run: |
-          npm ci
-
       - name: Update dev version
         run: |
           # Update the version to dev
@@ -78,14 +68,18 @@ jobs:
         run: |
           python3 central/tools/update_npm_project_for_dev.py
 
-      - name: update .npmrc to dev nexus
+      - name: update .npmrc and package deployment to dev nexus
         run: |
           rm -rf .npmrc
           echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}/" >> .npmrc
           echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}/:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
 
+          jq --arg registry ${{ secrets.NEXUS_NPM_DEV_REPO }} '.packageConfig.registry = "$registry"' package.json > new_package.json
+          mv new_package.json package.json
+
       - name: build and deploy
         id: build
         run: |
+          npm ci
           npm run ci 
           npm run deploy

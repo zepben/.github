@@ -178,6 +178,29 @@ jobs:
           echo "artifact=$artifact" >> "${GITHUB_OUTPUT}" 
         continue-on-error: true
 
+      - name: Also publish to Dev Nexus
+        shell: bash
+        id: dev-nexus
+        run: |
+          if [ -f ${{ steps.build.outputs.artifact }} ]; then
+
+            echo "Update registry for Dev Nexus"
+            rm -rf .npmrc
+            echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}/" >> .npmrc
+            echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}/:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+
+            jq --arg registry ${{ secrets.NEXUS_NPM_DEV_REPO }} '.packageConfig.registry = "$registry"' package.json > new_package.json
+            mv new_package.json package.json
+
+            # Now publish
+            npm publish
+
+            echo "================================================="
+            echo "::notice:: Deploying the package to dev-nexus! 🚀"
+            echo "================================================="
+
+          fi
+
       - name: Extract package.json version and set job output
         if: steps.build.outcome == 'success'
         id: version
