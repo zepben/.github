@@ -84,7 +84,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: /maven
-          key: maven
+          key: maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-
 
       - name: Maven build and test
         id: build

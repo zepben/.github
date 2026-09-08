@@ -189,12 +189,6 @@ jobs:
 
       - uses: actions/checkout@v7
 
-      - name: Cache maven deps
-        uses: actions/cache@v6
-        with:
-          path: /maven
-          key: maven
-
       - name: Checkout release branch
         run: |
           git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
