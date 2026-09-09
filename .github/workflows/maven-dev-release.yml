@@ -45,12 +45,6 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
-      - name: Cache maven deps
-        uses: actions/cache@v6
-        with:
-          path: /maven
-          key: maven
-
       - name: Update dev version
         run: |
           shopt -s nocasematch

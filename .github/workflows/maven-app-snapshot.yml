@@ -100,7 +100,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: /maven
-          key: maven
+          key: maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-
 
       - name: Work around git permission issue
         run: |
