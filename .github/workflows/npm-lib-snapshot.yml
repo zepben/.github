@@ -134,6 +134,7 @@ jobs:
 
     - name: Also publish to Dev Nexus
       shell: bash
+      id: dev-nexus
       run: |
         if [ -f ${{ env.artifact }} ]; then
 
