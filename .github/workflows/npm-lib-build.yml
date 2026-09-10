@@ -82,13 +82,15 @@ jobs:
         run: |
           apk add jq tar alpine-conf git curl bash github-cli
 
+      - uses: actions/checkout@v7
+
       - name: Cache nodejs deps
         uses: actions/cache@v6
         with:
           path: ~/.npm
-          key: npm
-
-      - uses: actions/checkout@v7
+          key: npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-
 
       - name: Work around git permission issue
         run: |

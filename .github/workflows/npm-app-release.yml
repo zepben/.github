@@ -174,15 +174,17 @@ jobs:
         run: |
           apk add jq tar alpine-conf git python3
 
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
       - name: Cache nodejs deps
         uses: actions/cache@v6
         with:
           path: ~/.npm
-          key: npm
-
-      - uses: actions/checkout@v7
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
+          key: npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-
 
       - name: Set timezone to Australia/ACT
         run: |

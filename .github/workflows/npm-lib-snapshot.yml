@@ -74,13 +74,15 @@ jobs:
       run: |
         apk add jq tar alpine-conf git curl bash github-cli python3
 
+    - uses: actions/checkout@v7
+
     - name: Cache nodejs deps
       uses: actions/cache@v6
       with:
         path: ~/.npm
-        key: npm
-
-    - uses: actions/checkout@v7
+        key: npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          npm-
 
     - name: Work around git permission issue
       run: |
@@ -129,6 +131,30 @@ jobs:
       if: steps.build.outcome == 'success'
       id: version
       uses: $/.github/actions/get-npm-version
+
+    - name: Also publish to Dev Nexus
+      shell: bash
+      id: dev-nexus
+      run: |
+        if [ -f ${{ env.artifact }} ]; then
+
+          echo "Update registry for Dev Nexus"
+          rm -rf .npmrc
+          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}/" >> .npmrc
+          echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}/:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+          echo "tag=snapshot" >> .npmrc
+
+          jq --arg registry ${{ secrets.NEXUS_NPM_DEV_REPO }} '.packageConfig.registry = "$registry"' package.json > new_package.json
+          mv new_package.json package.json
+
+          # Now publish
+          npm publish
+
+          echo "================================================="
+          echo "::notice:: Deploying the package to dev-nexus! 🚀"
+          echo "================================================="
+
+        fi
 
     - uses: actions/upload-artifact@v7
       if: steps.build.outcome == 'success'
