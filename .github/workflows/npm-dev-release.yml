@@ -74,6 +74,7 @@ jobs:
           rm -rf .npmrc
           echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}/" >> .npmrc
           echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}/:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+          echo "tag=dev" >> .npmrc
 
           jq --arg registry ${{ secrets.NEXUS_NPM_DEV_REPO }} '.packageConfig.registry = "$registry"' package.json > new_package.json
           mv new_package.json package.json
