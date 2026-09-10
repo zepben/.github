@@ -190,6 +190,11 @@ jobs:
             rm -rf .npmrc
             echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_DEV_REPO }}/" >> .npmrc
             echo "//${{ secrets.NEXUS_NPM_DEV_REPO }}/:_authToken=${{ secrets.CI_NPM_DEV_TOKEN }}" >> .npmrc
+            if [[ ${GITHUB_REF_NAME} =~ "hotfix" ]]; then
+              echo "tag=hotfix" >> .npmrc
+            elif [[ ${GITHUB_REF_NAME} =~ "LTS" ]]; then
+              echo "tag=lts" >> .npmrc
+            fi
 
             jq --arg registry ${{ secrets.NEXUS_NPM_DEV_REPO }} '.packageConfig.registry = "$registry"' package.json > new_package.json
             mv new_package.json package.json
