@@ -170,16 +170,24 @@ jobs:
       shell: sh
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.5
+      uses: NuGet/setup-nuget@v4
      
     - name: Setup MSBuild Path
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v3
 
     - name: Setup VSTest Path
-      uses: darenm/Setup-VSTest@v1.1.1
+      uses: Microsoft/vstest@v18
 
     - name: Add ZepBen Nuget Repo credentials
       run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
+
+    - name: Setup nuget cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
+        restore-keys: |
+          nuget-
 
     - name: Restore NuGet Packages
       run:   

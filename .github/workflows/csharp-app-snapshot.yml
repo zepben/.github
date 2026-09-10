@@ -191,6 +191,14 @@ jobs:
     - name: Add ZepBen Nuget Repo credentials
       run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
 
+    - name: Setup nuget cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
+        restore-keys: |
+          nuget-
+
     - name: Restore NuGet Packages
       run:
         msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /t:restore
