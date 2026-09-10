@@ -24,6 +24,10 @@ jobs:
         run: |
           apk add jq tar alpine-conf git bash python3
 
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
       - name: Cache nodejs deps
         uses: actions/cache@v6
         with:
@@ -32,10 +36,6 @@ jobs:
           restore-keys: |
             npm-
 
-      - uses: actions/checkout@v7
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-
        # Checkout the .github repo itself, into a subfolder
       - name: Checkout .github repo
         uses: actions/checkout@v7
@@ -43,7 +43,6 @@ jobs:
           repository: ${{ job.workflow_repository }}
           ref: ${{ job.workflow_sha }}
           path: central
-
 
       - name: Set timezone to Australia/ACT
         run: |
