@@ -176,7 +176,7 @@ jobs:
       uses: microsoft/setup-msbuild@v3
 
     - name: Setup VSTest Path
-      uses: microsoft-approved-actions/vstest@v1
+      uses: microsoft/vstest-action@v1.0.0
 
     - name: Add ZepBen Nuget Repo credentials
       run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"

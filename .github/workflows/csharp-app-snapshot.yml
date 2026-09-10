@@ -172,7 +172,7 @@ jobs:
       uses: microsoft/setup-msbuild@v3
 
     - name: Setup VSTest Path
-      uses: microsoft-approved-actions/vstest@v1
+      uses: microsoft/vstest-action@v1.0.0
 
     - name:  Update Info version
       id: update-info-version
