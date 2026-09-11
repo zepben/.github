@@ -171,6 +171,9 @@ jobs:
     - name: Setup MSBuild Path
       uses: microsoft/setup-msbuild@v3
 
+      # Keep this - it's to only set up vstest, 
+      # it doesn't actually deploy it - it uses the one in container
+      # so basically, it's using container-latest
     - name: Setup VSTest Path
       uses: darenm/Setup-VSTest@v1.1.1
 
