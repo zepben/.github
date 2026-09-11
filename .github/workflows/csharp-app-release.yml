@@ -204,11 +204,22 @@ jobs:
       - name: Setup MSBuild Path
         uses: microsoft/setup-msbuild@v3
 
+        # Keep this - it's to only set up vstest, 
+        # it doesn't actually deploy it - it uses the one in container
+        # so basically, it's using container-latest
       - name: Setup VSTest Path
         uses: darenm/Setup-VSTest@v1.1.1
 
       - name: Add ZepBen Nuget Repo credentials
         run: nuget sources update -Name "ZepBen" -username "${{ secrets.NEXUS_USERNAME }}" -password "${{ secrets.NEXUS_PASSWORD }}" -configFile "Nuget.Config"
+
+      - name: Setup nuget cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
+          restore-keys: |
+            nuget-
 
       - name: Restore NuGet Packages
         run:
