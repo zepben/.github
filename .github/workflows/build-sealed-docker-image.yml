@@ -165,6 +165,12 @@ jobs:
           echo "server-password=$server-password" >> $GITHUB_ENV
           echo "nexus-signature=${{ secrets.NEXUS_MAVEN_SIGNATURE }}" >> $GITHUB_ENV
 
+      - name: Debug
+        run: |
+          echo ${{ secrets.DEV_NEXUS_DOCKER_REPO }} | sed -e 's/nexus/blabhb/g'
+          echo ${{ secrets.NEXUS_DOCKER_REPO }} | sed -e 's/nexus/blabhb/g'
+          exit 1
+
       - name: Login to NPM
         run: |
           rm -rf ~/.npmrc
