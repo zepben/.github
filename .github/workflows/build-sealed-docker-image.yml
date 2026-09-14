@@ -168,7 +168,7 @@ jobs:
       - name: Login to NPM
         run: |
           rm -rf ~/.npmrc
-          echo "@zepben:registry=${{ env.npm-repo }}" >> ~/.npmrc
+          echo "@zepben:registry=https://${{ env.npm-repo }}" >> ~/.npmrc
           echo "//${{ env.npm-repo }}/:_authToken=${{ env.npm-token }}" >> ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
