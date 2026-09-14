@@ -192,21 +192,21 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Github Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.CI_GITHUB_TOKEN }}
 
       - name: Login to Nexus Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ secrets.NEXUS_DOCKER_REPO }} 
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
 
       - name: Login to Dev Nexus Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ secrets.DEV_NEXUS_DOCKER_REPO }} 
           username: ${{ secrets.DEV_NEXUS_USERNAME }}
