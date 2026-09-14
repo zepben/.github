@@ -147,7 +147,7 @@ jobs:
           server_username=${{ secrets.NEXUS_USERNAME }}
           server_password=${{ secrets.NEXUS_PASSWORD }}
 
-          if [ "${{ inputs.dev }}" = "true" ]; then
+          if [[ "${{ inputs.dev }}" == "true" ]]; then
 
             ticket=$(python3 central/tools/fetch-ticket-sha.py)
             echo "dev_version=$ticket" >> $GITHUB_OUTPUT
