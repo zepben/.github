@@ -164,13 +164,13 @@ jobs:
             server_password="${{ secrets.DEV_NEXUS_PASSWORD }}"
           fi
 
-          echo "npm_repo=$npm_repo" >> $GITHUB_ENV
-          echo "npm_token=$npm_token" >> $GITHUB_ENV
-          echo "maven_repo_url=$maven_repo_url" >> $GITHUB_ENV
-          echo "maven_release_url=$maven_release_url" >> $GITHUB_ENV
-          echo "maven_snapshot_url=$maven_snapshot_url" >> $GITHUB_ENV
-          echo "server_username=$server_username" >> $GITHUB_ENV
-          echo "server_password=$server_password" >> $GITHUB_ENV
+          echo "npm_repo=${npm_repo}" >> $GITHUB_ENV
+          echo "npm_token=${npm_token}" >> $GITHUB_ENV
+          echo "maven_repo_url=${maven_repo_url}" >> $GITHUB_ENV
+          echo "maven_release_url=${maven_release_url}" >> $GITHUB_ENV
+          echo "maven_snapshot_url=${maven_snapshot_url}" >> $GITHUB_ENV
+          echo "server_username=${server_username}" >> $GITHUB_ENV
+          echo "server_password=${server_password}" >> $GITHUB_ENV
           echo "nexus_signature=${{ secrets.NEXUS_MAVEN_SIGNATURE }}" >> $GITHUB_ENV
 
       - name: Login to NPM
@@ -184,12 +184,12 @@ jobs:
       - name: Login to Maven
         uses: zepben/maven-login@main
         with:
-          maven-repo-url: ${{ env.maven_repo_url }}
-          maven-release-url: ${{ env.maven_release_url }}
-          maven-snapshot-url: ${{ env.maven_snapshot_url }}
-          server-username: ${{ env.server_username }}
-          server-password: ${{ env.server_password }}
-          nexus-signature: ${{ env.nexus_signature }}
+          maven-repo-url: "${{ env.maven_repo_url }}"
+          maven-release-url: "${{ env.maven_release_url }}"
+          maven-snapshot-url: "${{ env.maven_snapshot_url }}"
+          server-username: "${{ env.server_username }}"
+          server-password: "${{ env.server_password }}"
+          nexus-signature: "${{ env.nexus_signature }}"
 
       - name: Login to Nuget
         run: |
@@ -197,7 +197,7 @@ jobs:
           dotnet nuget add source "${{ secrets.NEXUS_NUGET_FEED }}" --name "Zepben" --username "${{ secrets.NEXUS_USERNAME }}" --password "${{ secrets.NEXUS_PASSWORD }}" --store-password-in-clear-text
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Github Container Registry
         uses: docker/login-action@v4
@@ -226,7 +226,7 @@ jobs:
       # We only attach dev_version tag if dev enabled, and it's different than short sha - meaning branch is properly ticket-named 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.REGISTRY_URL }},enable=${{ inputs.dev == false }}
@@ -244,7 +244,7 @@ jobs:
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ inputs.push_image }}
