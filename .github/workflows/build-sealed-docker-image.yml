@@ -116,6 +116,14 @@ jobs:
         with:
           ref: ${{ inputs.commit }}
 
+       # Checkout the .github repo itself, into a subfolder
+      - name: Checkout .github repo
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: central
+
       - name: Get SHAs
         id: sha
         run: |
