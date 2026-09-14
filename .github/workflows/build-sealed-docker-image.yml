@@ -136,59 +136,59 @@ jobs:
         id: version
         run: |
           # Init regular NPM creds
-          npm-repo=${{ secrets.NEXUS_NPM_REPO }}
-          npm-token=${{ secrets.CI_NPM_TOKEN }}
+          npm_repo=${{ secrets.NEXUS_NPM_REPO }}
+          npm_token=${{ secrets.CI_NPM_TOKEN }}
 
           # Init regular MAVEN creds
-          maven-repo-url=${{ secrets.NEXUS_MAVEN_REPO }}
-          maven-release-url=${{ secrets.NEXUS_MAVEN_RELEASE }}
-          maven-snapshot-url=${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-          server-username=${{ secrets.NEXUS_USERNAME }}
-          server-password=${{ secrets.NEXUS_PASSWORD }}
+          maven_repo_url=${{ secrets.NEXUS_MAVEN_REPO }}
+          maven_release_url=${{ secrets.NEXUS_MAVEN_RELEASE }}
+          maven_snapshot_url=${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+          server_username=${{ secrets.NEXUS_USERNAME }}
+          server_password=${{ secrets.NEXUS_PASSWORD }}
 
           if [ "${{ inputs.dev }}" = "true" ]; then
 
             ticket=$(python3 central/tools/fetch-ticket-sha.py)
-            echo "dev-version=$ticket" >> $GITHUB_OUTPUT
+            echo "dev_version=$ticket" >> $GITHUB_OUTPUT
 
             # Swap Dev NPM
-            npm-repo=${{ secrets.DEV_NEXUS_NPM_REPO }}
-            npm-token=${{ secrets.CI_NPM_DEV_TOKEN }}
+            npm_repo=${{ secrets.DEV_NEXUS_NPM_REPO }}
+            npm_token=${{ secrets.CI_NPM_DEV_TOKEN }}
 
             # Swap Dev Maven
-            maven-repo-url=${{ secrets.DEV_NEXUS_MAVEN_REPO }}
-            maven-release-url=${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
-            maven-snapshot-url=${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
-            server-username=${{ secrets.DEV_NEXUS_USERNAME }}
-            server-password=${{ secrets.DEV_NEXUS_PASSWORD }}
+            maven_repo_url=${{ secrets.DEV_NEXUS_MAVEN_REPO }}
+            maven_release_url=${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
+            maven_snapshot_url=${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
+            server_username=${{ secrets.DEV_NEXUS_USERNAME }}
+            server_password=${{ secrets.DEV_NEXUS_PASSWORD }}
           fi
 
-          echo "npm-repo=$npm_repo" >> $GITHUB_ENV
-          echo "npm-token=$npm_token" >> $GITHUB_ENV
-          echo "maven-repo-url=$maven-repo-url" >> $GITHUB_ENV
-          echo "maven-release-url=$maven-release-url" >> $GITHUB_ENV
-          echo "maven-snapshot-url=$maven-snapshot-url" >> $GITHUB_ENV
-          echo "server-username=$server-username" >> $GITHUB_ENV
-          echo "server-password=$server-password" >> $GITHUB_ENV
-          echo "nexus-signature=${{ secrets.NEXUS_MAVEN_SIGNATURE }}" >> $GITHUB_ENV
+          echo "npm_repo=$npm_repo" >> $GITHUB_ENV
+          echo "npm_token=$npm_token" >> $GITHUB_ENV
+          echo "maven_repo_url=$maven_repo_url" >> $GITHUB_ENV
+          echo "maven_release_url=$maven_release_url" >> $GITHUB_ENV
+          echo "maven_snapshot_url=$maven_snapshot_url" >> $GITHUB_ENV
+          echo "server_username=$server_username" >> $GITHUB_ENV
+          echo "server_password=$server_password" >> $GITHUB_ENV
+          echo "nexus_signature=${{ secrets.NEXUS_MAVEN_SIGNATURE }}" >> $GITHUB_ENV
 
       - name: Login to NPM
         run: |
           rm -rf ~/.npmrc
-          echo "@zepben:registry=https://${{ env.npm-repo }}" >> ~/.npmrc
-          echo "//${{ env.npm-repo }}/:_authToken=${{ env.npm-token }}" >> ~/.npmrc
+          echo "@zepben:registry=https://${{ env.npm_repo }}" >> ~/.npmrc
+          echo "//${{ env.npm_repo }}/:_authToken=${{ env.npm_token }}" >> ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
 
       - name: Login to Maven
         uses: zepben/maven-login@main
         with:
-          maven-repo-url: ${{ env.maven-repo-url }}
-          maven-release-url: ${{ env.maven-release-url }}
-          maven-snapshot-url: ${{ env.maven-snapshot-url }}
-          server-username: ${{ env.server-username }}
-          server-password: ${{ env.server-password }}
-          nexus-signature: ${{ env.nexus-signature }}
+          maven-repo-url: ${{ env.maven_repo_url }}
+          maven-release-url: ${{ env.maven_release_url }}
+          maven-snapshot-url: ${{ env.maven_snapshot_url }}
+          server-username: ${{ env.server_username }}
+          server-password: ${{ env.server_password }}
+          nexus-signature: ${{ env.nexus_signature }}
 
       - name: Login to Nuget
         run: |
@@ -222,7 +222,7 @@ jobs:
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
       # We always push a commit based tag
-      # We only attach dev-version tag if dev enabled, and it's different than short sha - meaning branch is properly ticket-named 
+      # We only attach dev_version tag if dev enabled, and it's different than short sha - meaning branch is properly ticket-named 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -233,12 +233,12 @@ jobs:
             ${{ env.DEV_NEXUS_REGISTRY_URL }},enable=${{ inputs.dev == true }}
           labels: |
             org.opencontainers.image.vendor=Zepben
-            org.opencontainers.dev.version=${{ steps.version.outputs.dev-version }},enable=${{ inputs.dev == true }}
+            org.opencontainers.dev.version=${{ steps.version.outputs.dev_version }},enable=${{ inputs.dev == true }}
           tags: |
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},enable=${{ inputs.sha-tags }},priority=200
             type=raw,value=sha-${{ steps.sha.outputs.long_ref }},enable=${{ inputs.sha-tags }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
-            type=raw,value=${{ steps.version.outputs.dev-version }},enable=${{ inputs.dev && steps.version.outputs.dev-version != steps.sha.outputs.short_ref }},priority=100
+            type=raw,value=${{ steps.version.outputs.dev_version }},enable=${{ inputs.dev && steps.version.outputs.dev_version != steps.sha.outputs.short_ref }},priority=100
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
 
