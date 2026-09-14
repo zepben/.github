@@ -61,6 +61,8 @@ on:
       # Nexus docker CR
       NEXUS_DOCKER_REPO:
         required: true
+      DEV_NEXUS_DOCKER_REPO:
+        required: true
 
       # Maven
       NEXUS_MAVEN_REPO:
@@ -122,38 +124,64 @@ jobs:
           echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
           echo "long_ref=$LONG_REF" >> $GITHUB_OUTPUT
 
-      - name: Figure out the dev version
+      - name: Figure out the dev/version
         id: version
+        if: ${{ inputs.dev == 'true' }}
         run: |
           ticket=$(python3 central/tools/fetch-ticket-sha.py)
-          ecdho "dev-version=$version-$ticket" >> $GITHUB_OUTPUT
+          echo "dev-version=$version-$ticket" >> $GITHUB_OUTPUT
+
+          // Init regular NPM creds
+          npm-repo=${{ secrets.NEXUS_NPM_REPO }}
+          npm-token=${{ secrets.CI_NPM_TOKEN }}
+
+          // Init regular MAVEN creds
+          maven-repo-url=${{ secrets.NEXUS_MAVEN_REPO }}
+          maven-release-url=${{ secrets.NEXUS_MAVEN_RELEASE }}
+          maven-snapshot-url=${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
+          server-username=${{ secrets.NEXUS_USERNAME }}
+          server-password=${{ secrets.NEXUS_PASSWORD }}
+
+          if [ ${{ inputs.dev }} == "true" ]; then
+
+            # Swap Dev NPM
+            npm-repo=${{ secrets.DEV_NEXUS_NPM_REPO }}
+            npm-token=${{ secrets.CI_NPM_DEV_TOKEN }}
+
+            # Swap Dev Maven
+            maven-repo-url=${{ secrets.DEV_NEXUS_MAVEN_REPO }}
+            maven-release-url=${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
+            maven-snapshot-url=${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
+            server-username=${{ secrets.DEV_NEXUS_USERNAME }}
+            server-password=${{ secrets.DEV_NEXUS_PASSWORD }}
+          fi
+
+          echo "npm-repo=$npm_repo" >> $GITHUB_ENV
+          echo "npm-token=$npm_token" >> $GITHUB_ENV
+          echo "maven-repo-url=$maven-repo-url" >> $GITHUB_ENV
+          echo "maven-release-url=$maven-release-url" >> $GITHUB_ENV
+          echo "maven-snapshot-url=$maven-snapshot-url" >> $GITHUB_ENV
+          echo "server-username=$server-username" >> $GITHUB_ENV
+          echo "server-password=$server-password" >> $GITHUB_ENV
+          echo "nexus-signature=${{ secrets.NEXUS_MAVEN_SIGNATURE }}" >> $GITHUB_ENV
 
       - name: Login to NPM
         run: |
           rm -rf ~/.npmrc
-
-
-          // if dev, use dev nexus
-          // otherwise use regular nexus
-          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
-          echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
+          echo "@zepben:registry=${{ env.npm-repo }}" >> ~/.npmrc
+          echo "//${{ env.npm-repo }}/:_authToken=${{ env.npm-token }}" >> ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
 
       - name: Login to Maven
         uses: zepben/maven-login@main
         with:
-          maven-repo-url: ${{ secrets.NEXUS_MAVEN_REPO }}
-          maven-release-url: ${{ secrets.NEXUS_MAVEN_RELEASE }}
-          maven-snapshot-url: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-          server-username: ${{ secrets.NEXUS_USERNAME }}
-          server-password: ${{ secrets.NEXUS_PASSWORD }}
-          nexus-signature: ${{ secrets.NEXUS_SIGNATURE }}
-          dev-maven-repo-url: ${{ secrets.DEV_NEXUS_MAVEN_REPO }}
-          dev-release-url: ${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
-          dev-snapshot-url: ${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
-          dev-server-username: ${{ secrets.DEV_NEXUS_USERNAME }}
-          dev-server-password: ${{ secrets.DEV_NEXUS_PASSWORD }}
+          maven-repo-url: ${{ env.maven-repo-url }}
+          maven-release-url: ${{ env.maven-release-url }}
+          maven-snapshot-url: ${{ env.maven-snapshot-url }}
+          server-username: ${{ env.server-username }}
+          server-password: ${{ env.server-password }}
+          nexus-signature: ${{ env.nexus-signature }}
 
       - name: Login to Nuget
         run: |
@@ -180,9 +208,9 @@ jobs:
       - name: Login to Dev Nexus Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.NEXUS_DOCKER_REPO }} 
-          username: ${{ secrets.NEXUS_USERNAME }}
-          password: ${{ secrets.NEXUS_PASSWORD }}
+          registry: ${{ secrets.DEV_NEXUS_DOCKER_REPO }} 
+          username: ${{ secrets.DEV_NEXUS_USERNAME }}
+          password: ${{ secrets.DEV_NEXUS_PASSWORD }}
 
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
