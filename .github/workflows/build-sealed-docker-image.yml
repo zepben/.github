@@ -134,11 +134,7 @@ jobs:
 
       - name: Figure out the dev/version
         id: version
-        if: ${{ inputs.dev }}
         run: |
-          ticket=$(python3 central/tools/fetch-ticket-sha.py)
-          echo "dev-version=$version-$ticket" >> $GITHUB_OUTPUT
-
           // Init regular NPM creds
           npm-repo=${{ secrets.NEXUS_NPM_REPO }}
           npm-token=${{ secrets.CI_NPM_TOKEN }}
@@ -150,7 +146,10 @@ jobs:
           server-username=${{ secrets.NEXUS_USERNAME }}
           server-password=${{ secrets.NEXUS_PASSWORD }}
 
-          if [ ${{ inputs.dev }} == "true" ]; then
+          if [ "${{ inputs.dev }}" = "true" ]; then
+
+            ticket=$(python3 central/tools/fetch-ticket-sha.py)
+            echo "dev-version=$ticket" >> $GITHUB_OUTPUT
 
             # Swap Dev NPM
             npm-repo=${{ secrets.DEV_NEXUS_NPM_REPO }}
@@ -223,6 +222,7 @@ jobs:
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
       # We always push a commit based tag
+      # We only attach dev-version tag if dev enabled, and it's different than short sha - meaning branch is properly ticket-named 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -238,6 +238,7 @@ jobs:
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},enable=${{ inputs.sha-tags }},priority=200
             type=raw,value=sha-${{ steps.sha.outputs.long_ref }},enable=${{ inputs.sha-tags }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
+            type=raw,value=${{ steps.version.outputs.dev-version }},enable=${{ inputs.dev && steps.version.outputs.dev-version != steps.sha.outputs.short_ref }},priority=100
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
 
