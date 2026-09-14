@@ -135,11 +135,11 @@ jobs:
       - name: Figure out the dev/version
         id: version
         run: |
-          // Init regular NPM creds
+          # Init regular NPM creds
           npm-repo=${{ secrets.NEXUS_NPM_REPO }}
           npm-token=${{ secrets.CI_NPM_TOKEN }}
 
-          // Init regular MAVEN creds
+          # Init regular MAVEN creds
           maven-repo-url=${{ secrets.NEXUS_MAVEN_REPO }}
           maven-release-url=${{ secrets.NEXUS_MAVEN_RELEASE }}
           maven-snapshot-url=${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
