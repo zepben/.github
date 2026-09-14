@@ -134,6 +134,7 @@ jobs:
 
       - name: Figure out the dev/version
         id: version
+        shell: bash
         run: |
           # Init regular NPM creds
           npm_repo=${{ secrets.NEXUS_NPM_REPO }}
