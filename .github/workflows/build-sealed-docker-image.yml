@@ -137,15 +137,15 @@ jobs:
         shell: bash
         run: |
           # Init regular NPM creds
-          npm_repo=${{ secrets.NEXUS_NPM_REPO }}
-          npm_token=${{ secrets.CI_NPM_TOKEN }}
+          npm_repo="${{ secrets.NEXUS_NPM_REPO }}"
+          npm_token="${{ secrets.CI_NPM_TOKEN }}"
 
           # Init regular MAVEN creds
-          maven_repo_url=${{ secrets.NEXUS_MAVEN_REPO }}
-          maven_release_url=${{ secrets.NEXUS_MAVEN_RELEASE }}
-          maven_snapshot_url=${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-          server_username=${{ secrets.NEXUS_USERNAME }}
-          server_password=${{ secrets.NEXUS_PASSWORD }}
+          maven_repo_url="${{ secrets.NEXUS_MAVEN_REPO }}"
+          maven_release_url="${{ secrets.NEXUS_MAVEN_RELEASE }}"
+          maven_snapshot_url="${{ secrets.NEXUS_MAVEN_SNAPSHOT }}"
+          server_username="${{ secrets.NEXUS_USERNAME }}"
+          server_password="${{ secrets.NEXUS_PASSWORD }}"
 
           if [[ "${{ inputs.dev }}" == "true" ]]; then
 
@@ -153,15 +153,15 @@ jobs:
             echo "dev_version=$ticket" >> $GITHUB_OUTPUT
 
             # Swap Dev NPM
-            npm_repo=${{ secrets.DEV_NEXUS_NPM_REPO }}
-            npm_token=${{ secrets.CI_NPM_DEV_TOKEN }}
+            npm_repo="${{ secrets.DEV_NEXUS_NPM_REPO }}"
+            npm_token="${{ secrets.CI_NPM_DEV_TOKEN }}"
 
             # Swap Dev Maven
-            maven_repo_url=${{ secrets.DEV_NEXUS_MAVEN_REPO }}
-            maven_release_url=${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
-            maven_snapshot_url=${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
-            server_username=${{ secrets.DEV_NEXUS_USERNAME }}
-            server_password=${{ secrets.DEV_NEXUS_PASSWORD }}
+            maven_repo_url="${{ secrets.DEV_NEXUS_MAVEN_REPO }}"
+            maven_release_url="${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}"
+            maven_snapshot_url="${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}"
+            server_username="${{ secrets.DEV_NEXUS_USERNAME }}"
+            server_password="${{ secrets.DEV_NEXUS_PASSWORD }}"
           fi
 
           echo "npm_repo=$npm_repo" >> $GITHUB_ENV
