@@ -126,7 +126,7 @@ jobs:
 
       - name: Figure out the dev/version
         id: version
-        if: ${{ inputs.dev == 'true' }}
+        if: ${{ inputs.dev }}
         run: |
           ticket=$(python3 central/tools/fetch-ticket-sha.py)
           echo "dev-version=$version-$ticket" >> $GITHUB_OUTPUT
