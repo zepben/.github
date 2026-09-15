@@ -19,7 +19,7 @@ on:
     secrets:
       CI_GITHUB_TOKEN:
         description: >
-          PAT for docker/login and helm registry login on lint/test
+          PAT for docker/login and helm registry login on lint/pack/test
           (cross-repo OCI pulls e.g. helm-commons).
         required: true
       CI_SECRET_ENV:
@@ -83,8 +83,49 @@ jobs:
             --helm-dir "${{ inputs.helm_dir }}" \
             --chart "${{ matrix.chart }}"
 
-  test:
+  pack-images:
     needs: list-changed
+    if: needs.list-changed.outputs.charts != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: Login to GHCR (docker)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          # PAT: GITHUB_TOKEN cannot read private packages from other repos (e.g. helm-commons).
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Pack chart images
+        run: |
+          zep-dev cluster images pack \
+            --helm-dir "${{ inputs.helm_dir }}" \
+            --output /tmp/chart-images.tar
+
+      - name: Upload chart image archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: chart-images
+          path: /tmp/chart-images.tar
+          retention-days: 1
+          # pack no-ops with no file when no image refs are found
+          if-no-files-found: ignore
+
+  test:
+    needs: [list-changed, pack-images]
     if: needs.list-changed.outputs.charts != '[]'
     runs-on: ubuntu-latest
     strategy:
@@ -113,11 +154,19 @@ jobs:
           # PAT: GITHUB_TOKEN cannot read private packages from other repos (e.g. helm-commons).
           token: ${{ secrets.CI_GITHUB_TOKEN }}
 
+      - name: Download chart image archive
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: chart-images
+          path: /tmp
+
       - name: Create kind cluster
         run: |
           zep-dev cluster create \
             --kind-config "${{ inputs.helm_dir }}/kind-cluster.yaml" \
-            --components "${{ inputs.helm_dir }}/${{ inputs.components }}"
+            --components "${{ inputs.helm_dir }}/${{ inputs.components }}" \
+            --image-archive /tmp/chart-images.tar
           echo "KUBECONFIG=/tmp/kind-k8s-conf.yaml" >> "$GITHUB_ENV"
 
       - name: Test chart
