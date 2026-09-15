@@ -182,7 +182,7 @@ jobs:
           echo "\n" >> ~/.npmrc
 
       - name: Login to Maven
-        uses: zepben/maven-login@more-cleanup-profiles
+        uses: zepben/maven-login@main
         with:
           maven-repo-url: "${{ env.maven_repo_url }}"
           maven-release-url: "${{ env.maven_release_url }}"
