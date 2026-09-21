@@ -37,6 +37,11 @@ on:
         required: false
         type: boolean
         default: true
+      dev:
+        description: This deployment is for dev
+        required: false
+        type: boolean
+        default: false
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -48,9 +53,15 @@ on:
         required: true
       NEXUS_SIGNATURE:
         required: true
+      DEV_NEXUS_USERNAME:
+        required: true
+      DEV_NEXUS_PASSWORD:
+        required: true
 
       # Nexus docker CR
       NEXUS_DOCKER_REPO:
+        required: true
+      DEV_NEXUS_DOCKER_REPO:
         required: true
 
       # Maven
@@ -59,6 +70,12 @@ on:
       NEXUS_MAVEN_SNAPSHOT:
         required: true
       NEXUS_MAVEN_RELEASE:
+        required: true
+      DEV_NEXUS_MAVEN_REPO:
+        required: true
+      DEV_NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      DEV_NEXUS_MAVEN_RELEASE:
         required: true
 
       # NPM
@@ -82,6 +99,7 @@ on:
 env:
   REGISTRY_URL: "ghcr.io/${{ github.repository }}"
   NEXUS_REGISTRY_URL: "${{ secrets.NEXUS_DOCKER_REPO }}/${{ github.repository }}"
+  DEV_NEXUS_REGISTRY_URL: "${{ secrets.DEV_NEXUS_DOCKER_REPO }}/${{ github.repository }}"
 
 jobs:
   build:
@@ -98,6 +116,14 @@ jobs:
         with:
           ref: ${{ inputs.commit }}
 
+       # Checkout the .github repo itself, into a subfolder
+      - name: Checkout .github repo
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: central
+
       - name: Get SHAs
         id: sha
         run: |
@@ -106,23 +132,64 @@ jobs:
           echo "short_ref=$SHORT_REF" >> $GITHUB_OUTPUT
           echo "long_ref=$LONG_REF" >> $GITHUB_OUTPUT
 
+      - name: Figure out the dev/version
+        id: version
+        shell: bash
+        run: |
+          # Init regular NPM creds
+          npm_repo="${{ secrets.NEXUS_NPM_REPO }}"
+          npm_token="${{ secrets.CI_NPM_TOKEN }}"
+
+          # Init regular MAVEN creds
+          maven_repo_url="${{ secrets.NEXUS_MAVEN_REPO }}"
+          maven_release_url="${{ secrets.NEXUS_MAVEN_RELEASE }}"
+          maven_snapshot_url="${{ secrets.NEXUS_MAVEN_SNAPSHOT }}"
+          server_username="${{ secrets.NEXUS_USERNAME }}"
+          server_password="${{ secrets.NEXUS_PASSWORD }}"
+
+          if [[ "${{ inputs.dev }}" == "true" ]]; then
+
+            ticket=$(python3 central/tools/fetch-ticket-sha.py)
+            echo "dev_version=$ticket" >> $GITHUB_OUTPUT
+
+            # Swap Dev NPM
+            npm_repo="${{ secrets.DEV_NEXUS_NPM_REPO }}"
+            npm_token="${{ secrets.CI_NPM_DEV_TOKEN }}"
+
+            # Swap Dev Maven
+            maven_repo_url="${{ secrets.DEV_NEXUS_MAVEN_REPO }}"
+            maven_release_url="${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}"
+            maven_snapshot_url="${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}"
+            server_username="${{ secrets.DEV_NEXUS_USERNAME }}"
+            server_password="${{ secrets.DEV_NEXUS_PASSWORD }}"
+          fi
+
+          echo "npm_repo=${npm_repo}" >> $GITHUB_ENV
+          echo "npm_token=${npm_token}" >> $GITHUB_ENV
+          echo "maven_repo_url=${maven_repo_url}" >> $GITHUB_ENV
+          echo "maven_release_url=${maven_release_url}" >> $GITHUB_ENV
+          echo "maven_snapshot_url=${maven_snapshot_url}" >> $GITHUB_ENV
+          echo "server_username=${server_username}" >> $GITHUB_ENV
+          echo "server_password=${server_password}" >> $GITHUB_ENV
+          echo "nexus_signature=${{ secrets.NEXUS_MAVEN_SIGNATURE }}" >> $GITHUB_ENV
+
       - name: Login to NPM
         run: |
           rm -rf ~/.npmrc
-          echo "@zepben:registry=${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
-          echo "//nexus.z.zepben.cloud/repository/zepben-npm/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
+          echo "@zepben:registry=https://${{ env.npm_repo }}" >> ~/.npmrc
+          echo "//${{ env.npm_repo }}/:_authToken=${{ env.npm_token }}" >> ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
 
       - name: Login to Maven
         uses: zepben/maven-login@main
         with:
-          maven-repo-url: ${{ secrets.NEXUS_MAVEN_REPO }}
-          maven-release-url: ${{ secrets.NEXUS_MAVEN_RELEASE }}
-          maven-snapshot-url: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
-          server-username: ${{ secrets.NEXUS_USERNAME }}
-          server-password: ${{ secrets.NEXUS_PASSWORD }}
-          nexus-signature: ${{ secrets.NEXUS_SIGNATURE }}
+          maven-repo-url: "${{ env.maven_repo_url }}"
+          maven-release-url: "${{ env.maven_release_url }}"
+          maven-snapshot-url: "${{ env.maven_snapshot_url }}"
+          server-username: "${{ env.server_username }}"
+          server-password: "${{ env.server_password }}"
+          nexus-signature: "${{ env.nexus_signature }}"
 
       - name: Login to Nuget
         run: |
@@ -130,43 +197,54 @@ jobs:
           dotnet nuget add source "${{ secrets.NEXUS_NUGET_FEED }}" --name "Zepben" --username "${{ secrets.NEXUS_USERNAME }}" --password "${{ secrets.NEXUS_PASSWORD }}" --store-password-in-clear-text
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Github Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.CI_GITHUB_TOKEN }}
 
       - name: Login to Nexus Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ secrets.NEXUS_DOCKER_REPO }} 
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
 
+      - name: Login to Dev Nexus Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ secrets.DEV_NEXUS_DOCKER_REPO }} 
+          username: ${{ secrets.DEV_NEXUS_USERNAME }}
+          password: ${{ secrets.DEV_NEXUS_PASSWORD }}
+
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
       # We always push a commit based tag
+      # We only attach dev_version tag if dev enabled, and it's different than short sha - meaning branch is properly ticket-named 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ env.REGISTRY_URL }}
-            ${{ env.NEXUS_REGISTRY_URL }}
+            ${{ env.REGISTRY_URL }},enable=${{ inputs.dev == false }}
+            ${{ env.NEXUS_REGISTRY_URL }},enable=${{ inputs.dev == false }}
+            ${{ env.DEV_NEXUS_REGISTRY_URL }},enable=${{ inputs.dev == true }}
           labels: |
             org.opencontainers.image.vendor=Zepben
+            org.opencontainers.dev.version=${{ steps.version.outputs.dev_version }},enable=${{ inputs.dev == true }}
           tags: |
             type=raw,value=sha-${{ steps.sha.outputs.short_ref }},enable=${{ inputs.sha-tags }},priority=200
             type=raw,value=sha-${{ steps.sha.outputs.long_ref }},enable=${{ inputs.sha-tags }},priority=220
             type=raw,value=${{ inputs.version_tag }},enable=${{ inputs.version_tag != '' }},priority=900
+            type=raw,value=${{ steps.version.outputs.dev_version }},enable=${{ inputs.dev && steps.version.outputs.dev_version != steps.sha.outputs.short_ref }},priority=100
             type=raw,value=edge,enable=${{ inputs.edge_tag }},priority=100
             type=raw,value=latest,enable=${{ inputs.latest_tag }},priority=100
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ inputs.push_image }}
