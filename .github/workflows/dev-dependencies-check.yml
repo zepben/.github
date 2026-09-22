@@ -26,6 +26,7 @@ jobs:
       NEXUS_NPM_REPO: ${{ secrets.DEV_NEXUS_NPM_REPO }}
       CI_NPM_TOKEN: ${{ secrets.CI_NPM_DEV_TOKEN }}
     steps:
+      - uses: actions/checkout@v7
        # Checkout the .github repo itself, into a subfolder
       - name: Checkout .github repo
         uses: actions/checkout@v7
