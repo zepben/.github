@@ -26,9 +26,14 @@ jobs:
       NEXUS_NPM_REPO: ${{ secrets.DEV_NEXUS_NPM_REPO }}
       CI_NPM_TOKEN: ${{ secrets.CI_NPM_DEV_TOKEN }}
     steps:
-      - uses: actions/checkout@v7
+       # Checkout the .github repo itself, into a subfolder
+      - name: Checkout .github repo
+        uses: actions/checkout@v7
         with:
-          token: ${{ env.GITHUB_TOKEN }}
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: central
+
 
       - name: Work around git permission issue
         run: |
@@ -37,29 +42,13 @@ jobs:
         shell: sh
 
       - name: Check if there are maven dev dependencies
-        id: test
         shell: bash
         run: |
-          if [ "${{ inputs.lang }}" == "maven" ]; then
-            # Get the dependencies
-            out=$(mvn dependency:list -DincludeGroupIds=com.zepben -B \
-              -P 'zepben-maven' \
-              -f pom.xml \
-              -Dserver.username=$DEV_NEXUS_USERNAME \
-              -Dserver.password=$DEV_NEXUS_PASSWORD \
-              -Dserver.repo.url=$DEV_NEXUS_MAVEN_REPO | grep -F ':jar' | grep -F -e "-dev-")
-            res=$?
-          elif [ "${{ inputs.lang }}" == "npm" ]; then
-            out=$(grep -F "@zepben" package.json | grep -F -e "-dev-")
-            res=$?
-          else
-            echo "Provided lang '${{ inputs.lang }}' is currently unsupported!"
-            exit
-          fi
-
-          if [[ $res == 0 ]]; then
+          shopt -s nocasematch
+          msg=$(python3 central/.github/actions/internal/get_dependencies.py --mode ${{ inputs.lang }})
+          if [ ! -z "$msg" ]; then
             # Found dev dependencies, no need to build-and-test
             echo "Found dev dependencies, skipping project build"
-            echo -e "❌ Build Failed! Found the following dev dependencies:\n\n${out[@]}\n\nClear dev dependencies above when ready to merge." | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+            echo -e "$msg" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
             exit 1
           fi
