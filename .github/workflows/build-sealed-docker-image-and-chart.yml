@@ -44,6 +44,11 @@ on:
         description: Path to the helm directory containing ct.yaml and charts/
         type: string
         default: helm
+      dev:
+        description: This deployment is for dev
+        required: false
+        type: boolean
+        default: false
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -57,9 +62,15 @@ on:
         required: true
       NEXUS_SIGNATURE:
         required: true
+      DEV_NEXUS_USERNAME:
+        required: true
+      DEV_NEXUS_PASSWORD:
+        required: true
 
       # Nexus docker CR
       NEXUS_DOCKER_REPO:
+        required: true
+      DEV_NEXUS_DOCKER_REPO:
         required: true
 
       # Maven
@@ -68,6 +79,12 @@ on:
       NEXUS_MAVEN_SNAPSHOT:
         required: true
       NEXUS_MAVEN_RELEASE:
+        required: true
+      DEV_NEXUS_MAVEN_REPO:
+        required: true
+      DEV_NEXUS_MAVEN_SNAPSHOT:
+        required: true
+      DEV_NEXUS_MAVEN_RELEASE:
         required: true
 
       # NPM
@@ -98,10 +115,16 @@ jobs:
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
       NEXUS_SIGNATURE: ${{ secrets.NEXUS_SIGNATURE }}
+      DEV_NEXUS_USERNAME: ${{ secrets.DEV_NEXUS_USERNAME }}
+      DEV_NEXUS_PASSWORD: ${{ secrets.DEV_NEXUS_PASSWORD }}
       NEXUS_DOCKER_REPO: ${{ secrets.NEXUS_DOCKER_REPO }}
+      DEV_NEXUS_DOCKER_REPO: ${{ secrets.DEV_NEXUS_DOCKER_REPO }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_MAVEN_SNAPSHOT: ${{ secrets.NEXUS_MAVEN_SNAPSHOT }}
       NEXUS_MAVEN_RELEASE: ${{ secrets.NEXUS_MAVEN_RELEASE }}
+      DEV_NEXUS_MAVEN_REPO: ${{ secrets.DEV_NEXUS_MAVEN_REPO }}
+      DEV_NEXUS_MAVEN_SNAPSHOT: ${{ secrets.DEV_NEXUS_MAVEN_SNAPSHOT }}
+      DEV_NEXUS_MAVEN_RELEASE: ${{ secrets.DEV_NEXUS_MAVEN_RELEASE }}
       NEXUS_NPM_REPO: ${{ secrets.NEXUS_NPM_REPO }}
       NEXUS_NUGET_FEED: ${{ secrets.NEXUS_NUGET_FEED }}
     with:
@@ -113,6 +136,7 @@ jobs:
       build-args: ${{ inputs.build-args }}
       commit: ${{ inputs.commit }}
       sha-tags: ${{ inputs.sha-tags }}
+      dev: ${{ inputs.dev }}
 
   validate-image:
     if: ${{ inputs.push_image }}
