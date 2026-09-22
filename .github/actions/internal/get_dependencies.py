@@ -67,8 +67,6 @@ def main() -> int:
         package_list = "\n".join(pkgs)
         msg = f"""❌ Build Failed! Found the following dev dependencies:\n\n{package_list}\n\nClear dev dependencies above when ready to merge."""
         print(msg)
-    else:
-        print("nothing")
     return 0
 
 
