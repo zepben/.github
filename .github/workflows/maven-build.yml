@@ -86,7 +86,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     needs: [check-if-dev]
-    if: ${{ needs.check-if-dev.outputs.should_build == 'yes' }}
     container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     outputs:
       docs-present: ${{ steps.docs.outputs.present }}
