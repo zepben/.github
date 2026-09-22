@@ -62,7 +62,10 @@ def main() -> int:
         pkgs = get_maven_dependencies(root)
 
     if len(pkgs) > 0:
-        msg = f"""❌ Build Failed! Found the following dev dependencies:\n\n{"\n".join(pkgs)}\n\nClear dev dependencies above when ready to merge."""
+        # at python < 3.12, we can't use \n in the f-string, ie can't use f"{\n.join()}"
+        # so predefine the list before using
+        package_list = "\n".join(pkgs)
+        msg = f"""❌ Build Failed! Found the following dev dependencies:\n\n{package_list}\n\nClear dev dependencies above when ready to merge."""
         print(msg)
     else:
         print("nothing")
