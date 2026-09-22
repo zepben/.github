@@ -60,6 +60,6 @@ jobs:
           if [[ $res == 0 ]]; then
             # Found dev dependencies, no need to build-and-test
             echo "Found dev dependencies, skipping project build"
-            echo -e "::error:: ❌ Build Failed! Found the following dev dependencies:\n\n${out[@]}\n\nClear dev dependencies above when ready to merge." | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+            echo -e "❌ Build Failed! Found the following dev dependencies:\n\n${out[@]}\n\nClear dev dependencies above when ready to merge." | gh pr comment ${{ github.event.pull_request.number }} --body-file -
             exit 1
           fi
