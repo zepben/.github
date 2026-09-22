@@ -1,5 +1,5 @@
 name: Check that there are no dev dependecies in the chain
-description: Exits cleanly if there are dev dependecies, comment on PR
+description: Exits with error if there are dev dependecies, comment on PR
 
 inputs:
   lang:
