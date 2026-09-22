@@ -6,8 +6,6 @@ choose the mode so reusable workflow callers cannot select arbitrary files or
 parsing behaviour.
 """
 
-from __future__ import annotations
-
 import argparse
 import sys
 import xml.etree.ElementTree as ET
@@ -15,7 +13,8 @@ from pathlib import Path
 
 
 def get_npm_dependencies(root: Path) -> [str]:
-    with open("package.json", "r") as package:
+    descriptor = root / "package.json"
+    with open(descriptor, "r") as package:
         return [
             f"    {line.strip()}"
             for line in package
@@ -24,8 +23,9 @@ def get_npm_dependencies(root: Path) -> [str]:
 
 
 def get_maven_dependencies(root: Path) -> [str]:
+    descriptor = root / "pom.xml"
     ns = {"m": "http://maven.apache.org/POM/4.0.0"}
-    tree = ET.parse("pom.xml")
+    tree = ET.parse(descriptor)
     root = tree.getroot()
 
     pkgs = []
