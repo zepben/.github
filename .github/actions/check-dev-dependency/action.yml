@@ -1,0 +1,26 @@
+name: Check that there are no dev dependecies in the chain
+description: Exits with error if there are dev dependecies, comment on PR
+
+inputs:
+  lang:
+    description: The project build tool (npm, maven)
+    required: true
+    type: string
+
+
+runs:
+  using: composite
+  steps:
+    - id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        shopt -s nocasematch
+        msg=$(python3 "$GITHUB_ACTION_PATH/../internal/get_dependencies.py" --mode ${{ inputs.lang }})
+        if [ ! -z "$msg" ]; then
+          # Found dev dependencies, no need to build-and-test
+          echo "Found dev dependencies, skipping project build"
+          echo -e "$msg" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+          exit 1
+        fi

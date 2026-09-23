@@ -80,9 +80,21 @@ jobs:
     steps:
       - name: Install Dependencies
         run: |
-          apk add jq tar alpine-conf git curl bash github-cli
+          apk add jq tar alpine-conf git curl bash github-cli python3
 
       - uses: actions/checkout@v7
+
+      - name: Work around git permission issue
+        run: |
+          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
+          git config --global --add safe.directory /__w/$dname/$dname
+        shell: sh
+
+
+      - name: Check dev dependencies
+        uses: $/.github/actions/check-dev-dependency
+        with:
+          lang: npm
 
       - name: Cache nodejs deps
         uses: actions/cache@v6
@@ -91,12 +103,6 @@ jobs:
           key: npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             npm-
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
 
       - name: Cache licence-check
         uses: actions/cache@v6

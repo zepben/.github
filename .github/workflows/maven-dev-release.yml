@@ -52,7 +52,7 @@ jobs:
 
           # Clickup Ticket regex 
           ticket=$(python3 central/tools/fetch-ticket-sha.py)
-          new_version=$version-$ticket    
+          new_version=$version-dev-$ticket
           xmlstarlet ed -P -L -N pom="http://maven.apache.org/POM/4.0.0" -u "/pom:project/pom:version" -v "$new_version" pom.xml
           echo "Updated pom.xml with a new dev version: $new_version"
         shell: bash

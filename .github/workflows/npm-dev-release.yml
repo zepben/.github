@@ -60,14 +60,14 @@ jobs:
           version=$(jq -r .version package.json)
 
           ticket=$(python3 central/tools/fetch-ticket-sha.py)
-          new_version=$version-$ticket    
+          new_version=$version-dev-$ticket
           jq --arg VERSION $new_version '.version = $VERSION' package.json > new_package.json
           mv new_package.json package.json
         shell: bash
 
       - name: Add git info to the package
         run: |
-          python3 central/tools/update_npm_project_for_dev.py
+          python3 central/tools/update-npm-for-dev.py
 
       - name: update .npmrc and package deployment to dev nexus
         run: |
@@ -79,9 +79,12 @@ jobs:
           jq --arg registry ${{ secrets.NEXUS_NPM_DEV_REPO }} '.packageConfig.registry = "$registry"' package.json > new_package.json
           mv new_package.json package.json
 
+          # Now, remove package-lock to allow fetch-locking to dev nexus
+          rm package-lock.json
+
       - name: build and deploy
         id: build
         run: |
-          npm ci
+          npm i
           npm run ci 
           npm run deploy
