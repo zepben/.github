@@ -164,13 +164,6 @@ jobs:
             echo "tag=lts" >> ~/.npmrc
           fi
 
-      - name: Debug npmrc
-        uses: actions/upload-artifact@v7
-        with:
-          name: .npmrc
-          path: /github/home/.npmrc
-          if-no-files-found: error
-
       - name: build
         id: build
         run: |
