@@ -154,23 +154,24 @@ jobs:
 
       - name: create .npmrc
         run: |
-          rm -rf .npmrc
-          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
-          echo "//${{ secrets.NEXUS_NPM_REPO }}/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
+          rm -rf ~/.npmrc
+          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_REPO }}" >> ~/.npmrc
+          echo "//${{ secrets.NEXUS_NPM_REPO }}/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> ~/.npmrc
 
           if [[ ${GITHUB_REF_NAME} =~ "hotfix" ]]; then
-            echo "tag=hotfix" >> .npmrc
+            echo "tag=hotfix" >> ~/.npmrc
           elif [[ ${GITHUB_REF_NAME} =~ "LTS" ]]; then
-            echo "tag=lts" >> .npmrc
+            echo "tag=lts" >> ~/.npmrc
           fi
 
-          echo "path=$(pwd)/.npmrc" >> ${GITHUB_ENV} 
+      - name: Debug file
+        run: ls ~/.npmrc
 
       - name: Debug npmrc
         uses: actions/upload-artifact@v7
         with:
           name: .npmrc
-          path: "${{ env.path }}"
+          path: ~/.npmrc
           if-no-files-found: error
 
       - name: build
