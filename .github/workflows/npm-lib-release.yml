@@ -164,8 +164,6 @@ jobs:
             echo "tag=lts" >> .npmrc
           fi
 
-          echo "\n" >> .npmrc
-
       - name: build
         id: build
         run: |
