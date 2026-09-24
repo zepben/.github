@@ -167,8 +167,11 @@ jobs:
       - name: build
         id: build
         run: |
-          cat .npmrc | sed -e "s/zep/PEZ/g" -e "s/Npm/NPM/g"
-          echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
+          node --version
+          npm --version
+          npm config get registry
+          npm config get userconfig
+          npm pkg get name publishConfig
           npm ci 
           npm run build
           # We run npm pack twice because the command may log extra stdout from the `prepare` script.
