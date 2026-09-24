@@ -167,11 +167,8 @@ jobs:
       - name: build
         id: build
         run: |
-          node --version
-          npm --version
-          npm config get registry
-          npm config get userconfig
-          npm pkg get name publishConfig
+          npm config list
+          npm prefix
           npm ci 
           npm run build
           # We run npm pack twice because the command may log extra stdout from the `prepare` script.
