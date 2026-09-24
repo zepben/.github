@@ -167,8 +167,10 @@ jobs:
       - name: build
         id: build
         run: |
+          cat .npmrc | sed -e "s/npm/NPM/g" -e "s/zepben/ZEPBEN/g"
           npm config get registry | sed -e "s/npm/NPM/g" -e "s/zepben/ZEPBEN/g"
           npm pkg get name publishConfig | sed -e "s/npm/NPM/g" -e "s/zepben/ZEPBEN/g"
+          cat .npmrc | sed -e "s/npm/NPM/g" -e "s/zepben/ZEPBEN/g"
           npm ci 
           npm run build
           # We run npm pack twice because the command may log extra stdout from the `prepare` script.
