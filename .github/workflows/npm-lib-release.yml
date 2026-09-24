@@ -170,7 +170,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: .npmrc
-          path: "${ env.path }"
+          path: $path
           if-no-files-found: error
 
       - name: build
