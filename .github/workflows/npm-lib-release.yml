@@ -167,16 +167,15 @@ jobs:
       - name: build
         id: build
         run: |
-          npm config list
-          npm prefix
+          npm config get registry | sed -e "s/npm/NPM/g" -e "s/zepben/ZEPBEN/g"
+          npm pkg get name publishConfig | sed -e "s/npm/NPM/g" -e "s/zepben/ZEPBEN/g"
           npm ci 
           npm run build
           # We run npm pack twice because the command may log extra stdout from the `prepare` script.
           # We want all logs in CI, but we also want to capture just the artifact name.
           npm pack
           artifact="$(npm pack --foreground-scripts=false --json --dry-run | jq -r .[0].filename)"
-          npm publish --dry-run --loglevel=verbose | sed -e "s/nex/NEX/g" -e "s/mav/MAV/g"
-          npm publish --loglevel=http
+          npm publish
           echo "artifact=$artifact" >> "${GITHUB_OUTPUT}" 
         continue-on-error: true
 
