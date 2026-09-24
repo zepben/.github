@@ -164,19 +164,17 @@ jobs:
             echo "tag=lts" >> ~/.npmrc
           fi
 
-      - name: Debug file
-        run: ls ~/.npmrc
-
       - name: Debug npmrc
         uses: actions/upload-artifact@v7
         with:
           name: .npmrc
-          path: ~/.npmrc
+          path: /github/home/.npmrc
           if-no-files-found: error
 
       - name: build
         id: build
         run: |
+          cat ~/.npmrc
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci --unsafe-perm
           npm run build
