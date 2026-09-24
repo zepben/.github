@@ -167,6 +167,7 @@ jobs:
       - name: build
         id: build
         run: |
+          cat .npmrc | sed -e "s/zep/PEZ/g" -e "s/Npm/NPM/g"
           echo "NPM is sensitive to .npmrc formatting; check that it has a newline at the end!!!"
           npm ci 
           npm run build
