@@ -111,3 +111,35 @@ jobs:
             --chart "$CHART" \
             --registry-config "$HELM_REGISTRY_CONFIG" \
             --oci-repo "$OCI_REPO"
+
+      - name: Dispatch deployments Chainsaw
+        env:
+          CHART: ${{ matrix.chart }}
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          chart_name=$(basename "$CHART")
+          version=$(zep-dev chart version)
+
+          case "$chart_name" in
+            eas-web-client|ewb|hcs|eas) ;;
+            *)
+              echo "Skipping Chainsaw dispatch for chart $chart_name (not staging auto-deploy)"
+              exit 0
+              ;;
+          esac
+
+          case "$version" in
+            0.0.0-*)
+              echo "Skipping Chainsaw dispatch for intermediate version $version"
+              exit 0
+              ;;
+          esac
+
+          echo "Dispatching Argo CD Chainsaw for chart=$chart_name version=$version"
+          if ! gh workflow run argo-cd-chainsaw.yaml \
+            --repo zepben/deployments \
+            --ref main \
+            -f "chart=$chart_name"; then
+            echo "::warning::Failed to dispatch deployments Chainsaw for $chart_name; publish succeeded anyway"
+          fi
