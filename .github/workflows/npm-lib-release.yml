@@ -155,7 +155,7 @@ jobs:
       - name: create .npmrc
         run: |
           rm -rf .npmrc
-          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_REPO }}" >> .npmrc
+          echo "@zepben:registry=https://${{ secrets.NEXUS_NPM_REPO }}/" >> .npmrc
           echo "//${{ secrets.NEXUS_NPM_REPO }}/:_authToken=${{ secrets.CI_NPM_TOKEN }}" >> .npmrc
 
           if [[ ${GITHUB_REF_NAME} =~ "hotfix" ]]; then
