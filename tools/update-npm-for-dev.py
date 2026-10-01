@@ -6,9 +6,6 @@ import sys
 
 
 def update_project():
-    if not os.path.exists("package.json"):
-        sys.exit()
-
     try:
         # 1. Read the current package.json
         with open("package.json", "r", encoding="utf-8") as f:
@@ -48,4 +45,5 @@ def update_project():
 
 
 if __name__ == "__main__":
-    update_project()
+    if os.path.exists("package.json"):
+        update_project()
