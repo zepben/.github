@@ -450,6 +450,23 @@ jobs:
       ARTIFACT: ${{ needs.build-docs.outputs.artifact }}
     secrets: inherit
 
+  delete-release-branch-on-success:
+    needs: [create-release, update-version]
+    if: ${{ always() && needs.create-release.result == 'success' && (needs.update-version.result == 'success' || needs.update-version.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Delete release branch
+        run: |
+          git push origin -d release
+          echo "Release branch was deleted."
+        shell: bash
+
 
   delete-release-branch:
     needs: [create-release, update-version]
