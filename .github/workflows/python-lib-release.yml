@@ -450,10 +450,9 @@ jobs:
       ARTIFACT: ${{ needs.build-docs.outputs.artifact }}
     secrets: inherit
 
-
   delete-release-branch:
     needs: [create-release, update-version]
-    if: failure()
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     env:
       DEBUG: ${{ secrets.DEBUG }}
@@ -469,7 +468,11 @@ jobs:
         run: |
           git config --global user.email "ci@zepben.com"
           git config --global user.name "CI"
-          git push origin -d release
-          echo "There was a failure in the workflow. release branch was deleted."
+          if git ls-remote --exit-code --heads origin release > /dev/null; then
+            git push origin -d release
+            echo "Release branch was deleted."
+          else
+            echo "No release branch exists to delete."
+          fi
           exit 0
         shell: bash
