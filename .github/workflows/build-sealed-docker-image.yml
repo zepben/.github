@@ -181,6 +181,10 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.CI_GITHUB_TOKEN }}" >> ~/.npmrc
           echo "\n" >> ~/.npmrc
 
+      - name: Add git info to the npm package if it exists
+        run: |
+          python3 central/tools/update-npm-for-dev.py
+
       - name: Login to Maven
         uses: zepben/maven-login@main
         with:
