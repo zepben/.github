@@ -1,0 +1,144 @@
+name: Application Integration
+
+on:
+  workflow_call:
+    secrets:
+      CI_GITHUB_TOKEN:
+        required: true
+      NEXUS_MAVEN_REPO:
+        required: true
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD:
+        required: true
+      NEXUS_SIGNATURE:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: application-integration-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint charts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: will-distribution-poc
+
+      # Chart dependencies are pulled from oci://ghcr.io.
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Lint charts
+        run: make lint
+
+  test:
+    name: Deploy and test
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # Reclaim runner preinstalls before building images and creating Kind.
+      - name: Free disk space
+        run: |
+          set -euo pipefail
+
+          echo "=== BEFORE ==="
+          df -h /
+
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc /usr/local/.ghcup
+
+          sudo apt-get remove -y --fix-missing \
+            '^aspnetcore-.*' \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            '^mongodb-.*' \
+            '^mysql-.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            libgl1-mesa-dri \
+            google-cloud-sdk \
+            google-cloud-cli \
+            || true
+          sudo apt-get autoremove -y || true
+          sudo apt-get clean || true
+
+          # Kind has not been created yet; prune any pre-pulled host images.
+          sudo docker image prune --all --force || true
+
+          echo "=== AFTER ==="
+          df -h /
+
+      - name: Checkout application
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: will-distribution-poc
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: corretto
+          java-version: '17'
+          cache: maven
+
+      - name: Login to Maven
+        uses: zepben/maven-login@main
+        with:
+          maven-repo-url: ${{ secrets.NEXUS_MAVEN_REPO }}
+          server-username: ${{ secrets.NEXUS_USERNAME }}
+          server-password: ${{ secrets.NEXUS_PASSWORD }}
+          nexus-signature: ${{ secrets.NEXUS_SIGNATURE }}
+
+      # local-maven is an empty file repository, so it 404s every artifact. Nexus only
+      # hosts com/zepben; without a prefix file the resolver records a not-found for
+      # every public artifact and warns when Central or JCenter then supplies it.
+      - name: Use host Maven cache
+        run: |
+          set -euo pipefail
+          printf 'MAVEN_OPTS=-Dmaven.repo.local=%s\n' "$HOME/.m2/repository" >> "$GITHUB_ENV"
+          printf 'MAVEN_ARGS=%s -P-local-maven\n' "${MAVEN_ARGS:--ntp}" >> "$GITHUB_ENV"
+          filter_dir="$HOME/.m2/repository/.remoteRepositoryFilters"
+          mkdir -p "$filter_dir"
+          printf '%s\n' '## repository-prefixes/2.0' '/com/zepben' > "$filter_dir/prefixes-zepben-maven.txt"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Build distribution
+        run: make build-distribution
+
+      - name: Run integration tests
+        run: make integration-test
