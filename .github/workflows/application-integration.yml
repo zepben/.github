@@ -36,6 +36,43 @@ jobs:
       CI_SECRET_ENV: ${{ secrets.CI_SECRET_ENV }}
       ZEP_DEV_BINDINGS: integration/ci-bindings.yaml
     steps:
+      # Reclaim runner preinstalls before building images and creating Kind.
+      - name: Free disk space
+        run: |
+          set -euo pipefail
+
+          echo "=== BEFORE ==="
+          df -h /
+
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc /usr/local/.ghcup
+
+          sudo apt-get remove -y --fix-missing \
+            '^aspnetcore-.*' \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            '^mongodb-.*' \
+            '^mysql-.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            libgl1-mesa-dri \
+            google-cloud-sdk \
+            google-cloud-cli \
+            || true
+          sudo apt-get autoremove -y || true
+          sudo apt-get clean || true
+
+          # Kind has not been created yet; prune any pre-pulled host images.
+          sudo docker image prune --all --force || true
+
+          echo "=== AFTER ==="
+          df -h /
+
       - name: Checkout application
         uses: actions/checkout@v7
         with:
