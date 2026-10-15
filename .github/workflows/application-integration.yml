@@ -109,8 +109,17 @@ jobs:
           server-password: ${{ secrets.NEXUS_PASSWORD }}
           nexus-signature: ${{ secrets.NEXUS_SIGNATURE }}
 
+      # local-maven is an empty file repository, so it 404s every artifact. Nexus only
+      # hosts com/zepben; without a prefix file the resolver records a not-found for
+      # every public artifact and warns when Central or JCenter then supplies it.
       - name: Use host Maven cache
-        run: echo "MAVEN_OPTS=-Dmaven.repo.local=$HOME/.m2/repository" >> "$GITHUB_ENV"
+        run: |
+          set -euo pipefail
+          printf 'MAVEN_OPTS=-Dmaven.repo.local=%s\n' "$HOME/.m2/repository" >> "$GITHUB_ENV"
+          printf 'MAVEN_ARGS=%s -P-local-maven\n' "${MAVEN_ARGS:--ntp}" >> "$GITHUB_ENV"
+          filter_dir="$HOME/.m2/repository/.remoteRepositoryFilters"
+          mkdir -p "$filter_dir"
+          printf '%s\n' '## repository-prefixes/2.0' '/com/zepben' > "$filter_dir/prefixes-zepben-maven.txt"
 
       - name: Login to GHCR
         uses: docker/login-action@v4
