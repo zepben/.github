@@ -1,0 +1,62 @@
+name: Prepare Kind images
+description: Restore or pack discovered images using an eligible artifact from the caller workflow.
+
+inputs:
+  config:
+    description: Discovery YAML path, relative to the workspace
+    required: true
+  bundle:
+    description: Artifact namespace; change to refresh unchanged image tags
+    default: kind-images-v1
+  github-token:
+    description: Token with Actions read access to the current repository
+    default: ${{ github.token }}
+
+outputs:
+  archive-path:
+    description: Local archive path, or empty when discovery is empty
+    value: ${{ steps.prepare.outputs.archive-path }}
+  artifact-id:
+    description: Restored or uploaded artifact ID
+    value: ${{ steps.prepare.outputs.artifact-id || steps.upload.outputs.artifact-id }}
+  run-id:
+    description: Run containing the artifact
+    value: ${{ steps.prepare.outputs.run-id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare image archive
+      id: prepare
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        IMAGE_CONFIG: ${{ inputs.config }}
+        IMAGE_BUNDLE: ${{ inputs.bundle }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: zep-dev -v ci prepare-image-archive --config "$IMAGE_CONFIG" --bundle "$IMAGE_BUNDLE"
+
+    - name: Download cached images
+      if: steps.prepare.outputs.result == 'hit'
+      uses: actions/download-artifact@v8
+      with:
+        artifact-ids: ${{ steps.prepare.outputs.artifact-id }}
+        run-id: ${{ steps.prepare.outputs.run-id }}
+        github-token: ${{ inputs.github-token }}
+        repository: ${{ github.repository }}
+        path: ${{ steps.prepare.outputs.directory }}
+        merge-multiple: true
+        digest-mismatch: error
+
+    - name: Upload prepared images
+      id: upload
+      if: steps.prepare.outputs.result == 'miss'
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.prepare.outputs.name }}
+        path: |
+          ${{ steps.prepare.outputs.directory }}/images.tar
+          ${{ steps.prepare.outputs.directory }}/images.txt
+        compression-level: 1
+        if-no-files-found: error
+        overwrite: false

@@ -1,0 +1,242 @@
+# Reusable Helm PR workflow with a shared image artifact prepared before tests.
+name: Helm Charts PR (cached)
+
+on:
+  workflow_call:
+    inputs:
+      helm_dir:
+        description: Path to the helm directory containing ct.yaml and charts/
+        type: string
+        default: helm
+      chart_selection:
+        description: Select all charts or only charts changed against the target branch
+        type: string
+        default: changed
+      ci_utils_ref:
+        description: Git ref of zepben/ci-utils for zep-dev install
+        type: string
+        default: main
+      components:
+        description: Cluster components YAML relative to helm_dir
+        type: string
+        default: cluster-components.yaml
+      image_config:
+        description: Discovery YAML path relative to the caller workspace
+        type: string
+        required: true
+      image_bundle:
+        description: Image artifact namespace
+        type: string
+        default: kind-images-v1
+    secrets:
+      CI_GITHUB_TOKEN:
+        description: >
+          PAT for docker/login and helm registry login on lint/test
+          (cross-repo OCI pulls e.g. helm-commons).
+        required: true
+      CI_SECRET_ENV:
+        description: Optional KEY=value lines representing environment variables.
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  list-charts:
+    runs-on: ubuntu-latest
+    outputs:
+      charts: ${{ steps.detect.outputs.charts }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup zep-dev
+        # Relative ./.github/actions resolves to the *caller* workspace (e.g. deployments),
+        # not this reusable-workflow repo — must use an absolute org/repo@ref.
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: List charts
+        id: detect
+        env:
+          CHART_SELECTION: ${{ inputs.chart_selection }}
+          HELM_DIR: ${{ inputs.helm_dir }}
+        run: |
+          case "$CHART_SELECTION" in
+            all)
+              charts=$(zep-dev chart list --helm-dir "$HELM_DIR")
+              ;;
+            changed)
+              charts=$(zep-dev chart list-changed --helm-dir "$HELM_DIR")
+              ;;
+            *)
+              echo "Unsupported chart selection: $CHART_SELECTION" >&2
+              exit 1
+              ;;
+          esac
+          echo "charts=$charts" >> "$GITHUB_OUTPUT"
+          echo "Charts: $charts"
+
+  prepare-images:
+    needs: list-charts
+    if: needs.list-charts.outputs.charts != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      artifact-id: ${{ steps.images.outputs.artifact-id }}
+      run-id: ${{ steps.images.outputs.run-id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: Login to GHCR (docker)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Prepare image artifact
+        id: images
+        uses: zepben/.github/.github/actions/prepare-kind-images@will-cache-images-ci
+        with:
+          config: ${{ inputs.image_config }}
+          bundle: ${{ inputs.image_bundle }}
+
+  lint:
+    needs: list-charts
+    if: needs.list-charts.outputs.charts != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.list-charts.outputs.charts) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          # PAT: GITHUB_TOKEN cannot read private packages from other repos (e.g. helm-commons).
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Lint chart
+        run: |
+          zep-dev chart lint \
+            --helm-dir "${{ inputs.helm_dir }}" \
+            --chart "${{ matrix.chart }}"
+
+  test:
+    needs: [list-charts, prepare-images]
+    if: needs.list-charts.outputs.charts != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.list-charts.outputs.charts) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup zep-dev
+        uses: zepben/.github/.github/actions/setup-zep-dev@main
+        with:
+          ci_utils_ref: ${{ inputs.ci_utils_ref }}
+
+      - name: Login to GHCR (docker)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Helm registry login
+        uses: zepben/.github/.github/actions/helm-registry-login@main
+        with:
+          # PAT: GITHUB_TOKEN cannot read private packages from other repos (e.g. helm-commons).
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Download image artifact
+        if: needs.prepare-images.outputs.artifact-id != ''
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.prepare-images.outputs.artifact-id }}
+          run-id: ${{ needs.prepare-images.outputs.run-id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          path: ${{ runner.temp }}/kind-images
+          merge-multiple: true
+          digest-mismatch: error
+
+      - name: Create kind cluster
+        env:
+          IMAGE_ARCHIVE: ${{ needs.prepare-images.outputs.artifact-id != '' && format('{0}/kind-images/images.tar', runner.temp) || '' }}
+        run: |
+          zep-dev cluster create \
+            --kind-config "${{ inputs.helm_dir }}/kind-cluster.yaml" \
+            --components "${{ inputs.helm_dir }}/${{ inputs.components }}"
+          echo "KUBECONFIG=/tmp/kind-k8s-conf.yaml" >> "$GITHUB_ENV"
+
+      - name: Test chart
+        env:
+          CI_SECRET_ENV: ${{ secrets.CI_SECRET_ENV }}
+        run: |
+          zep-dev chart test \
+            --helm-dir "${{ inputs.helm_dir }}" \
+            --chart "${{ matrix.chart }}"
+
+  required-result:
+    name: Helm chart tests
+    needs: [list-charts, prepare-images, lint, test]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    env:
+      CHARTS: ${{ needs.list-charts.outputs.charts }}
+      LIST_RESULT: ${{ needs.list-charts.result }}
+      PREPARE_RESULT: ${{ needs.prepare-images.result }}
+      LINT_RESULT: ${{ needs.lint.result }}
+      TEST_RESULT: ${{ needs.test.result }}
+    steps:
+      - name: Require successful Helm checks when charts exist
+        run: |
+          if [[ "$LIST_RESULT" != success || -z "$CHARTS" ]]; then
+            echo "Chart discovery did not succeed"
+            exit 1
+          fi
+
+          if [[ "$CHARTS" == '[]' ]]; then
+            if [[ "$PREPARE_RESULT" == skipped && "$LINT_RESULT" == skipped && "$TEST_RESULT" == skipped ]]; then
+              echo "No charts found; Helm checks were skipped"
+              exit 0
+            fi
+          elif [[ "$PREPARE_RESULT" == success && "$LINT_RESULT" == success && "$TEST_RESULT" == success ]]; then
+            echo "All Helm checks passed"
+            exit 0
+          fi
+
+          echo "Helm checks did not complete successfully: preparation=$PREPARE_RESULT lint=$LINT_RESULT test=$TEST_RESULT"
+          exit 1
