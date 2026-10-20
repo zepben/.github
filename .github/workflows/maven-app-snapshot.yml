@@ -76,7 +76,7 @@ jobs:
           if [[ "$BRANCH" == "main" || "$BRANCH" =~ ^hotfix/ || "$BRANCH" =~ ^lts/ ]]; then
             echo "Building snapshot off '$BRANCH' is permitted. Proceeding..."
           else
-            echo "::error::❌ This workflow can only be run manually from the `main`, `LTS` or `Hotfix` branch!"
+            echo "::error::❌ This workflow can only be run manually from the \`main\`, \`LTS\` or \`Hotfix\` branch!"
             exit 1
           fi
 
