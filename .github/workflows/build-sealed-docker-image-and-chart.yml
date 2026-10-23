@@ -95,6 +95,11 @@ on:
       NEXUS_NUGET_FEED:
         required: true
 
+      # Slack
+      SLACK_WEBHOOK:
+        description: Webhook used to report a failed staging deployment dispatch
+        required: false
+
     outputs:
       image_tag:
         description: Primary published image tag
@@ -168,6 +173,7 @@ jobs:
     uses: ./.github/workflows/helm-application-charts-release.yml
     secrets:
       CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
     with:
       commit: ${{ needs.image.outputs.commit_sha }}
       image_tag: ${{ needs.image.outputs.image_tag }}
