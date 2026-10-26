@@ -27,6 +27,9 @@ on:
     secrets:
       CI_GITHUB_TOKEN:
         required: true
+      SLACK_WEBHOOK:
+        description: Webhook used to report a failed staging deployment dispatch
+        required: false
 
 permissions:
   contents: read
@@ -112,34 +115,54 @@ jobs:
             --registry-config "$HELM_REGISTRY_CONFIG" \
             --oci-repo "$OCI_REPO"
 
-      - name: Dispatch deployments Chainsaw
+      - name: Dispatch staging bump
+        id: dispatch
         env:
           CHART: ${{ matrix.chart }}
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           chart_name=$(basename "$CHART")
           version=$(zep-dev chart version)
 
+          # Keep in step with the chart options in zepben/deployments argo-cd-staging-bump.yaml.
           case "$chart_name" in
             eas-web-client|ewb|hcs|eas) ;;
             *)
-              echo "Skipping Chainsaw dispatch for chart $chart_name (not staging auto-deploy)"
+              echo "Skipping staging bump dispatch for chart $chart_name (not staging auto-deploy)"
               exit 0
               ;;
           esac
 
           case "$version" in
             0.0.0-*)
-              echo "Skipping Chainsaw dispatch for intermediate version $version"
+              echo "Skipping staging bump dispatch for intermediate version $version"
               exit 0
               ;;
           esac
 
-          echo "Dispatching Argo CD Chainsaw for chart=$chart_name version=$version"
-          if ! gh workflow run argo-cd-chainsaw.yaml \
+          echo "Dispatching Argo CD staging bump for chart=$chart_name version=$version"
+          if ! gh workflow run argo-cd-staging-bump.yaml \
             --repo zepben/deployments \
             --ref main \
-            -f "chart=$chart_name"; then
-            echo "::warning::Failed to dispatch deployments Chainsaw for $chart_name; publish succeeded anyway"
+            -f "chart=$chart_name" \
+            -f "version=$version"; then
+            # The publish succeeded, so do not fail it. Staging stays on its
+            # previous version, which the next step reports.
+            echo "::warning::Failed to dispatch staging bump for $chart_name $version; publish succeeded anyway"
+            text="Failed to dispatch the staging bump for \`$chart_name\` $version, so staging was not updated. <${RUN_URL}|Investigate>"
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            echo "text=$text" >> "$GITHUB_OUTPUT"
+            echo "$text" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Notify Slack of failed dispatch
+        if: steps.dispatch.outputs.failed == 'true'
+        uses: slackapi/slack-github-action@v4.0.0
+        with:
+          errors: false
+          webhook: ${{ secrets.SLACK_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ${{ toJSON(steps.dispatch.outputs.text) }}
