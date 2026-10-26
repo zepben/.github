@@ -15,7 +15,7 @@ on:
       ci_utils_ref:
         description: Git ref of zepben/ci-utils for zep-dev install
         type: string
-        default: main
+        default: zep-dev-pre-refactor
       components:
         description: Cluster components YAML relative to helm_dir
         type: string

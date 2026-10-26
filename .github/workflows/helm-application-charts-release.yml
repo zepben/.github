@@ -50,7 +50,7 @@ jobs:
       - name: Setup zep-dev
         uses: zepben/.github/.github/actions/setup-zep-dev@main
         with:
-          ci_utils_ref: main
+          ci_utils_ref: zep-dev-pre-refactor
 
       - name: Discover opted-in application charts
         id: charts
@@ -92,7 +92,7 @@ jobs:
       - name: Setup zep-dev
         uses: zepben/.github/.github/actions/setup-zep-dev@main
         with:
-          ci_utils_ref: main
+          ci_utils_ref: zep-dev-pre-refactor
 
       - name: Helm registry login
         uses: zepben/.github/.github/actions/helm-registry-login@main
