@@ -42,6 +42,16 @@ on:
         required: false
         type: boolean
         default: false
+      artifact_name:
+        description: The link to an artifact to wrap
+        required: false
+        type: string
+        default: ''
+      artifact_filename:
+        description: The name the artifact should have to be wrapped in the container
+        required: false
+        type: string
+        default: ''
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -224,6 +234,28 @@ jobs:
           username: ${{ secrets.DEV_NEXUS_USERNAME }}
           password: ${{ secrets.DEV_NEXUS_PASSWORD }}
 
+
+      # This is a support for wrapping artifacts instead of building them.
+      # It requires a separate Dockefile (Dockerfile.wrap) and a name
+      # for the artifact to be wrapped.
+      - name: Download an artifact if provided
+        if: ${{ inputs.artifact_name != '' && inputs.artifact_filename != '' }}
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: built-artifacts
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Rename the artifact if provided
+        if: ${{ inputs.artifact_name != '' && inputs.artifact_filename != '' }}
+        run: |
+          if [ ! -f Dockerfile.wrap ]; then
+            echo "Artifact wrapping was requested (via input params), but Dockerfile.wrap was not found!"
+            exit 1
+          fi
+          mv built-artifacts/* ${{ inputs.artifact_filename }}
+
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
       # We always push a commit based tag
@@ -249,12 +281,14 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v7
+        env:
+          DOCKERFILE: ${{ if inputs.artifact_filename != '' &&  inputs.dockerfile || '${{ inputs.dockerfile }}'.wrap  }}
         with:
           context: .
           push: ${{ inputs.push_image }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          file: ${{ inputs.dockerfile }}
+          file: ${{ env.DOCKERFILE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: ${{ inputs.build-args }}
