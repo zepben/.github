@@ -2,8 +2,6 @@ name: Redeploy docs again without version bump
 
 on:
   workflow_call:
-    branches:
-      - main
     secrets:
       CI_GITHUB_TOKEN:
         required: true
