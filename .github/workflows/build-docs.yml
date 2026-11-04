@@ -73,7 +73,7 @@ jobs:
 
       - name: Build docusaurus
         id: build
-        uses: zepben/docusaurus-action@main
+        uses: zepben/docusaurus-action@DEV-11189-copy-spec-to-versioned-site
         with:
           VERSION: ${{ inputs.VERSION }}
           NPM_REPO: ${{ secrets.NPM_REPO }}
