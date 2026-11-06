@@ -111,10 +111,26 @@ jobs:
       image_tag: ${{ steps.meta.outputs.version }}
       commit_sha: ${{ steps.sha.outputs.long_ref }}
     steps:
+      # When we build a chart for a release, we need to run the build from the tagged release commit,
+      # or we end up publishing the chart under a intermediate RFC version eg  0.0.0-3.14.0.9+13e36cf,
+      # instead of 3.15.0. When we detect we are being passed a valid semver release tag, checkout
+      # the version it points to, which ensures we build our chart off the correctly tagged commit.
+      - name: Resolve ref
+        id: ref
+        env:
+          COMMIT: ${{ inputs.commit }}
+          VERSION_TAG: ${{ inputs.version_tag }}
+        run: |
+          ref="$COMMIT"
+          if [[ -z "$ref" && "$VERSION_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            ref="v$VERSION_TAG"
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.commit }}
+          ref: ${{ steps.ref.outputs.ref }}
 
        # Checkout the .github repo itself, into a subfolder
       - name: Checkout .github repo
