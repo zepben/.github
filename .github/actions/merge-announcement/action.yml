@@ -1,0 +1,50 @@
+name: Merge announcement
+description: >-
+  Create the ClickUp task for a merged pull request under its maintenance backlog task,
+  and render the Slack announcements for it. Run on a checkout of the merge commit.
+
+inputs:
+  app:
+    description: 'Application name shown in announcements, e.g. "COMMONS".'
+    required: true
+  backlog-task:
+    description: 'Custom ID of the maintenance backlog ClickUp task, e.g. "DEV-3959".'
+    required: true
+  version-source:
+    description: 'Project descriptor holding the version: "maven", "npm" or "python".'
+    required: true
+  clickup-team-id:
+    description: ClickUp workspace (team) ID.
+    required: false
+    default: "6929263"
+  clickup-token:
+    description: ClickUp API token.
+    required: true
+
+outputs:
+  task-url:
+    description: URL of the created task; empty when the pull request has no change log block.
+    value: ${{ steps.announce.outputs.task-url }}
+  announcement:
+    description: Slack text for the maintenance backlog announcement.
+    value: ${{ steps.announce.outputs.announcement }}
+  breaking-announcement:
+    description: Slack text for the breaking changes announcement; empty when there are none.
+    value: ${{ steps.announce.outputs.breaking-announcement }}
+
+runs:
+  using: composite
+  steps:
+    - id: announce
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        BACKLOG_TASK: ${{ inputs.backlog-task }}
+        VERSION_SOURCE: ${{ inputs.version-source }}
+        TEAM_ID: ${{ inputs.clickup-team-id }}
+        CLICKUP_TOKEN: ${{ inputs.clickup-token }}
+      run: |
+        set -euo pipefail
+        version="$(python3 "$GITHUB_ACTION_PATH/../internal/get_version.py" --mode "$VERSION_SOURCE")"
+        python3 "$GITHUB_ACTION_PATH/announce.py" \
+          --app "$APP" --backlog-task "$BACKLOG_TASK" --team-id "$TEAM_ID" --version "$version"

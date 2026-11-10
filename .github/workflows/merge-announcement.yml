@@ -1,0 +1,80 @@
+name: Merge Announcement
+
+# Call from a workflow triggered by `pull_request: types: [closed]`. For a merged pull
+# request with an "Application change log updates" block, this creates its ClickUp task
+# and announces it on Slack. Each announcement is its own job, so "Re-run failed jobs"
+# repeats only what failed and never creates a second task or message.
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: 'Application name shown in announcements, e.g. "COMMONS".'
+        type: string
+        required: true
+      backlog-task:
+        description: 'Custom ID of the maintenance backlog ClickUp task, e.g. "DEV-3959".'
+        type: string
+        required: true
+      version-source:
+        description: 'Project descriptor holding the version: "maven", "npm" or "python".'
+        type: string
+        required: true
+    secrets:
+      CLICKUP_TOKEN:
+        required: true
+      SLACK_WEBHOOK_MAINTENANCE_BACKLOG:
+        required: true
+      SLACK_WEBHOOK_BREAKING_CHANGES:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  clickup-task:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      task-url: ${{ steps.announce.outputs.task-url }}
+      announcement: ${{ steps.announce.outputs.announcement }}
+      breaking-announcement: ${{ steps.announce.outputs.breaking-announcement }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          persist-credentials: false
+
+      - id: announce
+        uses: zepben/.github/.github/actions/merge-announcement@main
+        with:
+          app: ${{ inputs.app }}
+          backlog-task: ${{ inputs.backlog-task }}
+          version-source: ${{ inputs.version-source }}
+          clickup-token: ${{ secrets.CLICKUP_TOKEN }}
+
+  maintenance-announcement:
+    needs: clickup-task
+    if: needs.clickup-task.outputs.task-url != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: slackapi/slack-github-action@v4.0.0
+        with:
+          errors: true
+          webhook: ${{ secrets.SLACK_WEBHOOK_MAINTENANCE_BACKLOG }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ${{ toJSON(needs.clickup-task.outputs.announcement) }}
+
+  breaking-changes-announcement:
+    needs: clickup-task
+    if: needs.clickup-task.outputs.breaking-announcement != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: slackapi/slack-github-action@v4.0.0
+        with:
+          errors: true
+          webhook: ${{ secrets.SLACK_WEBHOOK_BREAKING_CHANGES }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ${{ toJSON(needs.clickup-task.outputs.breaking-announcement) }}
