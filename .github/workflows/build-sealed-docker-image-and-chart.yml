@@ -49,6 +49,11 @@ on:
         required: false
         type: boolean
         default: false
+      ci_utils_ref:
+        description: Git ref of zepben/ci-utils to install zep-dev from for chart release
+        required: false
+        type: string
+        default: zep-dev-pre-refactor
     secrets:
       CI_GITHUB_TOKEN:
         required: true
@@ -178,3 +183,4 @@ jobs:
       commit: ${{ needs.image.outputs.commit_sha }}
       image_tag: ${{ needs.image.outputs.image_tag }}
       helm_dir: ${{ inputs.helm_dir }}
+      ci_utils_ref: ${{ inputs.ci_utils_ref }}
