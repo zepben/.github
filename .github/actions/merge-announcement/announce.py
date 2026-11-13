@@ -129,17 +129,32 @@ def clickup_link(team_id: str, custom_id: str) -> str:
     return f"https://app.clickup.com/t/{team_id}/{custom_id}"
 
 
-def task_links(pull_request: PullRequest, team_id: str) -> str:
-    """Links to the ClickUp tickets named in the title, or to the pull request when it names none."""
-    tickets = dict.fromkeys(TICKET.findall(pull_request.title))
-    if not tickets:
-        return f"[#{pull_request.number}]({pull_request.url})"
-    return ", ".join(f"[{ticket}]({clickup_link(team_id, ticket)})" for ticket in tickets)
+def first_ticket(pull_request: PullRequest) -> str | None:
+    """The first ClickUp ticket named in the pull request title."""
+    ticket = TICKET.search(pull_request.title)
+    return ticket.group() if ticket else None
 
 
-def render_task_body(pull_request: PullRequest, notes: ChangeNotes, team_id: str) -> str:
+def link(text: str, target: str) -> str:
+    text = text.replace("[", "\\[").replace("]", "\\]")
+    return f"[{text}]({target})"
+
+
+def task_line(pull_request: PullRequest, team_id: str, ticket_name: str | None) -> str:
+    """Names the ClickUp ticket; says so when the pull request title is shown instead."""
+    ticket = first_ticket(pull_request)
+    if ticket is None:
+        return f"PR: {link(pull_request.title, pull_request.url)}"
+    target = clickup_link(team_id, ticket)
+    if ticket_name is None:
+        return f"{link(pull_request.title, target)} (ticket name unavailable; this is the pull request title)"
+    return link(ticket_name, target)
+
+
+def render_task_body(pull_request: PullRequest, notes: ChangeNotes, team_id: str, ticket_name: str | None) -> str:
     return (
-        f"#### Task: {task_links(pull_request, team_id)}\n\n"
+        f"#### Task: {task_line(pull_request, team_id, ticket_name)}\n\n"
+        f"#### Pull request: {pull_request.url}\n\n"
         f"#### Action/dev notes:\n{notes.description or 'None.'}\n\n"
         f"#### Change log updates:\n\n```markdown\n{notes.changelog}\n```\n"
     )
@@ -189,6 +204,17 @@ class ClickUp:
         except urllib.error.HTTPError as error:
             detail = error.read().decode(errors="replace")
             raise RuntimeError(f"ClickUp {method} {path} failed: HTTP {error.code} {detail}") from None
+
+
+def ticket_name(clickup: ClickUp, team_id: str, pull_request: PullRequest) -> str | None:
+    """The name of the pull request's ClickUp ticket; None when it has no ticket or the ticket cannot be read."""
+    ticket = first_ticket(pull_request)
+    if ticket is None:
+        return None
+    try:
+        return clickup.request("GET", f"/task/{ticket}", custom_task_ids="true", team_id=team_id)["name"]
+    except RuntimeError:
+        return None
 
 
 def create_merge_task(clickup: ClickUp, backlog_task: str, team_id: str, version: str, task_body: str) -> str:
@@ -251,8 +277,9 @@ def main() -> int:
     if not token:
         raise RuntimeError("CLICKUP_TOKEN is not set.")
 
-    task_body = render_task_body(pull_request, notes, args.team_id)
-    task_url = create_merge_task(ClickUp(token), args.backlog_task, args.team_id, args.version, task_body)
+    clickup = ClickUp(token)
+    task_body = render_task_body(pull_request, notes, args.team_id, ticket_name(clickup, args.team_id, pull_request))
+    task_url = create_merge_task(clickup, args.backlog_task, args.team_id, args.version, task_body)
     announcement = render_announcement(args.app, args.version, pull_request, task_url)
     breaking = breaking_changes(notes.changelog)
     breaking_announcement = render_breaking_announcement(announcement, breaking) if breaking else ""

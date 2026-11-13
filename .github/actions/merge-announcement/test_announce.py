@@ -12,7 +12,8 @@ from announce import (
     render_announcement,
     render_breaking_announcement,
     render_task_body,
-    task_links,
+    task_line,
+    ticket_name,
 )
 
 CHANGELOG = """### Breaking Changes
@@ -113,22 +114,35 @@ class Versions(unittest.TestCase):
 
 
 class Rendering(unittest.TestCase):
-    def test_task_links_to_the_clickup_tickets_in_the_title(self):
-        pull_request = PullRequest(1, "[DEV-1] [DEV-2] [DEV-1] Thing", "", "a", "https://pr")
+    def test_task_is_the_name_of_the_first_clickup_ticket_in_the_pull_request_title_linking_to_it(self):
+        pull_request = PullRequest(1, "[DEV-1] [DEV-2] Thing", "", "a", "https://pr")
         self.assertEqual(
-            task_links(pull_request, "6929263"),
-            "[DEV-1](https://app.clickup.com/t/6929263/DEV-1), [DEV-2](https://app.clickup.com/t/6929263/DEV-2)",
+            task_line(pull_request, "6929263", "Ticket [name]"),
+            "[Ticket \\[name\\]](https://app.clickup.com/t/6929263/DEV-1)",
         )
 
-    def test_task_links_to_the_pull_request_when_the_title_names_no_ticket(self):
+    def test_task_is_the_linked_pull_request_title_when_the_title_names_no_ticket(self):
         pull_request = PullRequest(289, "Add tie points", "", "a", "https://github.com/zepben/x/pull/289")
-        self.assertEqual(task_links(pull_request, "6929263"), "[#289](https://github.com/zepben/x/pull/289)")
+        self.assertEqual(
+            task_line(pull_request, "6929263", None),
+            "PR: [Add tie points](https://github.com/zepben/x/pull/289)",
+        )
+
+    def test_task_says_when_the_ticket_name_is_unavailable_and_shows_the_pull_request_title(self):
+        pull_request = PullRequest(1, "[DEV-1] Thing", "", "a", "https://pr")
+        self.assertEqual(
+            task_line(pull_request, "6929263", None),
+            "[\\[DEV-1\\] Thing](https://app.clickup.com/t/6929263/DEV-1) "
+            "(ticket name unavailable; this is the pull request title)",
+        )
 
     def test_task_body_follows_the_maintenance_backlog_format(self):
         notes = ChangeNotes(description="Notes.", changelog=CHANGELOG)
         self.assertEqual(
-            render_task_body(PULL_REQUEST, notes, "6929263"),
-            "#### Task: [DEV-10978](https://app.clickup.com/t/6929263/DEV-10978)\n\n"
+            render_task_body(PULL_REQUEST, notes, "6929263", "Align voltage line candidate info"),
+            "#### Task: [Align voltage line candidate info]"
+            "(https://app.clickup.com/t/6929263/DEV-10978)\n\n"
+            "#### Pull request: https://github.com/zepben/commons/pull/256\n\n"
             "#### Action/dev notes:\nNotes.\n\n"
             f"#### Change log updates:\n\n```markdown\n{CHANGELOG}\n```\n",
         )
@@ -162,6 +176,36 @@ class FakeClickUp:
         if method == "GET":
             return {"id": "backlog", "list": {"id": "list"}, "subtasks": self._subtasks}
         return {"id": f"created-{body['name']}", "custom_id": "DEV-11313"}
+
+
+class TicketName(unittest.TestCase):
+    class Tickets:
+        def __init__(self, response):
+            self.calls = []
+            self._response = response
+
+        def request(self, method, path, body=None, **query):
+            self.calls.append((method, path, query))
+            if isinstance(self._response, Exception):
+                raise self._response
+            return self._response
+
+    def test_the_ticket_name_is_read_from_clickup(self):
+        clickup = self.Tickets({"name": "Trace per AUP"})
+        self.assertEqual(ticket_name(clickup, "6929263", PULL_REQUEST), "Trace per AUP")
+        self.assertEqual(
+            clickup.calls, [("GET", "/task/DEV-10978", {"custom_task_ids": "true", "team_id": "6929263"})]
+        )
+
+    def test_a_title_without_a_ticket_has_no_ticket_name_and_calls_nothing(self):
+        clickup = self.Tickets({"name": "unused"})
+        pull_request = PullRequest(289, "Add tie points", "", "a", "https://pr")
+        self.assertIsNone(ticket_name(clickup, "6929263", pull_request))
+        self.assertEqual(clickup.calls, [])
+
+    def test_an_unreadable_ticket_has_no_ticket_name(self):
+        clickup = self.Tickets(RuntimeError("ClickUp GET failed: HTTP 404"))
+        self.assertIsNone(ticket_name(clickup, "6929263", PULL_REQUEST))
 
 
 class CreatingTheMergeTask(unittest.TestCase):
