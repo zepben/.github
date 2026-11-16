@@ -134,7 +134,7 @@ jobs:
       - name: Maven build and test
         id: build
         run: |
-          mvn clean test -B -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE 
+          mvn clean package -B -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE 
         shell: bash
 
       - name: Upload coverage to Codecov
