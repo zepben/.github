@@ -252,8 +252,8 @@ jobs:
       - name: Rename the artifact if it's provided
         if: ${{ inputs.artifact_name != '' && inputs.artifact_path != '' }}
         run: |
-          ls built-artifacts
-          ls ${{ inputs.artifact_path }}
+          ls -l built-artifacts
+          ls -l target
           mv built-artifacts/* ${{ inputs.artifact_path }}
 
       # Priority sorting determines the tag used in the OCI label
