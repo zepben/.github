@@ -252,6 +252,7 @@ jobs:
       - name: Rename the artifact if it's provided
         if: ${{ inputs.artifact_name != '' && inputs.artifact_path != '' }}
         run: |
+          ls -l
           ls -l built-artifacts
           ls -l target
           mv built-artifacts/* ${{ inputs.artifact_path }}
