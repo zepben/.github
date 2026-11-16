@@ -2,7 +2,7 @@
 # https://cli.github.com/manual/gh_api
 
 repos=(
-    zepben/mvn-lib-ci-test
+    zepben/deployments
 )
 
 for repo in ${repos[@]}; do

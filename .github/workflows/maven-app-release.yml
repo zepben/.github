@@ -57,6 +57,9 @@ on:
       version:
         description: "The current released version."
         value: ${{ jobs.release-checks.outputs.version }}
+      artifact:
+        description: "The built jar"
+        value: ${{ jobs.deploy.outputs.artifact }}
 
 concurrency:
   group: release-snapshot-lock-${{ github.repository }}-${{ github.ref }}

@@ -31,6 +31,11 @@ on:
       LC_URL: 
         required: false
 
+    outputs:
+      artifact:
+        description: "The built jar"
+        value: ${{ jobs.deploy.outputs.artifact }}
+
 concurrency:
   group: build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -131,11 +136,33 @@ jobs:
           restore-keys: |
             maven-
 
+      - name: Extract pom.xml version and set job output
+        id: version
+        uses: $/.github/actions/get-maven-version
+
       - name: Maven build and test
         id: build
         run: |
           mvn clean test -B -f pom.xml -Dserver.username=$NEXUS_USERNAME -Dserver.password=$NEXUS_PASSWORD -Dserver.repo.url=$NEXUS_MAVEN_REPO -Dnexus.signature=$NEXUS_SIGNATURE 
+
+          artifactId=$(xmlstarlet pyx pom.xml | grep -v ^A | xmlstarlet p2x | xmlstarlet sel -t -v "/project/artifactId")
+          version="${{ steps.version.outputs.version }}"
+          artifact="${artifactId}-${version}"
+          mkdir .artifact-$artifact
+          cp target/* -t .artifact-$artifact || :
+          rm .artifact-$artifact/original*.jar || :
+          echo "artifact=$(echo $artifact)" >> ${GITHUB_OUTPUT}
+          echo "artifact-path=$(echo .artifact-$artifact/)" >> ${GITHUB_OUTPUT}
         shell: bash
+
+      - uses: actions/upload-artifact@v7
+        id: upload
+        if: steps.build.outcome == 'success'
+        with:
+          name: ${{ steps.build.outputs.artifact }}
+          path: ${{ steps.build.outputs.artifact-path }}
+          include-hidden-files: true
+          if-no-files-found: error
 
       - name: Upload coverage to Codecov
         if: steps.build.outcome == 'success'

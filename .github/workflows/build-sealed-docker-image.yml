@@ -47,8 +47,8 @@ on:
         required: false
         type: string
         default: ''
-      artifact_filename:
-        description: The name the artifact should have to be wrapped in the container
+      artifact_path:
+        description: The path of the artifact that should be wrapped in the container
         required: false
         type: string
         default: ''
@@ -236,25 +236,23 @@ jobs:
 
 
       # This is a support for wrapping artifacts instead of building them.
-      # It requires a separate Dockefile (Dockerfile.wrap) and a name
-      # for the artifact to be wrapped.
+      # It requires a path/name for the artifact to be wrapped.
+      # The artifact is expected to end up in <some root>/target directory and bear no version
+      # ie, for energy-workbench jar it would be something like `target/energy-workbench-server.jar`
       - name: Download an artifact if provided
-        if: ${{ inputs.artifact_name != '' && inputs.artifact_filename != '' }}
+        if: ${{ inputs.artifact_name != '' && inputs.artifact_path != '' }}
         uses: actions/download-artifact@v8
+        id: get-artifact
         with:
           name: ${{ inputs.artifact_name }}
           path: built-artifacts
           merge-multiple: true
-        continue-on-error: true
+        continue-on-error: false
 
-      - name: Rename the artifact if provided
-        if: ${{ inputs.artifact_name != '' && inputs.artifact_filename != '' }}
+      - name: Rename the artifact if it's provided
+        if: ${{ inputs.artifact_name != '' && inputs.artifact_path != '' }}
         run: |
-          if [ ! -f Dockerfile.wrap ]; then
-            echo "Artifact wrapping was requested (via input params), but Dockerfile.wrap was not found!"
-            exit 1
-          fi
-          mv built-artifacts/* ${{ inputs.artifact_filename }}
+          mv built-artifacts/* ${{ inputs.artifact_path }}
 
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
@@ -281,14 +279,12 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v7
-        env:
-          DOCKERFILE: ${{ if inputs.artifact_filename != '' &&  inputs.dockerfile || '${{ inputs.dockerfile }}'.wrap  }}
         with:
           context: .
           push: ${{ inputs.push_image }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          file: ${{ env.DOCKERFILE }}
+          file: ${{ inputs.dockerfile }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: ${{ inputs.build-args }}
