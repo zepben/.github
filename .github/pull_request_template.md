@@ -1,8 +1,41 @@
 # Description
 
-A summary of the changes and what they achieve. If there is a ClickUp task with decent detail associated with this change the summary can be brief, otherwise please add some motivation and context here.
+<!-- For the reviewer: a summary of the changes and what they achieve. If there is a
+     ClickUp task with decent detail the summary can be brief, otherwise add some
+     motivation and context. If you added new dependencies, state why.
+     Not published. -->
 
-If you have added new dependencies to the project please state why.
+# Upgrade notes
+
+<!-- Published to NEWS.md on merge, if this repository has one.
+     For developers upgrading to this version: what must they change in
+     their code? Replace "None." or leave it. Use ## or smaller for headings. -->
+
+None.
+
+# Change log entries
+
+<!-- Published to NEWS.md on merge, if this repository has one.
+     Entries that repositories using this one copy into their own change log
+     when they upgrade: only what belongs in user facing documentation of
+     applications, not instructions to developers or internal changes (those go
+     in the upgrade notes above).
+     Replace "* None." under each heading that applies; leave the rest. -->
+
+### Breaking Changes
+* None.
+
+### New Features
+* None.
+
+### Enhancements
+* None.
+
+### Fixes
+* None.
+
+### Notes
+* None.
 
 # Associated tasks
 
@@ -35,11 +68,8 @@ When developing applications, use following guidelines for information security 
 ### Documentation
 - [ ] I have updated the changelog.
 - [ ] I have updated any documentation required for these changes.
-
-# Breaking Changes
-- [ ] I have considered if this is a breaking change and will communicate it with other team members by posting it on the Slack **breaking-changes** channel.
-
-Please leave a summary of the breaking changes here and then post it on the Slack **breaking-changes** channel to notify the team about it.
+- [ ] I have filled in the upgrade notes and change log entries above; they are published to NEWS.md on merge, if this repository has one.
+- [ ] If this is a breaking change, I will post it on the Slack **breaking-changes** channel.
 
 # Screenshots
 
@@ -47,6 +77,6 @@ Remove this section if the change cannot be shown through screenshots. Frontend 
 Screenshots can be copy-pasted into Github textboxes and a link will automatically be generated.
 Remove this text if you choose to use this section.
 
-| Before | After |
-| --- | --- |
+| Before                    | After                     |
+|---------------------------|---------------------------|
 | ![image](image-link-here) | ![image](image-link-here) |

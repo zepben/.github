@@ -1,0 +1,35 @@
+name: News
+description: >-
+  In a repository that has a NEWS.md, add upgrade notes from the pull requests merged
+  since the last snapshot bump to it, under the version just published, and stage it so
+  the bump commit carries it. A repository without a NEWS.md is left alone: adding the
+  file (it can be empty) turns news on.
+  Run in the update-snapshot-version job, before update-version.sh.
+
+inputs:
+  version-source:
+    description: 'Project descriptor holding the version: "maven", "npm" or "python".'
+    required: true
+  token:
+    description: Token that can read the repository's pull requests.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        VERSION_SOURCE: ${{ inputs.version-source }}
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        if [ ! -f NEWS.md ]; then
+          echo "No NEWS.md in this repository: news is off."
+          exit 0
+        fi
+        # The range reaches back to the last bump commit, so a shallow checkout is not enough.
+        if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+          git fetch --quiet --unshallow origin
+        fi
+        version="$(python3 "$GITHUB_ACTION_PATH/../internal/get_version.py" --mode "$VERSION_SOURCE")"
+        python3 "$GITHUB_ACTION_PATH/news.py" --version "$version"
