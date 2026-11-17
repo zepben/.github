@@ -245,17 +245,14 @@ jobs:
         id: get-artifact
         with:
           name: ${{ inputs.artifact_name }}
-          path: built-artifacts
+          path: artifacts
           merge-multiple: true
         continue-on-error: false
 
       - name: Rename the artifact if it's provided
         if: ${{ inputs.artifact_name != '' && inputs.artifact_path != '' }}
         run: |
-          ls -l
-          ls -l built-artifacts
-          ls -l target
-          mv built-artifacts/* ${{ inputs.artifact_path }}
+          mv artifacts/* ${{ inputs.artifact_path }}
 
       # Priority sorting determines the tag used in the OCI label
       # The current order preferences the version, then commit, then any special tags
