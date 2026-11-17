@@ -77,11 +77,49 @@ jobs:
             echo -e "${message}" | gh pr comment ${{ github.event.pull_request.number }} --body-file - 
           fi
 
+  docs-precheck:
+    runs-on: ubuntu-latest
+    outputs:
+      docs-present: ${{ steps.docs.outputs.present }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check if docs present
+        id: docs
+        run: |
+          if [ -d docs ]; then
+            echo "Docs folder found, will run the build-docs job"
+            echo "present=yes" >> "${GITHUB_OUTPUT}"
+            echo "present=yes" >> "${GITHUB_ENV}"
+          else
+            echo "Docs folder not found, will skip the build-docs"
+          fi
+
+      - name: Check doc build artifacts are ignored
+        if: ${{ env.present == 'yes' }}
+        shell: sh {0}
+        run: |
+          # Make sure directories are properly ignored
+          # docs/node_modules
+          git check-ignore -q docs/node_modules 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
+              exit 1
+          fi
+
+          # docs/build
+          git check-ignore -q docs/build 
+          if [ $? != 0 ]; then
+              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
+              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
+              exit 1
+          fi
+
   build-and-test:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     outputs:
-      docs-present: ${{ steps.docs.outputs.present }}
+      artifact: ${{ steps.build.outputs.artifact }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
@@ -144,46 +182,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
 
-      - name: Check if docs present
-        id: docs
-        run: |
-          if [ -d docs ]; then
-            echo "Docs folder found, will run the build-docs job"
-            echo "present=yes" >> "${GITHUB_OUTPUT}"
-            echo "present=yes" >> "${GITHUB_ENV}"
-          else
-            echo "Docs folder not found, will skip the build-docs"
-          fi
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
-
-      - name: Check doc build artifacts are ignored
-        if: ${{ env.present == 'yes' }}
-        shell: sh {0}
-        run: |
-          # Make sure directories are properly ignored
-          # docs/node_modules
-          git check-ignore -q docs/node_modules 
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              exit 1
-          fi
-
-          # docs/build
-          git check-ignore -q docs/build 
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
-              exit 1
-          fi
 
   build-docs:
-    needs: [build-and-test]
-    if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
+    needs: [docs-precheck]
+    if: ${{ needs.docs-precheck.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yml
     secrets: inherit
