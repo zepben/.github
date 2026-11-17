@@ -84,6 +84,8 @@ jobs:
 
   docs-precheck:
     runs-on: ubuntu-latest
+    outputs:
+      docs-present: ${{ steps.docs.outputs.present }}
     steps:
       - uses: actions/checkout@v7
       - name: Check if docs present
@@ -123,7 +125,6 @@ jobs:
     container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     outputs:
       artifact: ${{ steps.build.outputs.artifact }}
-      docs-present: ${{ steps.docs.outputs.present }}
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
