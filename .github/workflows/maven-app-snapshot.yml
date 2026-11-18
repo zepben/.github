@@ -231,7 +231,7 @@ jobs:
         shell: sh
 
       - name: Write news
-        uses: zepben/.github/.github/actions/news@main
+        uses: zepben/.github/.github/actions/news@will-clickup-task-automation
         with:
           version-source: maven
           token: ${{ env.GITHUB_TOKEN }}

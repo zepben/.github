@@ -1,39 +1,5 @@
-"""Add upgrade notes from merged pull requests to a news file, under the version just published.
+"""
 
-Runs in a snapshot workflow's update-snapshot-version job, before update-version.sh, in
-repositories that have a NEWS.md; the action skips the others. Adding the file, which can
-be empty, is how a repository turns news on. The file is staged, so the bump commit
-("Update snapshot 1.18.0b26 to 1.18.0b27 [skip ci]") carries it to the branch.
-
-Which pull requests: those merged since the last "Update snapshot" commit, the last time
-this file was written. One snapshot can cover several pull requests (a run was skipped
-because the branch moved, a build failed, or a pull request was merged with [skip ci]);
-all of them land under the first version that contains them.
-
-The file and the bump commit reach the branch together or not at all. So a pull request
-merged since the last bump is never already in the file, and the version being written
-never already has a section: every run adds one new section at the top.
-
-What each entry holds: the pull request's "# Upgrade notes" and each "### " category of
-its "# Change log entries" that is not None. The pull request template pre-fills both with
-None and keeps its instructions in HTML comments, which are dropped. A pull request that
-leaves everything at None gets no entry.
-
-    ## 1.18.0b26
-
-    ### [DEV-10974] Expand candidate info for tap optimization ([#255](https://github.com/...))
-
-    <upgrade notes>
-
-    #### Breaking Changes
-
-    <entries>
-
-    #### Fixes
-
-    <entries>
-
-Parsing and rendering are pure functions; git and GitHub calls are confined to main().
 """
 
 import argparse
@@ -154,9 +120,9 @@ def published(body: str) -> tuple[str, dict[str, str]]:
 
 
 def entry_text(text: str) -> str:
-    """Author text with its headings pushed below the version (`##`) and entry (`###`) headings."""
+    """Author text with its headings pushed below the entry's section (`####`) and category (`#####`) headings."""
     return "\n".join(
-        line if fenced else HEADING.sub(lambda match: "#" * min(len(match.group(1)) + 2, 6), line)
+        line if fenced else HEADING.sub(lambda match: "#" * min(len(match.group(1)) + 3, 6), line)
         for line, fenced in fenced_lines(text)
     )
 
@@ -169,8 +135,10 @@ def escape(text: str) -> str:
 def render_entry(pull_request: PullRequest) -> str:
     """The news entry for a pull request; "" when it has nothing to say."""
     notes, categories = published(pull_request.body)
-    parts = [entry_text(notes)] if notes else []
-    parts += [f"#### {name}\n\n{entry_text(text)}" for name, text in categories.items()]
+    parts = [f"#### {NOTES_HEADING}\n\n{entry_text(notes)}"] if notes else []
+    if categories:
+        entries = [f"##### {name}\n\n{entry_text(text)}" for name, text in categories.items()]
+        parts.append("\n\n".join([f"#### {CHANGELOG_HEADING}", *entries]))
     if not parts:
         return ""
     return "\n\n".join([f"### {escape(pull_request.title)} ([#{pull_request.number}]({pull_request.url}))", *parts])
