@@ -1,0 +1,47 @@
+name: News
+description: Stage public pull request notes in NEWS.md before the snapshot-bump commit.
+
+inputs:
+  version:
+    description: Snapshot version just published, supplied by the build or deploy job
+    required: true
+  token:
+    description: Token that can read the repository's pull requests
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Check NEWS opt-in
+      id: enabled
+      shell: bash
+      run: |
+        if [ -f NEWS.md ]; then
+          echo 'enabled=true' >> "$GITHUB_OUTPUT"
+        else
+          echo 'No NEWS.md in this repository: news is off.'
+        fi
+
+    - name: Install the CLI without managed tools
+      if: steps.enabled.outputs.enabled == 'true'
+      id: setup
+      uses: $/.github/actions/setup-zep-dev
+      with:
+        # Sandbox dependency; replace with the tested commit when promoting.
+        ci_utils_ref: will-add-news-feature
+        install-tools: 'false'
+
+    - name: Write and stage NEWS
+      if: steps.enabled.outputs.enabled == 'true'
+      shell: bash
+      env:
+        ZEP_DEV: ${{ steps.setup.outputs.executable }}
+        NEWS_VERSION: ${{ inputs.version }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        # NEWS's range reaches back to the last bump, not just the checkout tip.
+        if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+          git fetch --quiet --unshallow origin
+        fi
+        "$ZEP_DEV" ci news --version "$NEWS_VERSION" --repository "$GITHUB_REPOSITORY" | tee -a "$GITHUB_STEP_SUMMARY"

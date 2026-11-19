@@ -1,8 +1,36 @@
 # Description
 
-A summary of the changes and what they achieve. If there is a ClickUp task with decent detail associated with this change the summary can be brief, otherwise please add some motivation and context here.
+> [!NOTE]
+> **The Upgrade notes and Change log entries below are copied into `NEWS.md` when
+> a snapshot is published**
+>
+> Upgrade notes tell developers what to change when updating this dependency.
+> Change log entries are for downstream applications and user-facing documentation.
+>
+> Replace `None.` or `* None.` where needed; leave the other placeholders.
+> Use paragraphs, lists, links and code examples. Keep the template headings and
+> do not add headings within your notes. This notice is not copied into NEWS.
 
-If you have added new dependencies to the project please state why.
+# Upgrade notes
+
+None.
+
+# Change log entries
+
+### Breaking Changes
+* None.
+
+### New Features
+* None.
+
+### Enhancements
+* None.
+
+### Fixes
+* None.
+
+### Notes
+* None.
 
 # Associated tasks
 
@@ -35,11 +63,7 @@ When developing applications, use following guidelines for information security 
 ### Documentation
 - [ ] I have updated the changelog.
 - [ ] I have updated any documentation required for these changes.
-
-# Breaking Changes
-- [ ] I have considered if this is a breaking change and will communicate it with other team members by posting it on the Slack **breaking-changes** channel.
-
-Please leave a summary of the breaking changes here and then post it on the Slack **breaking-changes** channel to notify the team about it.
+- [ ] If this is a breaking change, I will post it on the Slack **breaking-changes** channel.
 
 # Screenshots
 
@@ -47,6 +71,6 @@ Remove this section if the change cannot be shown through screenshots. Frontend 
 Screenshots can be copy-pasted into Github textboxes and a link will automatically be generated.
 Remove this text if you choose to use this section.
 
-| Before | After |
-| --- | --- |
+| Before                    | After                     |
+|---------------------------|---------------------------|
 | ![image](image-link-here) | ![image](image-link-here) |
