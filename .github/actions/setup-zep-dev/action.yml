@@ -1,43 +1,52 @@
 name: Setup zep-dev
-description: Install Python and the zep-dev CLI (from zepben/ci-utils) with its tools on PATH.
+description: Install zep-dev using the existing Python in an isolated virtualenv, optionally with managed tools.
 
 inputs:
   ci_utils_ref:
-    description: Git ref of zepben/ci-utils for zep-dev install
+    description: Utility revision selected by the calling action or workflow
     required: false
     default: 'zep-dev-pre-refactor'
-  python-version:
-    description: Python version to install
+  install-tools:
+    description: Install managed tools and add their paths; false returns only the CLI executable
     required: false
-    default: '3.14'
+    default: 'true'
+
+outputs:
+  executable:
+    description: Absolute path to zep-dev in the installed virtualenv
+    value: ${{ steps.install.outputs.executable }}
 
 runs:
   using: composite
   steps:
-    - name: Setup Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ inputs.python-version }}
-
     - name: Cache zep-dev tools
+      if: inputs.install-tools == 'true'
       uses: actions/cache@v6
       with:
         path: ~/.local/share/${{ github.event.repository.name }}
-        key: zep-dev-tools-${{ runner.os }}-${{ inputs.ci_utils_ref }}
+        key: zep-dev-tools-${{ runner.os }}-${{ runner.arch }}-${{ inputs.ci_utils_ref }}
 
     - name: Cache pip downloads
       uses: actions/cache@v6
       with:
         path: ~/.cache/pip
-        key: zep-dev-pip-${{ runner.os }}-${{ inputs.ci_utils_ref }}
+        key: zep-dev-pip-${{ runner.os }}-${{ runner.arch }}-${{ inputs.ci_utils_ref }}
 
     - name: Install zep-dev
+      id: install
       shell: bash
+      env:
+        CI_UTILS_REF: ${{ inputs.ci_utils_ref }}
+        INSTALL_TOOLS: ${{ inputs.install-tools }}
       run: |
-        python -m venv .venv
-        # shellcheck disable=SC1091
-        source .venv/bin/activate
-        pip install "git+https://github.com/zepben/ci-utils.git@${{ inputs.ci_utils_ref }}#subdirectory=zep-dev"
-        zep-dev tools install
-        echo "$(zep-dev tools path)" >> "$GITHUB_PATH"
-        echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+        set -euo pipefail
+        # Keep the venv's parent name consistent with the managed-tool cache.
+        install_root=$(mktemp -d "$RUNNER_TEMP/zep-dev.XXXXXX")
+        venv="$install_root/${GITHUB_REPOSITORY##*/}/.venv"
+        python3 -m venv "$venv"
+        "$venv/bin/python" -m pip install "git+https://github.com/zepben/ci-utils.git@${CI_UTILS_REF}#subdirectory=zep-dev"
+        printf 'executable=%s\n' "$venv/bin/zep-dev" >> "$GITHUB_OUTPUT"
+        if [ "$INSTALL_TOOLS" = 'true' ]; then
+          "$venv/bin/zep-dev" tools install
+          printf '%s\n' "$("$venv/bin/zep-dev" tools path)" "$venv/bin" >> "$GITHUB_PATH"
+        fi
