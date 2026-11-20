@@ -75,8 +75,6 @@ jobs:
     continue-on-error: false
     env:
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-    outputs:
-      docs-present: ${{ steps.docs.outputs.present }}
     steps:
       - name: Install Dependencies
         run: |
@@ -133,6 +131,16 @@ jobs:
           npm ci --unsafe-perm
           npm run ci
 
+  docs-precheck:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    outputs:
+      docs-present: ${{ steps.docs.outputs.present }}
+
+    steps:
+
+      - uses: actions/checkout@v7
+
       - name: Check if docs present
         id: docs
         run: |
@@ -170,31 +178,8 @@ jobs:
               echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
               exit 1
           fi
-
   build-docs:
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
-    container: zepben/pipeline-docusaurus
-    steps:
-
-      - uses: actions/checkout@v7
-
-      - name: Check that title is defined in the repo
-        run: |
-          if [[ -d docs/site-config && -z $DOCS_TITLE ]]; then
-            echo "The \$DOCS_TITLE environment variable needs to be set on this repo!"
-            exit 1
-          fi
-        env:
-          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
-        shell: bash
-
-      - name: Build docusaurus
-        id: build
-        uses: zepben/docusaurus-action@main
-        with:
-          TAG: false
-          NPM_REPO: ${{ secrets.NPM_REPO }}
-          NPM_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-          DOCS_TITLE: ${{ vars.DOCS_TITLE }}
+    needs: [docs-precheck]
+    if: ${{ needs.docs-precheck.outputs.docs-present == 'yes' }}
+    uses: ./.github/workflows/build-docs.yml
+    secrets: inherit

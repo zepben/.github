@@ -138,6 +138,15 @@ jobs:
           npm ci --unsafe-perm
           npm run ci
 
+  docs-precheck:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    outputs:
+      docs-present: ${{ steps.docs.outputs.present }}
+
+    steps:
+
+      - uses: actions/checkout@v7
       - name: Check if docs present
         id: docs
         run: |
@@ -148,12 +157,6 @@ jobs:
           else
             echo "Docs folder not found, will skip the build-docs"
           fi
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
 
       - name: Check doc build artifacts are ignored
         if: ${{ env.present == 'yes' }}
@@ -177,7 +180,7 @@ jobs:
           fi
 
   build-docs:
-    needs: [build-and-test]
-    if: ${{ needs.build-and-test.outputs.docs-present == 'yes' }}
+    needs: [docs-precheck]
+    if: ${{ needs.docs-precheck.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yml
     secrets: inherit
