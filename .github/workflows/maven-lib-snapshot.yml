@@ -245,6 +245,12 @@ jobs:
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
 
+      - name: Write news
+        uses: $/.github/actions/news
+        with:
+          version: ${{ needs.deploy.outputs.version }}
+          token: ${{ env.GITHUB_TOKEN }}
+
       - name: Update snapshot version
         run: |
           /scripts/update-version.sh --java --snapshot --maven pom.xml
