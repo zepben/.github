@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     container: zepben/pipeline-java-ewb:${{ inputs.java-major-version }}-latest
     env:
+      # TOKEN is needed for the licence checked - there's a gh cli running and it requires the token to parse repos
       GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
       NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
