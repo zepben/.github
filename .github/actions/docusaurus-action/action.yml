@@ -1,0 +1,181 @@
+name: 'Docusaurus Release Action'
+description: 'Build docusaurus project as part of the build process.'
+inputs:
+  VERSION:
+    description: "The project version."
+    required: false
+    type: string
+    default: '0'
+  CHANGELOG_FILE:
+    description: "File containing the current changelog."
+    default: changelog.md
+    required: true
+  RELEASE_NOTES:
+    description: "Path to the release notes file."
+    default: ./src/pages/release-notes.md
+    required: true
+  NPM_REPO:
+    description: "The package repo for npm to use."
+    required: true
+  NPM_TOKEN:
+    description: "Token for authenticating with NPM_REPO."
+    required: true
+  DOCS_TITLE:
+    description: "The title for docusaurus configuration"
+    required: true
+  PRODUCT:
+    description: "The product to build for, evolve or ednar"
+    required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - shell: sh
+      if: ${{ inputs.VERSION != '0' }}
+      run: |
+        # "Checkout 'release' branch"
+        git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+        git fetch --all
+        git checkout release
+
+    - shell: bash
+      env:
+        REPO_NAME: ${{ github.repository }}
+        DOCS_TITLE: ${{ inputs.DOCS_TITLE }}
+        PRODUCT: ${{ inputs.PRODUCT }}
+      run: |
+        # Copy all the templates if on Docusaurus3, but don't build
+        cd docs
+        /templates/build.sh --skip-build
+        cd ..
+
+    - name: Detect build folder and release-notes
+      shell: bash
+      run: |
+        docs="$(pwd)/docs"
+        site="$docs"
+        if [ -d ${docs}/site-config ]; then
+          site="${docs}/site-config"
+
+          # on Docusaurus3 we don't need to fetch deps 
+          echo "skip_deps=yes" >> $GITHUB_ENV
+        fi
+        echo "docs=$docs" >> $GITHUB_ENV
+        echo "site=$site" >> $GITHUB_ENV
+
+        pushd "${site}"
+
+        if [ -f "release-notes.md" ]; then
+          echo "release_notes=$(pwd)/release-notes.md" >> $GITHUB_ENV
+        elif [ -f ${{ inputs.RELEASE_NOTES }} ]; then
+          echo "release_notes=${{ inputs.RELEASE_NOTES }}" >> $GITHUB_ENV
+        else
+          echo "I couldn't find release notes in ${{ inputs.RELEASE_NOTES }} nor in $(pwd)/release-notes.md"
+          exit 1
+        fi
+
+        popd
+
+    - name: Fetch dependencies
+      shell: bash
+      run: |
+        # "Update npmrc"
+        pushd "${site}"
+        rm -f .npmrc
+        echo "@zepben:registry=${{inputs.NPM_REPO}}" >> .npmrc
+        echo "//npm.pkg.github.com/:_authToken=${{inputs.NPM_TOKEN}}" >> .npmrc
+
+        # fetch dependencies for Docusaurus2 
+        if [ "${skip_deps}" != "yes" ]; then 
+          npm ci
+        fi
+        popd 
+
+    - name: Create a version
+      shell: bash
+      if: ${{ inputs.VERSION != '0' }}
+      run: |
+        # VERSION the new documentation
+
+        pushd "${site}"
+        
+        # The following command creates versioned docs/sidebars folders
+        npm run docusaurus docs:version ${{ inputs.VERSION }}
+
+        # The following copy creates a versioned spec folder
+        if [[ -d "${docs}/spec" && -d "${site}/static/spec" ]]; then
+          cp -r "${docs}/spec" "${site}/static/spec/${{ inputs.VERSION }}"
+        fi
+
+        popd
+
+    - name: Update release notes
+      shell: bash
+      if: ${{ inputs.VERSION != '0' }}
+      run: |
+        # Update the release notes
+        header="## [${{ inputs.VERSION }}]"
+        changelog=$(sed -n -E "/${{ inputs.VERSION }}/,/## [[0-9]+\.[0-9]+\.[0-9]+]/ { /## \[/d;p }" ${{ inputs.CHANGELOG_FILE }})
+        to_append="$header\n\n$changelog\n\n---\n"
+
+        pushd "${site}"
+
+        flat_version=$(echo ${{ inputs.VERSION }} | sed "s/\.//g")
+        sed -i "5i \|\[${{ inputs.VERSION }}\]\(\#${flat_version}\)\| \`$(date +'%d %B %Y')\` \|" "${release_notes}"
+        export ln=$(cat "${release_notes}" | grep -E -n "#+ \[[0-9]+.[0-9]+.[0-9]+" | head -1 | cut -d':' -f1)
+        if [ -z "$ln" ]; then
+          echo "${changelog}\n\n---\n" >> "${release_notes}"
+        else
+          awk -v n=$ln -v s="$to_append" 'NR == n {print s} {print}' "${release_notes}" > release-notes.tmp
+          mv release-notes.tmp ${release_notes}
+        fi
+        popd
+
+    - name: Build the documentation site
+      shell: bash
+      run: |
+        pushd "${site}"
+        npm run build
+
+        # Finally, we can copy out the build directory from site-config if in docusaurus3, so that zipper can do its thing
+        if [ $(basename $(pwd)) == "site-config" ]; then
+          mv build ..
+        fi
+
+        # Cleanup the "next" spec folder as it's temporary and needed for the build only
+        if [ -d "${site}/static/spec/next" ]; then
+          rm -rf "${site}/static/spec/next"
+        fi
+
+        popd
+
+    - name: Commit the results
+      shell: bash
+      if: ${{ inputs.VERSION != '0' }}
+      run: |
+        # "Commit the release branch"
+        cd docs
+
+        if [ -d site-config ]; then
+          # if on Docusaurus3, copy over the artefacts
+          \cp -frL site-config/versioned_docs/* archive/versioned_docs/
+          \cp -frL site-config/versioned_sidebars/* archive/versioned_sidebars/
+          if [ -d site-config/static/spec ]; then
+            \cp -fr site-config/static/spec archive/versioned_spec
+          fi
+          \cp -rf site-config/versions.json archive/
+
+          # restore .npmrc
+          git restore site-config/.npmrc
+        else
+          git restore .npmrc
+        fi
+
+        git add .
+        git config user.email "ci.github@zepben.com"
+        git config user.name "Github CI"
+        git commit -m "Tagging documentation with version ${{ inputs.VERSION }} [skip ci]"
+        git push origin release
+
+        # Get back home
+        cd
