@@ -3,11 +3,6 @@ name: NPM Lib Build
 on:
   workflow_call:
     inputs:
-      private:
-        description: 'Calling workflow from a private repo'
-        required: false
-        type: boolean
-        default: true
       sourcepath:
         description: 'Path to source directory (used for licence check)'
         required: false
@@ -29,45 +24,12 @@ concurrency:
 
 jobs:
   check-for-leaks:
-    runs-on: ubuntu-latest
-    container: zepben/pipeline-basic
-    env:
-      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+    uses: ./.github/workflows/check-git-leaks.yml
+    secrets: inherit
 
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
-
-      # - name: fetch gitleaks config
-      #   run: |
-      #     if [ ! -f gitleaks.toml ]; then
-      #       cp /configs/gitleaks.toml .
-      #     fi
-      #   shell: bash
-
-      - uses: gitleaks/gitleaks-action@v2
-        id: leaks
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # GITLEAKS_CONFIG: gitleaks.toml
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
-          GITLEAKS_VERSION: latest
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
-        continue-on-error: true
-
-      - name: Comment on pr
-        if: steps.leaks.outcome == 'failure'
-        run: |
-          if [ "x${{ github.event.pull_request.number }}" != "x" ]; then
-            message="Some secret leaks were potentially detected in this PR.\nCheck https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} for more info"
-            echo -e "${message}" | gh pr comment ${{ github.event.pull_request.number }} --body-file - 
-          fi
+  check-docs:
+    uses: ./.github/workflows/check-docs.yml
+    secrets: inherit
 
   build-and-test:
     runs-on: ubuntu-latest
@@ -81,13 +43,6 @@ jobs:
           apk add jq tar alpine-conf git curl bash github-cli python3
 
       - uses: actions/checkout@v7
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
-
 
       - name: Check dev dependencies
         uses: $/.github/actions/check-dev-dependency
@@ -131,55 +86,8 @@ jobs:
           npm ci --unsafe-perm
           npm run ci
 
-  docs-precheck:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    outputs:
-      docs-present: ${{ steps.docs.outputs.present }}
-
-    steps:
-
-      - uses: actions/checkout@v7
-
-      - name: Check if docs present
-        id: docs
-        run: |
-          if [ -d docs ]; then
-            echo "Docs folder found, will run the build-docs job"
-            echo "present=yes" >> "${GITHUB_OUTPUT}"
-            echo "present=yes" >> "${GITHUB_ENV}"
-          else
-            echo "Docs folder not found, will skip the build-docs"
-          fi
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
-
-      - name: Check doc build artifacts are ignored
-        if: ${{ env.present == 'yes' }}
-        shell: sh {0}
-        run: |
-          # Make sure directories are properly ignored
-          # docs/node_modules
-          git check-ignore -q docs/node_modules
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              exit 1
-          fi
-
-          # docs/build
-          git check-ignore -q docs/build
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/build' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
-              exit 1
-          fi
   build-docs:
-    needs: [docs-precheck]
-    if: ${{ needs.docs-precheck.outputs.docs-present == 'yes' }}
+    needs: [check-docs]
+    if: ${{ needs.check-docs.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yml
     secrets: inherit

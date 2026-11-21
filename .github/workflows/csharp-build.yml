@@ -8,11 +8,6 @@ on:
         required: false
         default: ''
         type: string
-      private:
-        description: 'Calling workflow from a private repo'
-        required: false
-        type: boolean
-        default: true
       sourcepath:
         description: 'Path to source directory (used for licence check)'
         required: false
@@ -44,47 +39,14 @@ concurrency:
  
 jobs:
   check-for-leaks:
-    runs-on: ubuntu-latest
-    container: zepben/pipeline-basic
-    env:
-      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+    uses: ./.github/workflows/check-git-leaks.yml
+    secrets: inherit
 
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
+  check-docs:
+    uses: ./.github/workflows/check-docs.yml
+    secrets: inherit
 
-      # - name: fetch gitleaks config
-      #   run: |
-      #     if [ ! -f gitleaks.toml ]; then
-      #       cp /configs/gitleaks.toml .
-      #     fi
-      #   shell: bash
-
-      - uses: gitleaks/gitleaks-action@v2
-        id: leaks
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # GITLEAKS_CONFIG: gitleaks.toml
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
-          GITLEAKS_VERSION: latest
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
-        continue-on-error: true
-
-      - name: Comment on pr
-        if: steps.leaks.outcome == 'failure'
-        run: |
-          if [ "x${{ github.event.pull_request.number }}" != "x" ]; then
-            message="Some secret leaks were potentially detected in this PR.\nCheck https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} for more info"
-            echo -e "${message}" | gh pr comment ${{ github.event.pull_request.number }} --body-file - 
-          fi
-
-  checks:
+  check-licence:
     runs-on: ubuntu-latest
     container: zepben/pipeline-basic
     outputs: 
@@ -95,12 +57,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN }}
-
-      - name: Work around git permission issue
-        run: |
-          dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-          git config --global --add safe.directory /__w/$dname/$dname
-        shell: sh
 
       - name: Cache licence-check
         uses: actions/cache@v6
@@ -114,41 +70,8 @@ jobs:
           LC_URL: ${{ secrets.LC_URL }}
           PATH: ${{ inputs.sourcepath }}
 
-      - name: Check if docs present
-        id: docs
-        shell: bash
-        run: |
-          if [ -d docs ]; then
-            echo "Docs folder found, will run the build-docs job"
-            echo "present=yes" >> "${GITHUB_OUTPUT}"
-            echo "present=yes" >> "${GITHUB_ENV}"
-          else
-            echo "Docs folder not found, will skip the build-docs"
-          fi
-
-      - name: Check doc build artifacts are ignored
-        if: ${{ env.present == 'yes' }}
-        shell: sh {0}
-        run: |
-          # Make sure directories are properly ignored
-          # docs/node_modules
-          git check-ignore -q docs/node_modules 
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/node_modules' to .gitignore"
-              exit 1
-          fi
-
-          # docs/build
-          git check-ignore -q docs/build 
-          if [ $? != 0 ]; then
-              echo "ERROR! Make sure to add 'docs/docs' to .gitignore"
-              echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
-              exit 1
-          fi
-
   build-and-test:
-    needs: checks
+    needs: check-licence
     runs-on: windows-2025
     strategy:
       matrix:
@@ -162,12 +85,6 @@ jobs:
       with:
         fetch-depth: 0
         token: ${{ env.GITHUB_TOKEN }}
-
-    - name: Work around git permission issue
-      run: |
-        dname=$(echo ${{github.repository}} | cut -d'/' -f2)
-        git config --global --add safe.directory /__w/$dname/$dname
-      shell: sh
 
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v4
@@ -204,7 +121,7 @@ jobs:
       run: vstest.console.exe ${{ inputs.test_files }} /Platform:${{ matrix.platform }}
 
   build-docs:
-    needs: [checks]
-    if: ${{ needs.checks.outputs.docs-present == 'yes' }}
+    needs: [check-docs, check-licence]
+    if: ${{ needs.check-docs.outputs.docs-present == 'yes' }}
     uses: ./.github/workflows/build-docs.yml
     secrets: inherit

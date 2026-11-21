@@ -1,0 +1,33 @@
+name: Check gitleaks
+
+on: 
+  workflow_call:
+
+jobs:
+  check-for-leaks:
+    runs-on: ubuntu-latest
+    container: zepben/pipeline-basic
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v3
+        id: leaks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_CONFIG: gitleaks.toml
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} 
+          GITLEAKS_VERSION: latest
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+        continue-on-error: true
+
+      - name: Comment on pr
+        if: steps.leaks.outcome == 'failure'
+        run: |
+          if [ "x${{ github.event.pull_request.number }}" != "x" ]; then
+            message="Some secret leaks were potentially detected in this PR.\nCheck https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} for more info"
+            echo -e "${message}" | gh pr comment ${{ github.event.pull_request.number }} --body-file - 
+          fi
