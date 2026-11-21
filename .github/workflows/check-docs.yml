@@ -44,4 +44,3 @@ jobs:
               echo "::error line=1::ERROR! Make sure to add 'docs/build' to .gitignore"
               exit 1
           fi
-  check-docs:
