@@ -230,7 +230,7 @@ jobs:
 
       - name: Maven deploy to Central
         id: build
-        uses: zepben/maven-deploy-central-action@main
+        uses: zepben/maven-deploy-central-action@test
         with:
           NEXUS_MAVEN_REPO: ${{ secrets.NEXUS_MAVEN_REPO }}
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
