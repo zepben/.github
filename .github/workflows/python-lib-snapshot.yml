@@ -207,7 +207,7 @@ jobs:
         continue-on-error: true
 
   update-snapshot-version:
-    needs: [deploy]
+    needs: [run-checks, deploy]
     container: zepben/pipeline-basic
     runs-on: ubuntu-latest
     env:
@@ -223,6 +223,12 @@ jobs:
           dname=$(echo ${{github.repository}} | cut -d'/' -f2)
           git config --global --add safe.directory /__w/$dname/$dname
         shell: sh
+
+      - name: Write news
+        uses: $/.github/actions/news
+        with:
+          version: ${{ needs.run-checks.outputs.version }}
+          token: ${{ env.GITHUB_TOKEN }}
 
       - name: Update snapshot version
         run: |
