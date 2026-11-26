@@ -40,6 +40,16 @@ jobs:
     env:
       # Be explicit, this is the default on the runners anyway
       KIND_EXPERIMENTAL_PROVIDER: docker
+      GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+      # Route source-repository Git access through HTTPS without changing runner config.
+      GIT_CONFIG_COUNT: "3"
+      GIT_CONFIG_KEY_0: url.https://github.com/.insteadOf
+      GIT_CONFIG_VALUE_0: "git@github.com:"
+      # Reset earlier helpers before delegating credentials to GitHub CLI.
+      GIT_CONFIG_KEY_1: credential.https://github.com.helper
+      GIT_CONFIG_VALUE_1: ""
+      GIT_CONFIG_KEY_2: credential.https://github.com.helper
+      GIT_CONFIG_VALUE_2: "!gh auth git-credential"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -97,6 +107,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.CI_GITHUB_TOKEN }}
 
-      - run: make integration-test
+      # maven-login's settings.xml sets localRepository to /maven, which only exists in the
+      # pipeline-java containers. On this bare runner, point the host mvn at ~/.m2/repository,
+      # the path setup-java's `cache: maven` restores. setup-java also writes MAVEN_ARGS
+      # (-ntp) to GITHUB_ENV, which beats job-level env, so extend it here.
+      - run: MAVEN_ARGS="${MAVEN_ARGS:+$MAVEN_ARGS }-Dmaven.repo.local=$HOME/.m2/repository" make integration-test
         env:
           CI_DUMP_DEBUG: "1" # print a cluster dump if Environment provisioning fails
