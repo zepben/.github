@@ -40,7 +40,7 @@ runs:
         # python -m venv .venv
         uv venv -p 3.14 .venv
         # shellcheck disable=SC1091
-        # source .venv/bin/activate
+        source .venv/bin/activate
         uv pip install "git+https://github.com/zepben/ci-utils.git@${{ inputs.ci_utils_ref }}#subdirectory=zep-dev"
         zep-dev tools install
         echo "$(zep-dev tools path)" >> "$GITHUB_PATH"
