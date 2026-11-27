@@ -31,13 +31,17 @@ runs:
         path: ~/.cache/pip
         key: zep-dev-pip-${{ runner.os }}-${{ inputs.ci_utils_ref }}
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v9
+
     - name: Install zep-dev
       shell: bash
       run: |
-        python -m venv .venv
+        # python -m venv .venv
+        uv venv -p 3.14 .venv
         # shellcheck disable=SC1091
-        source .venv/bin/activate
-        pip install "git+https://github.com/zepben/ci-utils.git@${{ inputs.ci_utils_ref }}#subdirectory=zep-dev"
+        # source .venv/bin/activate
+        uv pip install "git+https://github.com/zepben/ci-utils.git@${{ inputs.ci_utils_ref }}#subdirectory=zep-dev"
         zep-dev tools install
         echo "$(zep-dev tools path)" >> "$GITHUB_PATH"
         echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
